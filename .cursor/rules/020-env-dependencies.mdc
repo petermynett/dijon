@@ -1,0 +1,29 @@
+---
+description: Conda-forge installation workflow — dry-run first, then install (only when touching dependencies or env setup)
+globs:
+  - "pyproject.toml"
+  - "environment*.yml"
+  - "requirements*.txt"
+  - "constraints*.txt"
+  - "AGENTS.md"
+  - "README.md"
+  - ".github/workflows/**/*.yml"
+alwaysApply: false
+---
+
+# Conda-forge Installation Workflow
+
+**Policy authority:** See `AGENTS.md` → "Tooling and dependencies".
+
+This rule applies **only** when dependency, environment, or tooling configuration is being added or modified.
+
+## Procedure
+
+Always run a dry-run check before installing via conda-forge:
+
+```bash
+# Check availability and conflicts first
+mamba install -c conda-forge --dry-run <package(s)>
+
+# Only if dry-run succeeds, install
+mamba install -c conda-forge <package(s)>

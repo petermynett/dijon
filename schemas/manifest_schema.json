@@ -1,0 +1,19 @@
+{
+    "version": "1",
+    "type": "manifest",
+    "fields": {
+      "file_id":        { "type": "string", "required": true },
+      "rel_path":       { "type": "string", "required": true },
+      "status":         { "type": "enum",   "values": ["active", "superseded", "archived"] },
+      "sha256":         { "type": "string" },
+      "acq_sha256":     { "type": "string", "optional": true },
+      "ingested_at":    { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ)" },
+      "source_name":    { "type": "string" },
+      "schema_version": { "type": "string" },
+      "supersedes_file_id": { "type": "string", "optional": true },
+      "row_count":      { "type": "integer", "optional": true },
+      "start_date":     { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ) or civil date (YYYY-MM-DD). Time is optional.", "optional": true },
+      "end_date":       { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ) or civil date (YYYY-MM-DD). Time is optional.", "optional": true },
+      "partition":      { "type": "string", "optional": true }
+    }
+  }

@@ -1,0 +1,104 @@
+# =========================
+# Cursor Ignore
+# =========================
+# Goal:
+# - Keep source, docs, contracts, and small text data in context
+# - Exclude secrets, runtime noise, large/binary artifacts
+# - You can always include a file explicitly with @file when needed
+# =========================
+
+# --- Secrets / env ---
+.secrets/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# --- Python env + caches ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.cache/
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.cursor/
+
+# --- Logs / temp ---
+*.log
+logs/   # remove?
+tmp/
+temp/
+
+# --- Build / generated outputs ---
+.eggs/
+*.egg-info/
+*.whl
+
+# --- Database state / binaries ---
+*.sqlite
+*.sqlite3
+*.db
+db/snapshots/
+
+# --- Data visibility ---
+# Keep text-y data available, but hide raw + binaries
+data/raw/**
+
+# --- Lockfiles (often noisy; git may still track them) ---
+poetry.lock
+uv.lock
+Pipfile.lock
+requirements*.lock
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# --- Binaries (global) ---
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.tif
+*.tiff
+*.bmp
+*.heic
+
+# Audio
+*.wav
+*.mp3
+*.flac
+*.aiff
+*.m4a
+*.ogg
+
+# Video
+*.mp4
+*.mov
+*.mkv
+*.avi
+
+# Docs/exports that are usually binary/heavy
+*.pdf
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z

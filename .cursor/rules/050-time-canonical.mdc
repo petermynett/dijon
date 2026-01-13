@@ -1,0 +1,44 @@
+---
+description: Canonical time usage contract - what must be true when using time fields.
+globs:
+  - "**/utils/time.py"
+  - "docs/time.md"
+alwaysApply: false
+---
+
+# Time Canonical Usage Contract
+
+This rule defines **what must be true** when using time fields. For implementation guidance, see `docs/time.md`.
+
+## Core Invariants
+
+- **Instants**: Store as RFC 3339 UTC seconds-only with trailing `Z`: `YYYY-MM-DDTHH:MM:SSZ` (exactly 20 characters)
+- **Civil dates**: Store as `YYYY-MM-DD` (exactly 10 characters). Never convert to UTC or shift them.
+- **Ingest normalizes**: Ingest layer must normalize all timestamps to canonical format using `normalize_instant()` from `utils/time.py`
+- **Load validates only**: Load layer must validate format using `assert_ts_utc_z()`; no normalization or conversion
+
+## Field Standards
+
+- **`ts_utc`**: Required canonical UTC instant string (`...Z` format)
+- **`tz_event`**: IANA zone identifier (e.g., `America/Vancouver`). Never use `PST/PDT` or fixed offsets.
+- **`tz_offset_minutes`**: Optional metadata (only if source explicitly provided offset)
+- **`ts_src`**: Optional provenance (diagnostic only, never used for computation)
+- **`ts_local`**: FORBIDDEN - never persist. Derive at display time only.
+
+## DST Handling
+
+- Ambiguous/non-existent times must raise explicit exceptions (`AmbiguousLocalTimeError`, `NonexistentLocalTimeError`)
+- Never silently guess, fold, or normalize DST edge cases
+
+## Implementation
+
+See `docs/time.md` for:
+- How to add time fields to new datasets
+- Function usage examples
+- Ingest vs load patterns
+- DST error handling
+
+## See Also
+
+- `docs/time.md` - Implementation guidance
+- `src/<pkg>/utils/time.py` - Utility functions

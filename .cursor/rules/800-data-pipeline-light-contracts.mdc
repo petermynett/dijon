@@ -1,0 +1,45 @@
+---
+description: Data pipeline guardrails: protect data integrity (no silent overwrites, no in-place “fixes”, no contract changes without approval).
+globs:
+  - "src/**/data/**/*.py"
+  - "data/**/*"
+  - "DATA.md"
+  - "data/README.md"
+alwaysApply: false
+---
+
+# Data Pipeline Light Contracts
+
+This rule is a **guardrail**. Detailed workflows and data-layer descriptions live in:
+- `DATA.md`
+- `data/README.md`
+
+## Default Safety
+
+- Treat source/canonical inputs as read-only by default
+- Prefer deterministic transforms (safe to delete/rebuild derived outputs)
+- Do not depend on ambient state (cwd, local machine paths, ad-hoc files)
+
+## Forbidden Without Explicit Approval (Stop-and-Ask)
+
+Stop and ask before doing or proposing:
+
+- Editing or “fixing” canonical/source data in place
+- Overwriting existing data outputs without a safe, explicit workflow
+- Changing schemas, contracts, file formats, or directory layout in ways that break compatibility
+- Renaming or moving data roots, datasets, or pipeline outputs broadly
+- Introducing new identity/manifest schemes or “canonical” formats
+
+## Writes Must Be Explicit
+
+If code writes data:
+
+- Output paths must be explicit (configured, passed in, or clearly documented)
+- Avoid writing into the project `data/` tree by default unless that is the intended contract
+- If an output already exists, require an explicit overwrite/replace mode (or write to a new path)
+
+## Documentation Sync
+
+If behavior, contracts, schemas, or data locations change:
+
+- Update `DATA.md` and/or `data/README.md`, or stop and ask

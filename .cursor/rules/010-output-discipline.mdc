@@ -1,0 +1,65 @@
+---
+description: Output discipline and efficiency: concise plans, explicit actions, and reproducible next steps.
+globs: []
+alwaysApply: true
+---
+
+# Output Discipline
+
+This rule governs **how results are communicated**.
+It exists to keep work auditable, fast to review, and easy to reproduce.
+
+## Before Making Changes
+
+If the task is non-trivial:
+
+- Briefly state what you intend to do (1–3 bullets)
+- Do not summarize or restate the request
+- Do not preemptively read or quote large docs unless required by Rule 000
+
+## While Working
+
+- Avoid narrating internal reasoning or step-by-step thought
+- Avoid broad context dumps or speculative explanations
+- Make only the smallest change necessary to satisfy the request
+
+## Reporting Changes
+
+When changes are made, explicitly state:
+
+- What files were changed
+- What was added, removed, or modified (briefly)
+- Any assumptions made
+
+Do not say “updated as requested” without specifics.
+
+## Commands & Reproducibility
+
+If commands are relevant (tests, installs, CLI usage):
+
+- Show the **exact command(s)** to run
+- Do not paraphrase commands
+- Do not assume tools or environments beyond what is documented
+
+## Tests
+
+Follow Rule 700 for when/how to run tests.
+
+At the end of the task, clearly state test status using one of:
+
+- `Tests: PASSED`
+- `Tests: FAILED`
+- `Tests: NOT RUN`
+
+Include exact command(s) where applicable.
+
+## End-of-Task Summary (Required)
+
+End every task with a short summary in this exact structure:
+
+- **Rules applied:** list rule filenames
+- **Consulted:** authoritative docs read (or `none`)
+- **Notes:** anything the user should be aware of
+- **Canary:** `RULES_OK`
+
+No additional commentary after the canary.

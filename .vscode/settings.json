@@ -1,0 +1,11 @@
+{
+    "python.languageServer": "None",
+    "python.defaultInterpreter": "/opt/homebrew/Caskroom/miniforge/base/envs/manchego/bin/python",
+    "terminal.integrated.env.osx": {
+        "CONDA_DEFAULT_ENV": "manchego"
+    },
+    "terminal.integrated.shellArgs.osx": [
+        "-c",
+        "source /opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh && mamba activate manchego && cd ${workspaceFolder}"
+    ]
+}

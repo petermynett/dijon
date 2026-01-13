@@ -1,0 +1,70 @@
+# =========================
+# Git Ignore
+# =========================
+# Philosophy:
+# - Code + contracts visible by default
+# - Data opaque except for docs & manifests
+# - Runtime state, binaries, noise ignored
+# - Explicit @file always overrides ignore
+# =========================
+
+
+# --- Python env + caches ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Secrets ---
+.secrets/
+.env
+.env.*
+!.env.example
+
+
+# --- DATA VISIBILITY ---
+data/raw/**
+
+data/**/*.wav
+data/**/*.mp3
+data/**/*.flac
+data/**/*.aiff
+data/**/*.m4a
+data/**/*.png
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.tif
+data/**/*.tiff
+data/**/*.webp
+
+*.pdf
+!docs/**/*.pdf
+
+# --- Database state / binaries (ignored) ---
+*.sqlite
+*.sqlite3
+*.db
+db/snapshots/
+
+# --- Node tooling (optional, but consistent with package-lock) ---
+node_modules/
+
+
+# --- Build / generated outputs ---
+.cache/
+tmp/
+temp/
+build/
+dist/
