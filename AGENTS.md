@@ -1,89 +1,190 @@
 # AGENTS.md
 
-This file is the repo-level safety and operations manual for coding agents.  
-It defines non-negotiable rules and reasoning model for how to safely change this repository.
+This file defines the **safety model and reasoning constraints** for coding agents operating in this repository.
 
-AGENTS.md is the primary safety file. If safety rules exist, they live here or in narrowly scoped subfolder AGENTS.md files.
+It specifies **non-negotiable invariants** about how changes may be made.  
+It does not define procedures, commands, or workflows.
+
+AGENTS.md is the primary safety authority.
+
+---
 
 ## Purpose
 
-This file governs **how agents operate safely** — the timeless constraints and reasoning model that apply regardless of tooling, workflow, or repo maturity. It does not contain procedures or commands; those belong in procedural overlays (see below).
+This document governs **how agents operate safely**, independent of tooling, workflow, or project maturity.
 
-## Authoritative docs
+It exists to:
+- prevent irreversible mistakes
+- avoid silent drift in data meaning or system shape
+- enforce explicit human intent for risky actions
 
-These CAPS files are authoritative and must be consulted before making changes:
+If a requested action conflicts with this file, the agent must stop and explain why.
 
-- **README.md** — what the project does and how it is used  
-- **ARCHITECTURE.md** — structure, boundaries, and intended extension points  
-- **DATA.md** — data layers, schemas, contracts, provenance, regeneration rules
+---
 
-AGENTS.md governs **how changes are made**.  
-ARCHITECTURE.md and DATA.md govern **what must remain true**.
+## Relationship to other CAPS docs
+
+The following documents are authoritative and must be consulted as relevant:
+
+- **README.md** — project intent and navigation
+- **ARCHITECTURE.md** — system shape, boundaries, dependency direction
+- **DATA.md** — data meaning, lifecycle, immutability, rebuildability
+
+**Rule of precedence:**
+- AGENTS.md governs **whether** a change may proceed
+- DATA.md and ARCHITECTURE.md govern **what must remain true**
+
+If an action satisfies DATA.md but violates AGENTS.md, **stop**.
+
+---
 
 ## Procedural overlays
 
-Procedural overlays (e.g., `AGENTS_CURSOR.md`) may exist to provide tool- and time-bound execution details. Overlays must not contradict this file's invariants. If they appear to, treat the overlay as wrong and follow this file.
+Tool- or time-specific instructions (e.g. `AGENTS_CURSOR.md`) may exist.
+
+Overlays:
+- may add detail
+- must not weaken or contradict this file
+- are subordinate to AGENTS.md
+
+If an overlay conflicts with this file, treat the overlay as wrong.
+
+---
 
 ## Explicit approval
 
-**Explicit approval** means a human instruction in the current task/request explicitly authorizing the action. If approval is required and not present, stop and ask.
+**Explicit approval** means a clear human instruction in the current task authorizing the action.
+
+If explicit approval is required and not present:
+- stop
+- explain what approval is needed
+- do not proceed
+
+---
 
 ## Core invariants
 
-If a requested change conflicts with an invariant, stop and explain the conflict.
+If a requested change violates any invariant below, stop and explain the conflict.
 
 ### Destructive operations
 
-No destructive operations without explicit approval. This includes deletions, resets, rebuilds, migrations, dropping databases, mass renames, and similar operations that cannot be easily reversed.
+No destructive operations without explicit approval.
 
-**Note:** Code formatting (e.g., `ruff format`) and other code-style changes that do not affect data, manifests, or schemas are allowed by default.
+This includes (but is not limited to):
+- deleting data or code
+- rebuilding or resetting databases
+- migrations
+- dropping tables
+- mass renames or rewrites
 
-Non-canonical does not mean deletable. Protected-but-non-canonical evidence (e.g., acquisition data) must not be deleted or edited without explicit approval.
+**Important:**  
+Derived or rebuildable artifacts (including databases) are *still* considered destructive to rebuild by default and require explicit approval.
 
+Formatting-only code changes (e.g. `ruff format`) are allowed if they do not affect data, manifests, schemas, or contracts.
 
-### Manifests and file identity
+Non-canonical does **not** mean deletable.  
+Protected evidence (e.g. acquisition data) must never be deleted or edited.
 
-Follow all documented manifest rules (see `DATA.md` for authoritative manifest contract). Follow documented file-ID formats and generation rules. Do not invent new ID schemes or manifest fields. Do not retroactively rewrite identifiers.
+---
+
+### Data contracts and manifests
+
+- Follow all data rules defined in **DATA.md**
+- Do not edit acquisition, raw, or override data in place
+- Do not invent new manifest fields, schemas, or ID formats
+- Do not retroactively rewrite file identifiers
+
+If data meaning or lifecycle changes, **DATA.md must be updated**.
+
+---
 
 ### Tooling and dependencies
 
-Do not add new tooling, dependencies, or external integrations without explicit approval.
+Do not add:
+- new dependencies
+- new tools
+- new external integrations
 
-**Package sourcing policy**
-- Prefer **conda-forge** for all installable dependencies.
-- Use **pip / pipx** only when a dependency is unavailable or unsuitable via conda-forge.
-- If proposing a new dependency, explain:
-  - why it is needed,
-  - whether it is available via conda-forge,
-  - and why any non–conda-forge option is justified.
+without explicit approval.
 
-### Environment
+**Package sourcing posture**
+- Prefer **conda-forge**
+- Use pip/pipx only if conda-forge is unsuitable
+- Any proposal must explain why the dependency is needed and how it fits the system
 
-Assume one canonical development environment. Activate it before running any repo command. Do not assume the environment is active. If a command fails, first confirm environment activation and that you're using the repo's canonical interpreter before changing code.
+---
 
-### Safe reasoning model
+### Environment assumptions
 
-- Prefer the smallest change that satisfies the request.
-- Avoid drive-by refactors unless explicitly requested.
-- Stop on ambiguity or hidden assumptions; ask rather than guess.
-- If behavior or contracts change, update the relevant CAPS docs.
+Assume one canonical environment: **dijon**.
 
-### External communications and secrets
+Agents must:
+- not assume the environment is active
+- confirm environment activation before diagnosing failures
+- avoid changing code to compensate for a misconfigured environment
 
-Do not add external communications, telemetry, or handle secrets unsafely without explicit approval.
+---
+
+## Safe reasoning model
+
+Agents must:
+
+- prefer the **smallest change** that satisfies the request
+- avoid drive-by refactors
+- stop on ambiguity or hidden assumptions
+- ask rather than guess
+
+If a change affects:
+- data meaning or lifecycle
+- system boundaries or dependencies
+- safety posture
+
+the relevant CAPS document **must** be updated.
+
+---
+
+## Structural code changes
+
+Structural refactors (renames, moves, re-organization) are allowed **without explicit approval** *only if*:
+
+- data meaning is unchanged
+- manifests and schemas are untouched
+- contracts in DATA.md and ARCHITECTURE.md remain true
+
+If unsure, stop and ask.
+
+---
 
 ## Local documentation
 
-Folder-level README.md or AGENTS.md files may define folder-specific rules (e.g., which data files are canonical vs regenerable). They must not contradict root invariants. If a local doc conflicts with this file, treat the local doc as wrong and follow this file.
+Folder-level README.md files may further restrict behavior.
+
+They must not weaken root invariants.
+
+If a local rule conflicts with this file, follow **AGENTS.md**.
+
+---
 
 ## When to add nested AGENTS.md
 
-Default: do not create subfolder AGENTS.md files.
+Default: do not.
 
-Suggest a subfolder AGENTS.md if:
-- the folder has specialized invariants or workflows that agents repeatedly violate, and
-- a README.md cannot express those constraints clearly enough.
-- create a subfolder AGENTS.md only if explicit approval is given.
+Suggest a subfolder AGENTS.md only if:
+- repeated agent failures indicate missing invariants, and
+- a README.md cannot express the constraint clearly
 
-Otherwise, use README.md files and link back to ARCHITECTURE.md and DATA.md.
+Creating a nested AGENTS.md requires explicit approval.
 
+---
+
+## Final rule
+
+If an action would:
+- lose information
+- obscure provenance
+- break rebuildability
+- or change meaning without an explicit artifact
+
+it violates this safety model.
+
+Stop and ask.

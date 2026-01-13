@@ -1,183 +1,211 @@
-# <project_name>
+# dijon
 
-This repository is a **Python CLI-first data/pipeline toolkit template** optimized for solo, agent-assisted development.
+**dijon** is an experimental research system for **comparative music analysis** using techniques from **music information retrieval (MIR)**.
 
-This README is a **contract and navigation index**, not a tutorial.
-It defines what this repository is, how to orient yourself, and which documents are authoritative for specific kinds of decisions.
+It supports:
+- manual symbolic ground truth for a small, curated subset of performances
+- automated, probabilistic analysis at larger scale
+- comparison across **multiple performances of the same tune**
+- visualization-driven musicological insight rather than transcription accuracy
 
-## Purpose
+This README is a **navigation and contract**, not a tutorial.
 
+---
 
-Project context (agents): see **PROJECT.md**.
+## Project intent (authoritative summary)
+
+This project explores **harmony, form, and melody** in musics without fixed scores  
+(e.g. jazz and bluegrass), where:
+- lead sheets are **canonical but incomplete**
+- performances may **deviate meaningfully** from written references
+- multiple interpretations may coexist
+- ambiguity is musically meaningful, not an error
+
+A small subset of performances is **fully manually annotated**  
+(note-level melody, chord symbols, form).  
+These annotations act as **one labeled interpretation**, not absolute truth.
+
+Automated analysis is then used to:
+- compare performances against lead sheets and each other
+- surface **parallel hypotheses** with confidence estimates
+- support **visual exploration** and qualitative insight
+
+Quantitative metrics may exist, but **evaluation is primarily musicological**.
+
+Detailed research framing lives in **PROJECT.md**.
+
+---
 
 ## What this repository is
 
-- A scaffold for building deterministic, reproducible data pipelines
-- A CLI-first system with explicit boundaries and contracts
-- A repo designed to be safely modified by coding agents
-- A template: concrete names, datasets, and domains are plugged in later
+- A **library-backed, notebook-driven** research system
+- A **CLI-first** pipeline for acquisition, analysis, and comparison
+- A framework for handling **plural answers**, not forcing winners
+- A system optimized for reproducibility, explicit data meaning, and safe agent modification
 
-Primary languages: Python, SQL  
-Primary artifact types: CSV, JSON, SQLite, Markdown
+Primary language: Python  
+Primary artifacts: audio, symbolic annotations, CSV/JSON, SQLite, notebooks
 
+---
+
+## What this repository is not
+
+- Not a real-time system
+- Not fully automatic transcription
+- Not optimized for swing feel or expressive timing
+- Not a polished end-user application
+
+These non-goals are intentional.
+
+---
 
 ## How to read this repo (important)
 
-This project is governed by a small set of **authoritative CAPS files**.
-Before making changes, read the relevant one:
+This project is governed by a small set of **authoritative CAPS files**.  
+Read the one that matches the kind of decision you are making:
 
 - **README.md** (this file)  
-  What the project is, how to navigate it, and which doc governs what.
+  Orientation and document authority.
 
 - **ARCHITECTURE.md**  
-  System shape, subsystems, boundaries, dependency direction, and extension points.
+  System boundaries, subsystems, dependency direction, extension points.
 
 - **DATA.md**  
-  Data contracts: canonical vs derived, immutability, manifests, provenance, deletion rules.
+  Data meaning, lifecycle rules, canonical vs derived data, manifests, provenance.
 
 - **AGENTS.md**  
-  Safety model and invariants for how changes may be made.
+  Safety model and invariants for agent-initiated changes.
 
 - **AGENTS_CURSOR.md** (if present)  
-  Tool- and time-specific commands and workflows. Subordinate to AGENTS.md.
+  Tool- and workflow-specific instructions. Subordinate to AGENTS.md.
 
 If instructions conflict:
-- The most specific and most authoritative document wins.
-- AGENTS.md governs safety.
-- DATA.md governs data meaning and lifecycle.
-- ARCHITECTURE.md governs system shape.
+1. The most specific document wins
+2. AGENTS.md governs safety
+3. DATA.md governs meaning and lifecycle
+4. ARCHITECTURE.md governs structure
 
+---
 
 ## Repository structure (high level)
 
-This is a summary only. Detailed rules live in the documents above.
+This is a map, not a spec.  
+Local READMEs and CAPS files are authoritative.
 
-- src/  
-  Application code (Python, src-layout).
+src/dijon/  
+Core library code (analysis, pipelines, adapters)
 
-- data/  
-  Data workspace. Canonical, derived, and protected upstream data live here.  
-  Rules are defined in DATA.md and local READMEs.
+src/sql/  
+Database schema and seed SQL
 
-- db/  
-  Local databases (derived by default).
+data/  
+Data workspace (rules in DATA.md)
 
-- src/sql/  
-  Authoritative database schema and seed SQL.
+db/  
+Local derived databases
 
-- tests/  
-  Automated tests.
+docs/  
+Durable documentation and research notes
 
-- docs/  
-  Durable documentation (specs, ADRs, notes).
+tests/  
+Automated tests
 
-If you are working inside a subdirectory:
-- Read that directory’s README.md first.
-- Fall back to this file and the CAPS docs.
+If working inside a subdirectory:
+1. Read its README.md
+2. Then refer back here
+3. Then consult CAPS docs as needed
 
+---
 
 ## Entry points
 
-Primary execution is via the CLI.
+Primary execution is via the **CLI**.
 
-Typical patterns (exact names vary by instantiation):
-- In-repo: `python -m <package>.cli.main --help`
-- Installed entry point: `<cli_name> --help`
+Typical patterns:
+- In-repo: `python -m dijon.cli.main --help`
+- Installed: `dijon --help`
 
-CLI usage details belong in procedural docs, not here. Keep the CLI thin (parse/dispatch/present) and put logic in domain modules.
+CLI responsibilities are intentionally thin:
+- parse
+- dispatch
+- present
+
+All substantive logic belongs in library modules.
+
+---
 
 ## Environment & install (brief)
 
-- Env: `mamba env create -n template -f env/environment.yml` then `mamba activate dijon`.
-- Install protocol: dry-run first (`mamba install -c conda-forge --dry-run ...`), install only if clean.
-- Adding any dependencies or new tooling requires explicit approval.
-- Always activate the env before running repo commands.
+- Activate env: `mamba activate dijon`
+- Always dry-run installs first
+- Adding dependencies requires explicit approval
+- Always activate the env before running commands
 
-## Quickstart (minimal)
+Details belong in procedural docs, not here.
 
-1) `mamba activate dijon`
-2) `python -m <package>.cli.main --help` (or `<cli_name> --help` if installed)
-3) Run or add a sample CLI command (keep CLI thin; logic in domain modules)
-4) Optional checks: `pytest -q path` and `ruff check path`
+---
 
-## Best-effort checks
+## Safety & data semantics (summary only)
 
-Before concluding work (scope as appropriate):
-- `ruff check path`
-- `ruff format path`
-- `pytest -q path`
-If skipped or failing, note why in your change description.
+Authoritative rules live in **AGENTS.md** and **DATA.md**.
 
-
-## Safety and defaults (high level)
-
-Authoritative safety rules live in AGENTS.md and DATA.md.
-
-In brief:
-- Meaning vs protection are separate: treating meaning as canonical does **not** imply it is safe to delete. Acquisition data is non-canonical but protected evidence; do not delete or edit it.
-- Treat data meaning as canonical unless documented otherwise
+High-level invariants:
+- Meaning ≠ mutability  
+  Canonical meaning does not imply deletability.
+- Acquisition data is protected evidence
 - No destructive operations without explicit approval
-- Do not edit raw/canonical files in place
+- No in-place edits of raw or canonical data
 
+---
 
 ## Testing
 
-Testing protocol and agent instructions live in `docs/testing.md`.
+Testing protocol lives in `docs/testing.md`.
 
-Quick run:
-- `pytest -q`
+Quick check:
+pytest -q
 
+---
 
-## How to extend the system (navigation only)
+## How to extend the system (navigation)
 
-If you want to:
+- Change system structure → ARCHITECTURE.md
+- Add datasets or data layers → DATA.md, docs/cli_implementation.md
+- Run workflows or commands → AGENTS_CURSOR.md
+- Agent permissions & limits → AGENTS.md
 
-- Change system structure or add new subsystems  
-  → see ARCHITECTURE.md
-
-- Add or modify datasets, data layers, manifests, or schemas  
-  → see DATA.md and data/<dataset>/README.md
-
-- Run commands, install dependencies, or follow workflows  
-  → see AGENTS_CURSOR.md (if present)
-
-- Understand what you are allowed to do as an agent  
-  → see AGENTS.md
-
+---
 
 ## What this README intentionally excludes
 
-This file does NOT contain:
-- Installation guides
-- Step-by-step tutorials
-- Command runbooks
-- Dataset-specific rules
-- Data schemas or manifest formats
+This file does not contain:
+- step-by-step tutorials
+- command runbooks
+- dataset-specific rules
+- schemas or manifest formats
 
 Those belong in more specific documents.
 
+---
 
 ## Change discipline
 
-Any change that affects:
+Any change affecting:
 - data meaning or lifecycle
 - system boundaries or flow
-- safety, permissions, or destructive behavior
+- safety or destructive behavior
 
-must be reflected in the appropriate CAPS file:
-- ARCHITECTURE.md
-- DATA.md
-- AGENTS.md
+must be reflected in the relevant CAPS file.  
+Unreflected changes are incomplete.
 
-Unreflected changes are considered incomplete.
-
+---
 
 ## Final note
 
-This repository is designed to be reasoned about, not explored blindly.
+This repository is designed to be **reasoned about**, not explored blindly.
 
-If you are unsure where a rule belongs:
-- Meaning → DATA.md
-- Shape → ARCHITECTURE.md
-- Permission → AGENTS.md
+If unsure where a rule belongs:
+- Meaning → DATA.md  
+- Structure → ARCHITECTURE.md  
+- Permission → AGENTS.md  
 - Procedure → AGENTS_CURSOR.md

@@ -22,7 +22,7 @@ The CLI layer is a thin wrapper around pipeline verbs. Pipeline verbs coordinate
 
 ### Source Registry
 
-Sources are discovered by scanning `src/{{ package_name }}/sources/`:
+Sources are discovered by scanning `src/dijon/sources/`:
 
 - **Ignore**: `_manifest.py`, `__pycache__/`, underscore-prefixed entries.
 - **Eligibility**: exports `SOURCE_KEY: str` and either `SOURCE` or `get_source()`.

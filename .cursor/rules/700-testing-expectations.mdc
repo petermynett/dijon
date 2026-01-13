@@ -69,6 +69,4 @@ At the end of the task, state one of:
 - `Tests: FAILED` + exact command(s) run + brief failure summary
 - `Tests: NOT RUN` + why + exact command(s) to run
 
-Do not claim tests passed unless they were executed.---
-alwaysApply: true
----
+Do not claim tests passed unless they were executed.

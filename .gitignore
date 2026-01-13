@@ -1,13 +1,6 @@
 # =========================
 # Git Ignore
 # =========================
-# Philosophy:
-# - Code + contracts visible by default
-# - Data opaque except for docs & manifests
-# - Runtime state, binaries, noise ignored
-# - Explicit @file always overrides ignore
-# =========================
-
 
 # --- Python env + caches ---
 .venv/
@@ -23,16 +16,25 @@ __pycache__/
 Thumbs.db
 *.swp
 
-# --- Logs ---
-*.log
-logs/
-
 # --- Secrets ---
 .secrets/
 .env
 .env.*
 !.env.example
 
+# --- CAPS files ---
+README.md
+AGENTS.md
+AGENTS_CURSOR.md
+ARCHITECTURE.md
+DATA.md
+
+# --- CURSOR files ---
+.cursorignore
+docs/cli_tasks/**
+docs/cli_implementation.md
+docs/cli_tasks/**/*.md
+docs/_plans/**
 
 # --- DATA VISIBILITY ---
 data/raw/**
