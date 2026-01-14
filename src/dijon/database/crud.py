@@ -15,8 +15,6 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, Mapping
 
-from ..utils.time import now_ts_utc_z
-
 from . import queries
 from .errors import from_sqlite_error
 
@@ -29,7 +27,7 @@ def _now_iso() -> str:
     Returns:
         Canonical instant string: YYYY-MM-DDTHH:MM:SSZ.
     """
-    return now_ts_utc_z()
+    return datetime.now(UTC).isoformat().replace('+00:00', 'Z')
 
 
 def _validate_identifier(name: str) -> None:

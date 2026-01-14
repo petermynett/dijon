@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dijon"
 version = "0.1.0"
-description = "Template project for a Python CLI application."
+description = "Dijon is an experimental research system for comparative music analysis using techniques from music information retrieval (MIR)."
 readme = "README.md"
 requires-python = ">= 3.12"
 license = {text = "MIT"}
@@ -18,6 +18,9 @@ classifiers = [
 dependencies = [
     "typer",
 ]
+
+[project.scripts]
+dijon = "dijon.cli.main:app"
 
 [tool.setuptools]
 packages = { find = { where = ["src"] } }

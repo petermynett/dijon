@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from datetime import UTC, datetime
+
 from ...sources._manifest import compute_file_checksum
-from ...utils.time import now_ts_utc_z
 
 
 def acquire(
@@ -47,7 +48,7 @@ def acquire(
 
     # Example: Create a minimal acquisition file
     # In a real implementation, this would fetch from upstream
-    timestamp = now_ts_utc_z()
+    timestamp = datetime.now(UTC).isoformat().replace('+00:00', 'Z')
     example_file = acquisition_dir / f"example_{timestamp.replace(':', '-').replace('T', '_')}.txt"
     example_file.write_text(f"Example acquisition data for {source_key}\nTimestamp: {timestamp}\n")
 

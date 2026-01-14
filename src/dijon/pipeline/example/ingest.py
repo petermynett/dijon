@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from datetime import UTC, datetime
+
 from ...sources._manifest import (
     append_manifest_row,
     compute_file_checksum,
     generate_next_file_id,
     read_manifest,
 )
-from ...utils.time import format_ts_utc_z, utc_now
 
 
 def ingest(
@@ -75,7 +76,7 @@ def ingest(
 
     if dry_run:
         # Generate a file_id for dry-run display
-        ingest_date = utc_now()
+        ingest_date = datetime.now(UTC)
         file_id = generate_next_file_id(dataset_code, manifest_path, ingest_date)
         return {
             "success": True,
@@ -88,7 +89,7 @@ def ingest(
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate file_id
-    ingest_date = utc_now()
+    ingest_date = datetime.now(UTC)
     file_id = generate_next_file_id(dataset_code, manifest_path, ingest_date)
 
     # Copy acquisition file to raw layer (canonical copy)
@@ -100,7 +101,7 @@ def ingest(
 
     # Write manifest entry
     # rel_path is relative to data/raw/<source_key>/ for stage-first structure
-    ingested_at = format_ts_utc_z(ingest_date)
+    ingested_at = ingest_date.isoformat().replace('+00:00', 'Z')
     rel_path = f"raw/{raw_file.name}"
     append_manifest_row(
         manifest_path=manifest_path,

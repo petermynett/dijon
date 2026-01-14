@@ -12,8 +12,6 @@ import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ..utils.time import utc_now
-
 logger = __import__("logging").getLogger(__name__)
 
 # Manifest schema fields (all required, values may be empty)
@@ -58,7 +56,7 @@ def generate_file_id(dataset_code: str, ingest_date: datetime | None = None) -> 
     dataset_code = dataset_code.strip().upper()
 
     if ingest_date is None:
-        ingest_date = utc_now()
+        ingest_date = datetime.now(UTC)
 
     yymm = ingest_date.strftime("%y%m")
 
@@ -88,7 +86,7 @@ def generate_next_file_id(
         File ID string with next available sequence number.
     """
     if ingest_date is None:
-        ingest_date = utc_now()
+        ingest_date = datetime.now(UTC)
 
     yymm = ingest_date.strftime("%y%m")
     prefix = f"{dataset_code.strip().upper()}-{yymm}-"

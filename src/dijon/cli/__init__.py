@@ -1,2 +1,2 @@
-"""CLI module for project."""
+"""CLI module for Dijon."""
 

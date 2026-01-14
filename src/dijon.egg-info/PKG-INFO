@@ -1,0 +1,223 @@
+Metadata-Version: 2.4
+Name: dijon
+Version: 0.1.0
+Summary: Dijon is an experimental research system for comparative music analysis using techniques from music information retrieval (MIR).
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Intended Audience :: Developers
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: typer
+
+# dijon
+
+**dijon** is an experimental research system for **comparative music analysis** using techniques from **music information retrieval (MIR)**.
+
+It supports:
+- manual symbolic ground truth for a small, curated subset of performances
+- automated, probabilistic analysis at larger scale
+- comparison across **multiple performances of the same tune**
+- visualization-driven musicological insight rather than transcription accuracy
+
+This README is a **navigation and contract**, not a tutorial.
+
+---
+
+## Project intent (authoritative summary)
+
+This project explores **harmony, form, and melody** in musics without fixed scores  
+(e.g. jazz and bluegrass), where:
+- lead sheets are **canonical but incomplete**
+- performances may **deviate meaningfully** from written references
+- multiple interpretations may coexist
+- ambiguity is musically meaningful, not an error
+
+A small subset of performances is **fully manually annotated**  
+(note-level melody, chord symbols, form).  
+These annotations act as **one labeled interpretation**, not absolute truth.
+
+Automated analysis is then used to:
+- compare performances against lead sheets and each other
+- surface **parallel hypotheses** with confidence estimates
+- support **visual exploration** and qualitative insight
+
+Quantitative metrics may exist, but **evaluation is primarily musicological**.
+
+Detailed research framing lives in **PROJECT.md**.
+
+---
+
+## What this repository is
+
+- A **library-backed, notebook-driven** research system
+- A **CLI-first** pipeline for acquisition, analysis, and comparison
+- A framework for handling **plural answers**, not forcing winners
+- A system optimized for reproducibility, explicit data meaning, and safe agent modification
+
+Primary language: Python  
+Primary artifacts: audio, symbolic annotations, CSV/JSON, SQLite, notebooks
+
+---
+
+## What this repository is not
+
+- Not a real-time system
+- Not fully automatic transcription
+- Not optimized for swing feel or expressive timing
+- Not a polished end-user application
+
+These non-goals are intentional.
+
+---
+
+## How to read this repo (important)
+
+This project is governed by a small set of **authoritative CAPS files**.  
+Read the one that matches the kind of decision you are making:
+
+- **README.md** (this file)  
+  Orientation and document authority.
+
+- **ARCHITECTURE.md**  
+  System boundaries, subsystems, dependency direction, extension points.
+
+- **DATA.md**  
+  Data meaning, lifecycle rules, canonical vs derived data, manifests, provenance.
+
+- **AGENTS.md**  
+  Safety model and invariants for agent-initiated changes.
+
+- **AGENTS_CURSOR.md** (if present)  
+  Tool- and workflow-specific instructions. Subordinate to AGENTS.md.
+
+If instructions conflict:
+1. The most specific document wins
+2. AGENTS.md governs safety
+3. DATA.md governs meaning and lifecycle
+4. ARCHITECTURE.md governs structure
+
+---
+
+## Repository structure (high level)
+
+This is a map, not a spec.  
+Local READMEs and CAPS files are authoritative.
+
+src/dijon/  
+Core library code (analysis, pipelines, adapters)
+
+src/sql/  
+Database schema and seed SQL
+
+data/  
+Data workspace (rules in DATA.md)
+
+db/  
+Local derived databases
+
+docs/  
+Durable documentation and research notes
+
+tests/  
+Automated tests
+
+If working inside a subdirectory:
+1. Read its README.md
+2. Then refer back here
+3. Then consult CAPS docs as needed
+
+---
+
+## Entry points
+
+Primary execution is via the **CLI**.
+
+Typical patterns:
+- In-repo: `python -m dijon.cli.main --help`
+- Installed: `dijon --help`
+
+CLI responsibilities are intentionally thin:
+- parse
+- dispatch
+- present
+
+All substantive logic belongs in library modules.
+
+---
+
+## Environment & install (brief)
+
+- Activate env: `mamba activate dijon`
+- Always dry-run installs first
+- Adding dependencies requires explicit approval
+- Always activate the env before running commands
+
+Details belong in procedural docs, not here.
+
+---
+
+## Safety & data semantics (summary only)
+
+Authoritative rules live in **AGENTS.md** and **DATA.md**.
+
+High-level invariants:
+- Meaning ≠ mutability  
+  Canonical meaning does not imply deletability.
+- Acquisition data is protected evidence
+- No destructive operations without explicit approval
+- No in-place edits of raw or canonical data
+
+---
+
+## Testing
+
+Testing protocol lives in `docs/testing.md`.
+
+Quick check:
+pytest -q
+
+---
+
+## How to extend the system (navigation)
+
+- Change system structure → ARCHITECTURE.md
+- Add datasets or data layers → DATA.md, docs/cli_implementation.md
+- Run workflows or commands → AGENTS_CURSOR.md
+- Agent permissions & limits → AGENTS.md
+
+---
+
+## What this README intentionally excludes
+
+This file does not contain:
+- step-by-step tutorials
+- command runbooks
+- dataset-specific rules
+- schemas or manifest formats
+
+Those belong in more specific documents.
+
+---
+
+## Change discipline
+
+Any change affecting:
+- data meaning or lifecycle
+- system boundaries or flow
+- safety or destructive behavior
+
+must be reflected in the relevant CAPS file.  
+Unreflected changes are incomplete.
+
+---
+
+## Final note
+
+This repository is designed to be **reasoned about**, not explored blindly.
+
+If unsure where a rule belongs:
+- Meaning → DATA.md  
+- Structure → ARCHITECTURE.md  
+- Permission → AGENTS.md  
+- Procedure → AGENTS_CURSOR.md
