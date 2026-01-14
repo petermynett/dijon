@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ...sources._manifest import (
+from ...utils._manifest import (
     get_active_files,
     read_manifest,
     resolve_effective_raw_path,

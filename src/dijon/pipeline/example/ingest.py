@@ -10,7 +10,7 @@ from pathlib import Path
 
 from datetime import UTC, datetime
 
-from ...sources._manifest import (
+from ...utils._manifest import (
     append_manifest_row,
     compute_file_checksum,
     generate_next_file_id,

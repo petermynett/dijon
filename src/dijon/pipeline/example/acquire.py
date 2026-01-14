@@ -10,7 +10,7 @@ from pathlib import Path
 
 from datetime import UTC, datetime
 
-from ...sources._manifest import compute_file_checksum
+from ...utils._manifest import compute_file_checksum
 
 
 def acquire(
