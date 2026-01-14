@@ -60,7 +60,7 @@ def ingest(
 
     # Check if already ingested (idempotency check)
     # Status scope: active or superseded entries are considered "already ingested"
-    manifest_rows = read_manifest(manifest_path) if manifest_path.exists() else []
+    manifest_rows = read_manifest(manifest_path, profile="raw") if manifest_path.exists() else []
     for row in manifest_rows:
         if row.get("acq_sha256") == acq_sha256:
             status = row.get("status", "").strip()
@@ -100,19 +100,23 @@ def ingest(
     sha256 = compute_file_checksum(raw_file)
 
     # Write manifest entry
-    # rel_path is relative to data/raw/<source_key>/ for stage-first structure
+    # rel_path must be relative to DATA_DIR
     ingested_at = ingest_date.isoformat().replace('+00:00', 'Z')
-    rel_path = f"raw/{raw_file.name}"
+    # Construct rel_path relative to DATA_DIR (raw_dir is data/raw/<source_key>/)
+    from ...global_config import DATA_DIR
+    rel_path = str(raw_file.relative_to(DATA_DIR))
     append_manifest_row(
         manifest_path=manifest_path,
-        file_id=file_id,
         rel_path=rel_path,
         status="active",
         sha256=sha256,
-        ingested_at=ingested_at,
         source_name=acquisition_file.name,
-        acq_sha256=acq_sha256,
         schema_version="1",
+        profile="raw",
+        validate="row",
+        file_id=file_id,
+        ingested_at=ingested_at,
+        acq_sha256=acq_sha256,
     )
 
     return {

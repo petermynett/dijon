@@ -1,19 +1,37 @@
 {
-    "version": "1",
-    "type": "manifest",
-    "fields": {
-      "file_id":        { "type": "string", "required": true },
-      "rel_path":       { "type": "string", "required": true },
-      "status":         { "type": "enum",   "values": ["active", "superseded", "archived"] },
-      "sha256":         { "type": "string" },
-      "acq_sha256":     { "type": "string", "optional": true },
-      "ingested_at":    { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ)" },
-      "source_name":    { "type": "string" },
-      "schema_version": { "type": "string" },
-      "supersedes_file_id": { "type": "string", "optional": true },
-      "row_count":      { "type": "integer", "optional": true },
-      "start_date":     { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ) or civil date (YYYY-MM-DD). Time is optional.", "optional": true },
-      "end_date":       { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ) or civil date (YYYY-MM-DD). Time is optional.", "optional": true },
-      "partition":      { "type": "string", "optional": true }
+  "version": "1.0",
+  "type": "manifest",
+  "fields": {
+    "file_id":        { "type": "string", "required": true },
+    "rel_path":       { "type": "string", "required": true },
+    "status":         { "type": "enum",   "values": ["active", "superseded", "archived"] },
+    "sha256":         { "type": "string" },
+    "acq_sha256":     { "type": "string", "optional": true },
+    "ingested_at":    { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ)" },
+    "source_name":    { "type": "string" },
+    "schema_version": { "type": "string" },
+    "supersedes_file_id": { "type": "string", "optional": true },
+    "row_count":      { "type": "integer", "optional": true },
+    "start_date":     { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ) or civil date (YYYY-MM-DD). Time is optional.", "optional": true },
+    "end_date":       { "type": "datetime", "format": "RFC3339 UTC seconds-only with trailing Z (YYYY-MM-DDTHH:MM:SSZ) or civil date (YYYY-MM-DD). Time is optional.", "optional": true },
+    "partition":      { "type": "string", "optional": true },
+    "meta_json":      { "type": "string", "optional": true, "description": "JSON object serialized canonically. Empty string treated as absent." }
+  },
+  "profiles": {
+    "raw": {
+      "required_fields": ["file_id", "rel_path", "status", "sha256", "acq_sha256", "ingested_at", "source_name", "schema_version"],
+      "unique_fields": ["file_id", "sha256", "rel_path"],
+      "status_enum_mode": "strict"
+    },
+    "upstream": {
+      "required_fields": ["status", "sha256", "source_name", "schema_version"],
+      "unique_fields": [],
+      "status_enum_mode": "if_present"
+    },
+    "derived": {
+      "required_fields": ["rel_path", "status", "sha256", "source_name", "schema_version"],
+      "unique_fields": ["rel_path"],
+      "status_enum_mode": "if_present"
     }
   }
+}

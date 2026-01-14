@@ -54,7 +54,7 @@ def load(
         }
 
     if dry_run:
-        manifest_rows = read_manifest(manifest_path)
+        manifest_rows = read_manifest(manifest_path, profile="raw")
         active_count = len([r for r in manifest_rows if r.get("status") == "active"])
         return {
             "success": True,
@@ -64,10 +64,10 @@ def load(
         }
 
     # Verify manifest integrity
-    errors = verify_manifest_integrity(manifest_path, raw_dir, overrides_dir)
+    errors = verify_manifest_integrity(manifest_path, raw_dir, overrides_dir, profile="raw")
 
     # Get active files
-    active_files = get_active_files(manifest_path)
+    active_files = get_active_files(manifest_path, profile="raw")
 
     # Resolve effective raw paths for each active file
     resolved_files = []

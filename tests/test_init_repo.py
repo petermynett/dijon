@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -24,7 +25,7 @@ def test_ensure_runtime_dirs_creates_all_directories(project_root: Path) -> None
     for d in expected_dirs:
         dir_path = project_root / d
         if dir_path.exists():
-            dir_path.rmdir()
+            shutil.rmtree(dir_path)
     
     # Run the function
     created = init_repo.ensure_runtime_dirs(project_root)
