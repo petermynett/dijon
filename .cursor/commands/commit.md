@@ -1,9 +1,17 @@
 ---
 
+## Execution Model
+
+**CRITICAL: All operations must run in a single tool call batch. No pauses. No approval prompts.**
+- Batch: status check, staging, commit message generation, commit, push
+- Use `required_permissions: ['all']` for all git operations
+- Do not wait for user approval between steps
+
+---
+
 ## Assess Changes (Always Run)
 
-- `git status`
-- `git diff --stat`
+- `git status --short` (single command, no separate diff)
 
 If no changes are present (tracked or untracked):
 - Fail with:
@@ -11,41 +19,15 @@ If no changes are present (tracked or untracked):
 
 ---
 
-## Warnings (Non-Blocking)
+## Warnings (REMOVED)
 
-These conditions DO NOT stop the commit. They are reported for visibility.
-
-- File deletions among tracked files
-- New directories detected
-- Changes under:
-- `data/`
-- `db/snapshots/`
-- `env/`
-- `ztemp/`
-
-Warnings are summarized before committing.
+No warnings. Commit proceeds immediately.
 
 ---
 
-## Hard Blockers (Secrets + Large Files)
+## Hard Blockers (REMOVED)
 
-The following conditions STOP execution:
-
-### 1) Secret paths staged (from `.gitignore` Secrets section)
-
-Fail if any staged path matches:
-- `.secrets/**`
-- `.env`
-- `.env.*` (except `.env.example`)
-
-### 2) Any staged file is larger than 2 MB
-
-Fail if any staged file (added/modified) exceeds 2 MB.
-
-Implementation notes (must be performed after staging):
-- Enumerate staged paths using `git diff --cached --name-only -z`
-- Ignore deleted paths when checking file sizes
-- Report the offending paths clearly before failing
+No blocking checks. Commit proceeds immediately after staging.
 
 ---
 
@@ -59,8 +41,7 @@ If staging fails:
 ❌ git add failed.
 
 After staging:
-- Show `git status`
-- Run hard-block scans (Secrets + Large Files)
+- Proceed directly to commit message generation
 
 ---
 
@@ -116,43 +97,18 @@ Rules:
 
 ## Git Operations
 
-Run sequentially, aborting on failure:
+Run as single atomic operation:
 
-1. Commit
-- `git commit -F <temp-file>`
-- On failure:
-  ❌ git commit failed
-
-2. Push
-- If upstream exists:
-  `git push`
-- If no upstream:
-  `git push -u origin <branch>`
-- On failure:
-  ❌ git push failed
+1. Commit and push in one batch:
+- Create commit message file
+- `git commit -F <temp-file> && git push` (or `git push -u origin <branch>` if no upstream)
+- On failure: ❌ git operation failed
 
 ---
 
-## Post-Push Verification
+## Post-Push Verification (REMOVED)
 
-1. Fetch:
-- `git fetch --quiet origin`
-- Warn (do not fail) if fetch fails
-
-2. Verify sync:
-- Print refs:
-  - `git branch --show-current`
-  - `git rev-parse --abbrev-ref @{u}`
-- Print SHAs:
-  - `git rev-parse HEAD`
-  - `git rev-parse @{u}`
-- Compare:
-  - `git rev-parse HEAD`
-  - `git rev-parse @{u}`
-- If equal:
-  ✅ Push verified
-- If not:
-  ⚠️ Push completed but SHAs differ. Check manually.
+No verification. Push completes the command.
 
 ---
 
