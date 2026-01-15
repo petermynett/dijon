@@ -13,7 +13,9 @@ from pathlib import Path
 
 # Core roots
 PACKAGE_ROOT: Path = Path(__file__).resolve().parent
-PROJECT_ROOT: Path = PACKAGE_ROOT.parent
+# PROJECT_ROOT is the repo root (where pyproject.toml and data/ live)
+# From src/dijon/global_config.py, go up two levels: src/dijon -> src -> repo root
+PROJECT_ROOT: Path = PACKAGE_ROOT.parent.parent
 
 # Core Names
 PROJECT_NAME = "dijon"

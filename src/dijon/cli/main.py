@@ -5,6 +5,7 @@ from typing import Annotated
 import typer
 
 from .base import configure_logging, format_result
+from .commands.acquire import app as acquire_app
 from .commands.db import app as db_app
 from .commands.example import app as example_app
 from .commands.tree import tree_command
@@ -15,6 +16,7 @@ app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
+app.add_typer(acquire_app, name="acquire")
 app.add_typer(db_app, name="db")
 app.add_typer(example_app, name="example")
 

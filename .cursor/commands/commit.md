@@ -1,114 +1,60 @@
-# /commit
-
-Safely commit tracked changes to git, generate a meaningful commit message,
-and push to GitHub. Fast for routine work, intentionally cautious when risk
-is detected.
-
-This command NEVER auto-includes untracked files.
-
-## Modifiers
-
-Dry Run: `/commit --dry-run` or `/commit -n`
-
-When dry-run is specified:
-1. Run all pre-flight and safety checks
-2. Run `git status` and `git diff --stat`
-3. Detect and report any danger flags
-4. Generate the proposed commit message
-5. Display:
-   - Current branch and upstream
-   - Files that would be staged (if any)
-   - Whether auto-staging would occur or be blocked
-   - Full proposed commit message
-6. DO NOT run `git add`, `git commit`, or `git push`
-7. End with: "Run `/commit` or say 'commit it' to execute."
-
-## Workflow
-
-### Pre-Flight Checks (Fail Fast)
-
-1. Not detached
-   - Run: `git rev-parse --abbrev-ref HEAD`
-   - If output is `HEAD`, fail with:
-     "❌ Detached HEAD. Checkout a branch first."
-
-2. Origin remote exists
-   - Run: `git remote -v`
-   - If no `origin` push URL exists, fail with:
-     "❌ No remote 'origin' configured. Fix: git remote add origin <url>"
-
-3. Upstream tracking branch exists
-   - Run: `git rev-parse --abbrev-ref --symbolic-full-name @{u}`
-   - If missing, fail with:
-     "❌ No upstream tracking branch set. Fix: git push -u origin <branch>"
-
-4. Not mid-merge / rebase / conflict
-   - Run: `git diff --name-only --diff-filter=U`
-   - If any output, fail with:
-     "❌ Unresolved merge conflicts. Resolve before committing."
-   - Check `git status` for merge/rebase indicators (e.g., `.git/MERGE_HEAD`, `.git/REBASE_HEAD`)
-   - If merge or rebase in progress, fail with:
-     "❌ Merge/rebase in progress. Complete or abort before committing."
-
-5. Echo branch info (print this)
-   ```
-   Current branch: <branch>
-   Upstream:       <upstream>
-   Will push to:   <upstream>
-   ```
+---
 
 ## Assess Changes (Always Run)
 
-Run:
 - `git status`
 - `git diff --stat`
 
-## Danger Flags (Auto-Staging Blockers)
+If no tracked changes are present:
+- Fail with:
+❌ Nothing to commit (no tracked changes).
 
-If ANY of the following are true, DO NOT run `git add -A`.
+---
 
-A) Untracked files present
-- Run: `git ls-files --others --exclude-standard`
-- Policy:
-  - Untracked files are NEVER auto-included.
-  - User must explicitly decide what to do.
+## Warnings (Non-Blocking)
 
-B) File deletions detected
-- Run: `git diff --name-status --diff-filter=D`
-- Policy:
-  - Deletions require explicit confirmation.
+These conditions DO NOT stop the commit. They are reported for visibility.
 
-C) New top-level directories detected
-- Any untracked directory at repo root triggers danger.
+- Untracked files present
+- File deletions among tracked files
+- New directories detected
+- Changes under:
+- `data/`
+- `db/snapshots/`
+- `env/`
+- `ztemp/`
+- Large untracked files (>2 MB)
 
-D) Risky paths modified
-- Any changes under:
-  - `data/`
-  - `db/snapshots/`
-  - `env/`
-  - `ztemp/`
-  trigger danger.
+Warnings are summarized before committing.
 
-E) Large untracked files
-- Any untracked file exceeding 2 MB triggers danger.
-- Check size with: `git ls-files --others --exclude-standard | xargs -I {} sh -c 'test -f {} && test $(stat -f%z {} 2>/dev/null || stat -c%s {} 2>/dev/null || echo 0) -gt 2097152 && echo {}'`
+Untracked files are excluded unless `--include-new` is specified.
+
+---
 
 ## Staging Policy
 
-If NO danger flags:
-- Run: `git add -A`
-- Check exit code: if non-zero, fail immediately with: "❌ git add failed: [stderr]"
-- Then show: `git status`
+Default behavior:
+- Stage tracked changes only:
+- `git add -u`
 
-If ANY danger flag:
-- STOP. Do NOT auto-stage.
-- Explain which danger flags triggered.
-- Present options:
-  1) Stage specific files explicitly (user chooses exact paths)
-  2) Stash: `git stash push -u -m "wip before commit"` then rerun `/commit`
-  3) Abort (no changes made)
+If `--include-new` is specified:
+- Stage all changes:
+- `git add -A`
+- Exclude untracked files larger than 2 MB and warn.
+
+If staging fails:
+- Hard fail:
+❌ git add failed.
+
+After staging:
+- Show `git status`
+
+---
 
 ## Commit Message Generation
+
+Commit message is always auto-generated.
+No prompts. No pauses.
 
 ### Change Magnitude
 
@@ -118,13 +64,15 @@ Quick (1–3 files):
 Standard (4–10 files):
 - Subject + short bullet list
 
-Significant (read diffs before writing message):
-Triggered by any of:
-- Deleted files
+Significant:
+- Triggered by:
+- 10+ files changed
 - New directories
 - Changes to `.cursor/`, `env/`, `pyproject.toml`
 - Schema changes (`sql/`, `db/migrations/`)
-- 10+ files changed
+- Include a concise bullet summary
+
+---
 
 ## Commit Message Format
 
@@ -136,81 +84,73 @@ Triggered by any of:
 Files: <comma-separated list or "+N more">
 
 Types:
-- `feat`     New feature or capability
+- `feat`     New feature
 - `fix`      Bug fix
-- `refactor` Code restructuring without behavior change
+- `refactor` Restructure without behavior change
 - `docs`     Documentation only
-- `config`   Configuration, environment, tooling
-- `chore`    Maintenance, cleanup, formatting
+- `config`   Tooling or configuration
+- `chore`    Maintenance or cleanup
 
-Formatting rule:
-- Use REAL newlines.
-- Do NOT embed literal `\n`.
-- Write message to a temp file and commit with: `git commit -F <temp-file>`
+Rules:
+- Use real newlines
+- No literal `\n`
+- Write message to temp file
+- Commit with:
+`git commit -F <temp-file>`
 
-## Examples
-
-**Quick:**
-```
-fix: correct import path in transactions module
-
-Files: manchego/sources/transactions/core.py
-```
-
-**Standard:**
-```
-feat: add transaction parsing with validation
-
-- Parse CSV files with header detection
-- Validate required fields (date, amount, description)
-- Skip malformed rows with warning log
-
-Files: manchego/sources/transactions/core.py, types.py, __init__.py
-```
+---
 
 ## Git Operations
 
 Run sequentially, aborting on failure:
-1. `git commit -F <temp-file>`
-   - Check exit code: if non-zero, fail immediately with: "❌ git commit failed: [stderr]"
-2. `git push`
-   - Check exit code: if non-zero, fail immediately with: "❌ git push failed: [stderr]"
+
+1. Commit
+- `git commit -F <temp-file>`
+- On failure:
+  ❌ git commit failed
+
+2. Push
+- If upstream exists:
+  `git push`
+- If no upstream:
+  `git push -u origin <branch>`
+- On failure:
+  ❌ git push failed
+
+---
 
 ## Post-Push Verification
 
-1. **Fetch latest refs**: Run `git fetch --quiet origin`
-   - Check exit code: if non-zero, fail with: "❌ Push may have succeeded but verification failed. Check remote manually."
+1. Fetch:
+- `git fetch --quiet origin`
+- Warn (do not fail) if fetch fails
 
-2. **Verify sync by comparing SHAs**:
-   - Local HEAD: `git rev-parse HEAD`
-   - Upstream HEAD: `git rev-parse @{u}`
-   - If equal:
-     - ✅ Pushed to <upstream>. Local and origin are in sync.
-   - If not:
-     - ❌ Push verification failed. Local and upstream commits differ.
+2. Verify sync:
+- Compare:
+  - `git rev-parse HEAD`
+  - `git rev-parse @{u}`
+- If equal:
+  ✅ Push verified
+- If not:
+  ⚠️ Push completed but SHAs differ. Check manually.
+
+---
 
 ## Error Handling
 
-Pre-Flight Errors:
-- Format: `❌ <issue>. Fix: <command>`
+Hard failures only for:
+- Detached HEAD
+- Merge/rebase/conflicts
+- git add / commit / push failures
 
-Operation Errors:
-- Format: `❌ <git command> failed: <stderr>`
+Warnings never block execution.
 
-Verification Errors:
-- Clear statement of mismatch and next step.
-
-## Efficiency Guidelines
-
-- DO rely on `git diff --stat` first
-- DO read full diffs only when danger is detected
-- DO keep normal commits fast
-- DO slow down intentionally when risk appears
-- NEVER auto-include untracked files
+---
 
 ## Philosophy
 
-- Commits are safety rails.
-- Branches are cheap.
-- Automation must surface risk, not hide it.
-- If something looks surprising, stop and ask the human.
+- Commit early.
+- Commit often.
+- Tracked changes are safe.
+- Untracked changes are opt-in.
+- Automation should help you ship, not ask permission.

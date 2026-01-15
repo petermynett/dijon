@@ -22,37 +22,24 @@ logger = __import__("logging").getLogger(__name__)
 # Manifest type definitions
 ManifestType = Literal["raw", "upstream", "derived"]
 
-# Load profile definitions from schema
-_SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent.parent / "schemas" / "manifest_schema.json"
-
-def _load_profiles() -> dict[str, dict]:
-    """Load manifest profiles from schema JSON."""
-    try:
-        with open(_SCHEMA_PATH, "r", encoding="utf-8") as f:
-            schema = json.load(f)
-        return schema.get("profiles", {})
-    except Exception as e:
-        logger.warning("Failed to load manifest schema, using defaults: %s", e)
-        # Fallback defaults
-        return {
-            "raw": {
-                "required_fields": ["file_id", "rel_path", "status", "sha256", "acq_sha256", "ingested_at", "source_name", "schema_version"],
-                "unique_fields": ["file_id", "sha256", "rel_path"],
-                "status_enum_mode": "strict",
-            },
-            "upstream": {
-                "required_fields": ["status", "sha256", "source_name", "schema_version"],
-                "unique_fields": [],
-                "status_enum_mode": "if_present",
-            },
-            "derived": {
-                "required_fields": ["rel_path", "status", "sha256", "source_name", "schema_version"],
-                "unique_fields": ["rel_path"],
-                "status_enum_mode": "if_present",
-            },
-        }
-
-PROFILES = _load_profiles()
+# Profile definitions (Python constants, no runtime schema-file IO)
+PROFILES: dict[str, dict] = {
+    "raw": {
+        "required_fields": ["file_id", "rel_path", "status", "sha256", "acq_sha256", "ingested_at", "source_name", "schema_version"],
+        "unique_fields": ["file_id", "sha256", "rel_path"],
+        "status_enum_mode": "strict",
+    },
+    "upstream": {
+        "required_fields": ["sha256", "source_name", "schema_version"],  # status is optional
+        "unique_fields": [],
+        "status_enum_mode": "if_present",
+    },
+    "derived": {
+        "required_fields": ["rel_path", "status", "sha256", "source_name", "schema_version"],
+        "unique_fields": ["rel_path"],
+        "status_enum_mode": "if_present",
+    },
+}
 
 # Manifest schema fields (all fields that may appear)
 MANIFEST_FIELDS = [
@@ -294,6 +281,10 @@ def read_manifest(
         ValueError: If manifest file exists but has invalid format or missing required fields.
     """
     if not manifest_path.exists():
+        return []
+
+    # Handle empty file (0 bytes) - treat as if it doesn't exist
+    if manifest_path.stat().st_size == 0:
         return []
 
     profile_config = PROFILES.get(profile)
@@ -582,12 +573,13 @@ def append_manifest_row(
             f"Missing values for: {missing_required}"
         )
 
-    # Validate status enum
-    if status not in VALID_STATUSES:
-        raise ValueError(
-            f"Invalid status '{status}'. Must be one of {VALID_STATUSES}"
-        )
-    if not status and status_enum_mode == "strict":
+    # Validate status enum (only if status is provided)
+    if status:
+        if status not in VALID_STATUSES:
+            raise ValueError(
+                f"Invalid status '{status}'. Must be one of {VALID_STATUSES}"
+            )
+    elif status_enum_mode == "strict":
         raise ValueError(f"status is required for profile '{profile}'")
 
     # Check uniqueness constraints via index (O(1))

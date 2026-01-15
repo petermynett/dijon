@@ -68,6 +68,22 @@ If something is wrong, the fix is expressed by **adding new data**, not modifyin
 
 ---
 
+## Human override (explicit approval)
+
+The immutability rules above are **agent guardrails** by default.
+
+**Exception (case-by-case)**: With explicit human approval **and explicit implications stated**, manifest/metadata files (especially under `data/acquisition/`) may be rewritten during iterative development.
+
+This exception:
+- applies **case-by-case** with explicit approval
+- requires **explicit implications** to be stated
+- primarily covers **manifests and metadata** files, not acquisition/raw artifacts themselves
+- does **not** relax the safety floor defined in `AGENTS.md`
+
+When in doubt, treat artifacts as protected and non-mutable.
+
+---
+
 ## Canonical meaning and precedence
 
 - **Raw data is canonical** for system meaning

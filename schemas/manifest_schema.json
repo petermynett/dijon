@@ -24,7 +24,7 @@
       "status_enum_mode": "strict"
     },
     "upstream": {
-      "required_fields": ["status", "sha256", "source_name", "schema_version"],
+      "required_fields": ["sha256", "source_name", "schema_version"],
       "unique_fields": [],
       "status_enum_mode": "if_present"
     },
