@@ -6,9 +6,9 @@
 - `git diff --stat`
 - `git log -5 --oneline`
 
-If no tracked changes are present:
+If no changes are present (tracked or untracked):
 - Fail with:
-❌ Nothing to commit (no tracked changes).
+❌ Nothing to commit (working tree clean).
 
 ---
 
@@ -23,32 +23,42 @@ These are surfaced prominently but do NOT stop execution unless noted.
 - `db/snapshots/`
 - `env/`
 - `ztemp/`
-- Large untracked files (>2 MB)
 
 Warnings are summarized before staging and referenced in the commit message
 when relevant.
 
 ---
 
-## Hard Blockers (Rare)
+## Hard Blockers (Secrets + Large Files)
 
 The following conditions STOP execution:
 
-- Any untracked files would be staged (never allowed)
 - Staging failures
 - Commit failures
 - Push failures
 
-Large untracked files DO NOT block unless explicitly staged (which is forbidden).
+### 1) Secret paths staged (from `.gitignore` Secrets section)
+
+Fail if any staged path matches:
+- `.secrets/**`
+- `.env`
+- `.env.*` (except `.env.example`)
+
+### 2) Any staged file is larger than 2 MB
+
+Fail if any staged file (added/modified) exceeds 2 MB.
+
+Implementation notes (must be performed after staging):
+- Enumerate staged paths using `git diff --cached --name-only -z`
+- Ignore deleted paths when checking file sizes
+- Report the offending paths clearly before failing
 
 ---
 
 ## Staging Policy
 
-- Stage tracked changes only:
-- `git add -u`
-
-Untracked files are explicitly excluded.
+Stage all changes (tracked, untracked, and deletions):
+- `git add -A`
 
 If staging fails:
 - Hard fail:
@@ -56,6 +66,7 @@ If staging fails:
 
 After staging:
 - Show `git status`
+- Run hard-block scans (Secrets + Large Files)
 
 ---
 
@@ -163,6 +174,12 @@ Run sequentially, aborting on failure:
 - Warn (do not fail) if fetch fails
 
 2. Verify sync:
+- Print refs:
+  - `git branch --show-current`
+  - `git rev-parse --abbrev-ref @{u}`
+- Print SHAs:
+  - `git rev-parse HEAD`
+  - `git rev-parse @{u}`
 - Compare:
   - `git rev-parse HEAD`
   - `git rev-parse @{u}`

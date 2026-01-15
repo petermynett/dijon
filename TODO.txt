@@ -1,0 +1,3 @@
+- acquire Jazz1460
+- normalize audio ingestion: sample rate, gain normal (small limit?), bit depth. ...TRIM non-music?
+- fix commit commands

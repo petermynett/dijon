@@ -1,0 +1,1313 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+NOTE ON FORMATTING: USE REGULAR SPACE RATHER THAN TAB TO CREATE IDENTATION AND SEPARATE COMMENTS FROM THE CODE TO ENSURE FORWARD COMPATIBILITY 
+BECAUSE GITHUB MAY CHANGE THE LENGTH OF TAB SPACE WHICH WILL BREAK FORMATTING LIKE WHAT HAPPENED DURING UPDATE OF THE DOC ON AUG 16, 2025.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Original by IXix
+Cockos Wiki: http://wiki.cockos.com/wiki/index.php/State_Chunk_Definitions
+
+This page details what is known about various state chunk definitions such as are returned by API functions. 
+There are still some question marks (gaps) in the definitions and several plugin formats are completely undocumented so please fill in any gaps you can. Thanks to all who have spent time poking around these things. It's a tedious business.
+Please note that comments, empty lines and indentation are for illustration only.
+
+For the sake of formatting, the following changes have been made:
+Float values with fourteen decimal places have been condensed to three decimal places.
+Float values with ten decimal places have been condensed to two decimal places.
+Float values with six decimal places have been condensed to one decimal place.
+The shorthand "int (bool)" has been used to denote "0 = False, 1 = True"
+
+
+Contents:
+1 Track
+2 Audio Item
+3 MIDI Item
+4 Envelope
+5 Track/Take FX
+6 VST(i) Plugin
+7 Jesusonic Plugin
+
+--------------------------------------------------------------------------------------------------------------------
+
+The Track state chunk contains all the settings for a track and all of it's items, envelopes, receives, plugins etc.
+<TRACK                                                        // Start of Track definition
+    NAME "Track Name"                                         // Track name
+    LOCK 1                                                    // Track controls are locked, absent altogether when not locked
+    PEAKCOL 16576                                             // Peak colour (items and takes override)
+                                                              // 16576 is the default value to be returned by 
+                                                              // GetMediaTrackInfo_Value() function with 'I_CUSTOMCOLOR' 
+                                                              // attribute when no custom track color has been applied
+    BEAT -1                                                   // Track timebase (-1 = project default)
+    AUTOMODE 0                                                // Automation mode
+                                                              //   0 = Trim/Read
+                                                              //   1 = Read
+                                                              //   2 = Touch
+                                                              //   3 = Write
+                                                              //   4 = Latch
+    VOLPAN 0.359 0.000 -1.000                                 // Volume/Pan
+                                                              //  field 1, float, track volume
+                                                              //  field 2, float, track pan
+                                                              //  field 3, float, track pan law
+    MUTESOLO 0 0 0                                            // Mute/solo
+                                                              //  field 1, int (bool), mute
+                                                              //  field 2, int, solo, 0= no solo, 1 = solo, 2 = solo-in-place
+                                                              //  field 3, int (bool), solo defeat
+    IPHASE 0                                                  // Invert phase, int (bool)
+    ISBUS 0 0                                                 // Folder settings
+                                                              //  field 1, int, folder state:
+                                                              //   0 - regular track (both top level and folder child);
+                                                              //   1 - folder parent (both top level and nested);
+                                                              //   2 - the very last track in the folder.
+                                                              //  field 2, int, track "indentation" increase:
+                                                              //   0 - regular track (both top level and folder child),
+                                                              //   no change in indentation;
+                                                              //   1 - folder parent (both top level and nested),
+                                                              //   as 1 indentation level is to be increased;
+                                                              //  -n - the very last track in the folder, the value n depends 
+                                                              //   on the total count of folder levels including the topmost,
+                                                              //   if the last track in the folder has never been followed by
+                                                              //   another (regular) track, this field value is -1 regardless
+                                                              //   of the folder depth.
+                                                              //   In practice regular track values are always 0 0, folder 
+                                                              //   parent tracks 1 1 and last track in the folder 2 -n
+    BUSCOMP 0 0 0 41 8                                        // Collapse folder (bus compact?)
+                                                              //  field 1, int, collapse state in Arrange 0=not collapsed, 
+                                                              //  1=collapsed medium, 2=collapsed small
+                                                              //  field 2, int, collapse state in the Mixer 0=not collapsed, 
+                                                              //  1=collapsed;
+                                                              //  field 3, int, collapse state in track wiring, 0=not collapsed, 
+                                                              //  1=collapsed;
+                                                              //  field 4, int, track wiring routing window x position
+                                                              //  field 5, int, track wiring routing window y position
+    SHOWINMIX 1 0.6 0.5 1 0.5 -1 -1 -1                        // Show In Mixer
+                                                              //  field 1, int (bool), show in mixer
+                                                              //  field 2, float, ??
+                                                              //  field 3, float, ??
+                                                              //  field 4, int (bool), show in track list
+                                                              //  field 5, float, ??
+                                                              //  field 6, int, ??
+                                                              //  field 7, int, ??
+                                                              //  field 8, int, ??
+    FREEMODE 0                                                // Free item positioning / Fixed item lanes mode, int
+                                                              //  1 - free item positioning (FIP), 2 - fixed item lanes (FIL)
+                                                              //  which is supported since REAPER 7;
+                                                              //  Only present when either of the modes is enabled,
+                                                              //  it's possible than in pre-7 versions it was present always
+                                                              //  and only the value would change between 0 and 1.
+
+                                                              // The following 3 FIL mode attributes are only supported since v7
+
+    FIXEDLANES 8 0 0 0 0                                      //  field 1, int, bitfield
+                                                              //  &2 - 'Create comp areas for new recording while comping' 
+                                                              //  option is DISabled, 
+                                                              //  &8 - 'Big lanes' option is enabled, false means 'Small lanes' 
+                                                              //  option is enabled, 
+                                                              //  &32 - 'Hide all buttons' option is enabled; 
+                                                              //  field 2, int (bool), 1 - 'Allow editing source media while comping' 
+                                                              //  option is enabled;
+                                                              //  field 3, int (bool), 1 - 'Show/play only lane' option is enabled
+                                                              //  (index of the playing lane is the 1st field of LANESOLO attribute),
+                                                              //  in this mode lanes only play exclusively;
+                                                              //  field 4, int (bool), 1 - 'Media items in higher numbered lanes mask 
+                                                              //  playback of lower lanes' option is enabled;
+                                                              //  field 5, int (bitfield), 0	 - Project default recording behavior 
+                                                              //  set at Options -> New recording that overlaps existing media items,
+                                                              //  &1 - New recording add lanes in layers (multiple lanes play at once),
+                                                              //  &2 - New recording add lanes (lanes play exclusively),
+                                                              //  &4 - New recording does not add lanes (record into playing lane);
+                                                              //  FIXEDLANES attribute is present in track chunk by default, it's absent 
+                                                              //  when 'Small lanes' and 'Create comp areas for new recording while comping' 
+                                                              //  options are enabled.
+    LANESOLO 7 0 0 0 0 0 0 0                                  //  field 1, int (bitfield), 0 - no lane plays, &1 - lane 1 plays, 
+                                                              //  &2 - lane 2 plays, &4 - lane 3 plays etc,
+                                                              //  he value isn't updated after the last playing lane has been deleted 
+                                                              //  and no other lane is a playing one;
+                                                              //  field 2 ??
+                                                              //  field 3 ??
+                                                              //  field 4 ??
+                                                              //  field 5 ??
+                                                              //  field 6 ??
+                                                              //  field 7 ??
+                                                              //  field 8 ??
+                                                              //  When lanes are toggled as playing with 'Toggle playing lane' 
+                                                              //  the default value for all fields becomes 4294967295 (a max 32 bit integer). 
+                                                              //  The difference between 4294967295 and the value of the field 1
+                                                              //  is the bitfield of the NON-playing lanes, i.e. if field 1 is 4294967289,  
+                                                              //  then 4294967295 - 4294967289 = 6, 6&1 == 1 false, 6&2 = 2 true, 6&4 = 4 true, 
+                                                              //  which means lane 1 plays, lanes 2 and 3 do not (toggled to off);
+                                                              //  LANESOLO attribute is absent when 'Fixed item lanes' mode hasn't been enabled 
+                                                              //  yet or when 'Play all lanes' option is enabled as is the case immediately   
+                                                              //  after enabling 'Fixed item lanes' on a track that hasn't had any, and it is  
+                                                              //  present when only one lane is enabled as playing, out of several, or when all 
+                                                              //  lanes were enabled as playing by Ctrl+click or with 'Toggle playing lane' 
+                                                              //  regardless of the FIL mode's being currently enabled.
+    LANEREC 1 -1 -1                                           //  Only present when there's a record or comping enabled lane.
+                                                              //  field 1, int, 0-based index of a record enabled lane, lane record enabled 
+                                                              //  state is exclusive; -1 - no record enabled lane;
+                                                              //  field 2, int, 0-based index of a comping enabled lane, lane comping enabled
+                                                              //  state is exclusive, -1 - comping is disabled;
+                                                              //  field 3, int, 0-based index of the last comping enabled lane 
+                                                              //  when it's no longer active, -1 - comping hasn't been enabled yet.
+                                                              //  The attribute is absent when 'Fixed item lanes' mode hasn't been enabled yet.
+                                                              //  and present when it was enabled at least once.
+    LANENAME 1 2 "" "lane name"                               //  List of lane names in ascending order, the attribute is absent 
+                                                              //  when 'Fixed item lanes' mode isn't enabled, names which contain spaces
+                                                              //  as well as empty names are enclosed within double quotes ""
+                                                              //  The attribute is absent when 'Fixed item lanes' mode hasn't been enabled yet
+                                                              //  and present when it was enabled at least once.
+    REC 0 0 0 0 0 0 0                                         // Record settings
+                                                              //  field 1, int (bool), armed
+                                                              //  field 2. int, input,
+                                                              //    0=mono left, 1=mono right, 1024=stereo left+right...
+                                                              //    device + channel(s) coded via unknown bitwise method
+                                                              //  field 3. int, monitor, 0=off, 1=on, 2=auto
+                                                              //  field 4. int, record mode,
+                                                              //   0=input, 1=output (stereo), 2=disable(monitor),
+                                                              //   3=output (stereo, latency comp), 4=Output (MIDI),
+                                                              //   5=output (mono), 6=output (mono, latency comp),
+                                                              //   7=MIDI overdub, 8=MIDI replace, 9=MIDI touch replace,
+                                                              //   10=output (multichannel),
+                                                              //   11=output (multichannel, latency comp)
+                                                              //  field 5. int (bool), monitor track media while recording
+                                                              //  field 6. int (bool), preserve PDC delayed monitoring
+                                                              //  field 7. int, record path, 0=primary, 1=secondary, 2=both
+    TRACKHEIGHT 0 0                                           // Height in TCP,
+                                                              //  field 1, int, height in pixels
+                                                              //  field 2, int (bool), folder override (collapsed)
+    INQ 0 0 0 0.50 100 0 0 100                                // Input quantize settings
+                                                              //  field 1, int (bool), quantize midi
+                                                              //  field 2, int, quantize to pos (-1=prev, 0=nearest, 1=next)
+                                                              //  field 3, int (bool), quantize note-offs
+                                                              //  field 4, float, quantize to (fraction of beat)
+                                                              //  field 5, int (%), quantize strength
+                                                              //  field 6, int (%), swing strength
+                                                              //  field 7, int (%), quantize range min
+                                                              //  field 8, int (%), quantize range max
+    NCHAN 2                                                   // Number of track channels, int
+    <RECCFG 1                                                 // Recording format data. Not present if not changed.
+        dmdnbwAAAD8AgAAAAIAAAAAgAAAAAAEAAA==                  //  binary data, leave it alone
+    >                                                         //
+    MIDICOLORMAPFN "C:Path\To\note_color_map.png"             // Path to note color map file, is added after execution of the action
+                                                              // "View: Load note color map from file", cleared after execution
+                                                              // of the action "View: Clear note color map (use default)"
+    FX 1                                                      // FX state, int, 0=bypassed, 1=active
+    TRACKID {5619EDC5-E743-4BE8-AE9F-3B3469A111B5}            // REAPER track id, leave it alone
+    PERF 0                                                    // Performance options, int (bitwise)
+                                                              //  val & 1 = prevent media buffering
+                                                              //  val & 2 = prevent anticipative fx
+
+   LAYOUTS "bd -- Small Full Meter + value readouts" "bc -- Small Full Meter"  // active TCP and MCP layouts,
+                                                                               // the attribute is absent if both
+                                                                               // are set to Global default, 
+                                                                               // and in the Master track chunk,
+                                                                               // if only one is set to Global default
+                                                                               // it's represented by an empty placeholder
+                                                                               // i.e. "" "bc -- Small Full Meter",
+                                                                               // if not an empty placeholder, the layout
+                                                                               // name is only enclosed within quotes if
+                                                                               // it contains spaces as is the rule in
+                                                                               // the chunks
+
+    <EXT                                                // Extension-specific persistent data which can be added with 
+                                                        // GetSetEnvelopeInfo_String() function using 'P_EXT' parameter
+    parmname string                                     //  field 1, string - parmname, set with the function namesake argument
+    >                                                   //  field 2, string - string, set with the function stringNeedBig  
+                                                        //  argument; to delete pass this argument as an empty string
+
+                                                              // --- Start of receive data ---
+                                                              //     One for each receive or not present if no receives
+    AUXRECV 2 1 1.000 0.000 0 0 0 2 0 1.000 80 1              // First receive
+                                                              //  field 1, int, source track index (zero based)
+                                                              //  field 2, int, mode
+                                                              //    0 = Post Fader (Post Pan)
+                                                              //    1 = Pre FX
+                                                              //    3 = Pre Fader (Post FX)
+                                                              //  field 3, float, volume
+                                                              //  field 4, float, pan
+                                                              //  field 5, int (bool), mute
+                                                              //  field 6, int (bool), mono sum
+                                                              //  field 7, int (bool), invert polarity
+                                                              //  field 8, int, source audio channels
+                                                              //    -1 = none, 0 = 1+2, 1 = 2+3, 2 = 3+4 etc.
+                                                              //    probably different if non-standard pairs aren't allowed
+                                                              //  field 9, int, dest audio channels (as source but no -1)
+                                                              //  field 10, float, panlaw
+                                                              //  field 11, int, midi channels
+                                                              //    source = val & 0x1F (0=None), dest = floor(val / 32)
+                                                              //  field 12, int, automation mode (-1 = use track mode)
+															
+                                                              // --- Start of envelope definitions for the above receive
+                                                              //     One definition block for each non-empty envelope.
+                                                              //     See GetSetEnvelopeState() for full envelope definition.
+    <AUXPANENV                                                //  Start of first receive envelope
+        (see chunk info below)                                //   ...
+    >                                                         //  End of first receive envelope
+    <AUXMUTEENV                                               //  Start of second receive envelope.
+        (see chunk info below)                                //   ...
+    >                                                         //  End of second receive envelope
+                                                              // --- End of envelopes for first receive
+								
+    AUXRECV 3 0 1.000 0.000 0 0 0 0 0 -1.000 0 -1             // Second track receive settings (as above but no envelopes)
+                                                              // --- End of receive data ---
+																
+    MIDIOUT -1                                                // MIDI hardware output settings. int (bitwise)
+                                                              //  device = floor(val / 32)
+                                                              //    index of device (inc. ignored devices)
+                                                              //    -1 for no MIDI hardware output
+                                                              //  channel = val & 0x1F
+                                                              //    channel number or 0 for 'use original'
+                                                              //    val = device * 32 + channel (device 2, ch 4 == 68)
+
+   CUSTOM_NOTE_ORDER 0 1 2 45 105 3                           // list of integers in the range of 0 - 127 representing note numbers
+                                                              // Custom note order in Piano roll on the track, which can be changed 
+                                                              // by Click+left drag.
+                                                              // Only numbers of displayed notes are listed. The note display 
+                                                              // is governed by options under 
+                                                              // View -> Show/hide note rows in the MIDI Editor
+   
+  <MIDINOTENAMES                  // Custom MIDI note names applied to Piano roll in all MIDI items 
+   -1 36 "My note 1" 0 36         //  on the track
+   -1 38 "My note 2" 0 38         //  field 1, int, MIDI channel number, -1 = Omni, named notes can be 
+   -1 40 "My note 3" 0 40         //  assigned to different channels, and the same named note can be 
+   -1 41 "My note 4" 0 41         //  assigned to more that one channel, in which case its listed as many 
+   -1 43 "My note 5" 0 43         //  times as there're channels it's assigned to appearing under  
+  >                               //  different channel numbers;
+                                  //  field 2, int, 0-based note number; field 3, string, note name,
+                                  //  if the name contains spaces it's enclosed within quotes; 
+                                  //  field 4 ??; field 5, int, note number.
+                                  //  Named notes assigned to specific MIDI channels are only displayed 
+                                  //  when such channels are selected in the MIDI Editor channel filter,
+                                  //  unless they're also assigned to Omni in which case they will be 
+                                  //  displayed if any other channel is selected in the filter as well.
+                                  //  Named notes assigned to Omni will be displayed alongside named notes 
+                                  //  assigned to specific MIDI channels unless there're blank names
+                                  //  assigned to such specific MIDI channel whose note numbers match 
+                                  //  the named note numbers assigned to Omni.
+                                  //  Manual input of note names in the MIDI Editor always results in Omni
+                                  //  assignment. Linking note names to specific MIDI channel is only
+                                  //  possible via API using Get/SetTrackMIDINoteName(Ex) functions
+                                  //  or by manual editing of the .rpp file.
+
+    MAINSEND 1 0                  // Master/parent send
+                                  // field 1, int (bool)
+                                  // field 2, ????
+
+                                    // --- Start of hardware send data, one line per hardware send ---
+                                    //   --- absent if no hardware sends ---
+    HWOUT 512 0 1 0 0 0 0 -1:U -1   //  field 1, int, output index: 0 - 511 - stereo output, 
+                                    //  512 - 1023 - aux (rearoute) loopback stereo output which existed  
+                                    //  before v7.0, or officially supported looback output available  
+                                    //  since v7.0 
+                                    //  (before v7.0 could be enabled manually with 'rearoute_loopback=' key 
+                                    //  in reaper.ini and had been supporting up to 512 channels since build 
+                                    //  6.69, 
+                                    //  ref: https://forum.cockos.com/showthread.php?p=1796913#post1796913;
+                                    //  since v7.0 can be enabled at   
+                                    //  Preferences -> Audio -> Virtual loopback audio hardware),
+                                    //  1024 - 1535 - mono output, 1536 - 2047 - aux (rearoute) loopback  
+                                    //  mono output (of both types, see explanation above; if both types are 
+                                    //  enabled the number of channels allocated to each is 256 rather than 
+                                    //  512) (with mono channel count even integer corresponds to the odd 
+                                    //  channel number, i.e. 1024 is mono 1, 1025 is mono 2 etc.),
+                                    //  the value is a bitfield, see explanation to 'I_DSTCHAN' parameter
+                                    //  of SetTrackSendInfo_Value() function in the ReaScript API doc;
+                                    //  field 2, int, send mode: 0 - Post-Fader (Post-Pan),  
+                                    //  1 - Pref-Fader (Pre-FX), 3 - Pref-Fader (Post-FX);
+                                    //  field 3, float, volume: 1 is 0 dB;
+                                    //  field 4, float, pan: the range is -1 - +1;
+                                    //  field 5, int (bool), mute: 1 - On, 0 - Off;
+                                    //  field 6, int (bool), invert polarity: 1 - On, 0 - Off;
+                                    //  field 7, int, send source channel: -1 - None, 0 - 1023 stereo, 
+                                    //  1024 - 1535 - mono (even integer corresponds to the odd channel 
+                                    //  number, i.e. 1024 is mono 1, 1025 is mono 2 etc.), 
+                                    //  2048 - 3071 - multichannel with 4 channels, starting from channel 1, 
+                                    //  and from 2, 3 etc. if more than  4,
+                                    //  3072 - 4095 - multichannel with 6 channels, same pattern, etc.,
+                                    //  the value is a bitfield, see explanation to 'I_SRCCHAN' parameter
+                                    //  of SetTrackSendInfo_Value() function in the ReaScript API doc;
+                                    //  field 8, ????
+                                    //  field 9, int, automation mode: -1 - Track automation mode, 
+                                    //  0 - Trim/read, 1 - Read, 2 - Touch, 3 - Write, 4 - Latch, 
+                                    //  5 - Latch Preview;
+
+                                      // --- Start of track envelopes ---
+                                      //     One definition block for each non-empty envelope.
+                                      //     See GetSetEnvelopeState() for full envelope definition.
+    <VOLENV2                          //   First track envelope.
+        (definition removed)          //   ...
+    >                                 //   End of first track envelope
+                                      // --- End of track envelopes
+
+                                      // --- Start of FX section ----
+    <FXCHAIN                          //     Not present if track hasn't got/had FX ---
+        (see chunk info below)
+    >                                 // --- End of FX section
+    
+                                      // --- Start of FREEZE section ----
+    <FREEZE 0                         //     Not present if track wasn't frozen ---
+        (see chunk info below)
+    >                                 // --- End of FREEZE section
+    
+                                      // --- Start of Input FX section (irrelevant for the Master track) ----	
+    <FXCHAIN_REC                      //      Not present if track hasn't got/had Input FX ---								     
+	(see chunk info below)
+    >                                 // --- End of Input FX section
+	
+                                      // --- Start of item definitions ---
+    <ITEM                             // First item definition
+        (see chunk info below) 
+    >                                 // End of first item
+                                      // --- End of item definitions
+																
+>                                     // End of Track definition
+
+--------------------------------------------------------------------------------------------------------------------
+
+Audio Item
+
+<ITEM                       // Item section start
+    POSITION 0.000          // Position on the timeline, in seconds
+    SNAPOFFS 0.000          // Snap offset, in seconds
+    LENGTH 145.500          // Item length, in seconds
+    LOOP 0                  // Loop source? int (bool)
+    ALLTAKES 0              // Play all takes? int (bool)
+    COLOR 22278759          // Item colour, int , Not present if not set.
+    BEAT 0                  // Item timebase, int, Not present if not set. -1 = use track timebase
+    SEL 1                   // Is the item selected? int (bool)
+    YPOS 0.75 0.25 2        // Item lane relative position (supported since v7)
+                            // Only present when Fixed item lanes (FIL) mode is enabled in item's parent track
+                            //  field 1, float, fixed item lane top edge relative Y coordinate within track height
+                            //  which is taken to be 1, the actual lane index can be calculated with the formula:
+                            //  0.75 + 0.25 (field 2 below) / 0.25 = 4, i.e. first find the part of the track height
+                            //  occupied by the current and preceding lanes (0.75 + 0.25), then divide by
+                            //  the ratio between track height and lane height (0.25), which is the same as 
+                            //  reaper.GetMediaItemInfo_Value(item, 'I_FIXEDLANE');
+                            //  field 2, float, ratio between track height and single fixed item lane height,
+                            //  where track height is 1, so 0.25 means there're 4 lanes, because 1 / 0.25 = 4,
+                            //  track height is divided uniformely between lanes;
+                            //  field 3, ??, the value of 2 seems constant.
+    FADEIN 1 0.0 0.0        // Fade in settings
+                            //  field 1, int, fade in curve type (0 - linear, etc.)
+                            //  field 2, float, fade in time (in seconds)
+                            //  field 3, float, ??
+    FADEOUT 1 0.0 0.0       // Fade out settings (same as fade in above)
+                            //  ...
+                            //  ...
+                            //  ...
+    MUTE 0 0                // field 1, int (bool) 1 - item is or was muted if mute state was followed
+                            // by item soloing with actions 'Item properties: Solo', 
+                            // 'Item properties: Solo exclusive', 'Item properties: Toggle solo',
+                            // 'Item properties: Toggle solo exclusive' or via ReaScript API because  
+                            // in this case mute flag isn't cleared);
+                            // field 2, int, 0 - item is and was not soloed; -1 - item is soloed
+                            // (via actions 'Item properties: Solo', 'Item properties: Solo exclusive',
+                            // 'Item properties: Toggle solo' or via ReaScript API); 
+                            // 1 - item was soloed and its solo was overridden by soloing of another item 
+                            // (via action 'Item properties: Toggle solo exclusive' or via ReaScript API)
+    FADEFLAG 1                                          // ??, int, may not be present
+    GROUP 2560                                          // A number of the group the item belongs to, if grouped
+    IGUID {98E8ECDE-FF4D-4E06-87ED-43A5E7E6A61A}        // Item id. Leave it alone
+                                                        // --- From this point, values mostly relate to the first take
+                                                        //     except for field 1 of VOLPAN which is the item trim
+    IID 424                 // Deprecated since build 6.54
+                            // Item ordinal number governing the order of overlapping items 
+                            // displayed in lanes and especially those with identical start 
+                            // and end coordinates, when  
+                            // 'Show overlapping media items in lanes (when room)' option
+                            // is enabled. The greater the IID the lower the item's lane is.
+                            // With the said option disabled or lanes fully collapsed 
+                            // the visible/outermost item is the latest one on the track 
+                            // out of all items it's overlapping, regardless of its IID							
+
+    <NOTES                  // Notes block start
+      |-1                   // Notes content
+    >                       // Notes block end
+
+    RESOURCEFN "filename.ext"       // Name of the image file loaded in the notes, full path if located outside 
+                                    // of the resource directory
+    IMGRESOURCEFLAGS 0              // Bitfield of item notes settings; absent if item notes are empty
+                                    // 0 - Do not display image and no Word wrap; &1 - Center/tile image; 
+                                    // &3 - Stretch image/text; &5 - Full height image; &8 - Word wrap.
+    NOTESWND 38 176 529 55          // Item Notes window last coordinates
+
+                                    // Note: Empty items don't have takes so NOTESWND will be the last possible
+                                    // attribute in their chunk
+
+    COMP 1 1 0                      // Take comps data: field 1 - integer, comp index (1 based), 
+    COMP 2 0 0                      // field 2 - integer, active take index (0 based), field 3 - ???
+                                    // Custom comp names are stored in RAM and in the project .RPP file once saved
+    NAME "The first take"           // First take name
+    VOLPAN 1.0 0.0 1.0 -1.0         // Volume and pan settings
+                                    // field 1, float, item trim
+                                    //   1.00 = 0 dB
+                                    //   16.00 = +24 dB
+                                    //   0.50 = -6 dB
+                                    // field 2, float, first take pan, -1.00 = left, 1.00 = right
+                                    // field 3, float, first take volume (other takes in TAKEVOLPAN below), 
+                                    // if negative 'Invert phase' setting is enabled
+                                    // field 4, float, first take pan law
+    SOFFS 0.000                     // First take slip offset (in seconds)
+    PLAYRATE 1.000 1 0.000 -1       // First take playrate settings
+                                    //  field 1, float, playrate
+                                    //  field 2, int (bool), preserve pitch while changing rate
+                                    //  field 3, float, pitch adjust, in semitones.cents
+                                    //  field 4, int, pitch shifting/time stretch mode and preset
+                                    //    -1 - project default
+                                    //    0-2 - Sound Touch (3 presets)
+                                    //    65536-65567 - Dirac LE (32 presets)
+                                    //    131072-131119 - Low quality windowed (48 presets)
+                                    //    196608-196639 - élastique Pro (32 presets)
+                                    //    262144-262147 - élastique Efficient (4 presets)
+                                    //    327680-327683 - élastique SOLOIST (4 presets)
+                                    //    393216-393247 - élastique 2.1 Pro (32 presets)
+                                    //    458752-458755 - élastique 2.1 Efficient (4 presets)
+                                    //    524288-524291 - élastique 2.1 SOLOIST (4 presets)
+    CHANMODE 0                      // First take channel mode, int
+                                    //   0 = normal, 1 = reverse stereo, 2 = mono (downmix)
+                                    //   3 = mono (left), 4 = mono (right),
+                                    //   5-194 = Mono (3-128), the break point is channel 65
+                                    //   whose index is 131, so mono channel ranges are
+                                    //   5-66 = 3-64, 131-194 = 65-128;
+                                    //   67-257 = Stereo (1-128), the break point is channel 
+                                    //   65/66 whose index is 195, so stereo channel ranges are
+                                    //   67-130 = 1/2-64/65, 195-257 = 65/66-127/128;
+                                    //   These are the values which are set and retrieved with
+                                    //   Get/SetMediaItemTakeInfo_Value() 'I_CHANMODE' attribute
+
+    GUID {4EB7779B-D570-4CCF-8739-161D2D32C154}         // First take id. Leave it alone
+    <SOURCE SECTION                                     // Source section start (only present when changed in Item properties)
+        LENGTH 0.000                                    // Section length
+        MODE 3                                          // Mode, 2 = Section and Reverse, 3 = Reverse
+        STARTPOS 0.000                                  // Section start offset (in seconds)
+        OVERLAP 0.010                                   // Section crossfade (in seconds)
+        <SOURCE WAVE                                    // Source details. Appears alone if SOURCE SECTION is not set;
+                                                        // when the take is offline WAVE is replaced with _OFFLINE_WAVE
+            FILE "C:Path\To\AudioFile.wav"              // Source file.
+        >                                               // Source details end
+    >                                                   // Source section end
+
+    <SOURCE CLICK                                       // Click source section start (only relevant for click source item/take)
+      AUTO 1 0                                          //
+      BPM 100                                           // Project tempo at which click source item was created
+      BPI 4 4                                           //
+      VOL 0.5 0.25                                      //
+      BEATLEN 4                                         //
+      FREQ 1760 880 1                                   //
+      SAMPLES "" "" "" ""                               //
+      SPLIGNORE 0 0                                     //
+      SPLDEF 2 660 "" 0 ""                              //
+      SPLDEF 3 440 "" 0 ""                              //
+      PATTERN 0 169                                     //
+      PATTERNSTR ABBB                                   // Click pattern
+      MULT 1                                            //
+    >                                                   // Click source section end
+
+    <SOURCE LTC                    // SMPTE Generator propetries source section start (only relevant for SMPTE Generator item/take)
+      STARTTIME 0                  //
+      FRAMERATE 30 0               //
+      SEND 0                       //
+      USERDATA 0 0 0 0             //
+    >                              // SMPTE Generator propetries section end
+
+    <SOURCE VIDEOEFFECT                                                             // Dedicated video processor item/take source section start
+                                                                                    // Source of item inserted with the action 
+                                                                                    // 'Insert dedicated video processor item'.
+      <CODE                                                                         // The following code formatting is identical to Video
+                                                                                    // processor code formatting showcased further below 
+                                                                                    // in the 'Video Processor plugin' paragraph
+      |// Invert colors                                                             //
+      |//@param pa 'preserve RGBA alpha' 0 0 1 .5 1                                 //
+      |ok=input_info(input=0,project_w,project_h);                                  //
+      |gfx_set(1);                                                                  //
+      |gfx_fillrect(0,0,project_w,project_h);                                       //
+      |gfx_set(0,0,0,-1,1); // negative alpha, additive                             //
+      |ok? (                                                                        //
+      |  gfx_blit(input, 0);                                                        //
+      |  pa && colorspace=='RGBA' ? ( gfx_mode=0xf0+3+3*4;  gfx_blit(input,0); );   //
+      |);                                                                           //
+      >                                                                             //
+    CODEPARM 0 8 5 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0    //
+    0 0 0 0 0 0                                                                     //
+    >                                                                               // Dedicated video processor item/take source section end
+
+    <SOURCE EMPTY                            // Present in items without source, which can be created 
+    >                                        // out of empty items by adding a take marker for example.
+
+    TKM 0.5 "TEST 123" 21036800	0.5         // Take marker data
+                                            // field 1 - float, position within take in sec
+                                            // field 2 - string, name, without quotes if consists of only one 
+                                            // character or word
+                                            // field 3 - integer, OS native color code	
+                                            // can be converted to RGB with: r, g, b = reaper.ColorFromNative(code)
+                                            // field 4 - integer, marker length in sec (protruding horizontal bar)
+                                            // supported since build 7.17
+							
+    SM 0 0 -0.149425287 + 0.574712644 0.5 + 1.348114004 1.273401361		// Stretch marker data
+    							
+                                                        // Transient markers (guides) data
+    TMINFO 44100                                        // field 2 - item source sample rate
+    TM 104 671 6270 13233 678 676 673 19218 6385 677    // field 2 - distance in samples, at the above sample rate,  
+    680 6320                                            // of the first transient guide from the item start
+                                                        // returned by reaper.GetMediaItemInfo_Value(item, 'D_POSITION')
+                                                        // fields 3 onwards - distance in samples at the above sample rate 
+                                                        // from previous transient guide
+							
+    <TAKEFX                                             // -- Take FX section start
+     (see chunk info below under Track/Take FX)         //
+    >                                                   // -- Take FX section end
+    TAKE_FX_HAVE_NEW_PDC_AUTOMATION_BEHAVIOR 1
+                                                        // -- Take envelopes section start, one block per envelope    
+    <VOLENV                                             // Envelope alias (VOLENV, PANENV, MUTEENV, PITCHENV)
+      EGUID {5CB63539-0B47-4094-97FA-C62230F23208}      // Envelope ID
+	(see chunk info below under Envelope)
+    >                                                   // -- Take envelopes section end 
+    TAKE NULL                                           //  Second take start. An empty take inserted with actions 
+                                                        //  'Item: Add an empty take before/after the active take',
+                                                        //  if active and the item is selected, SEL attribute follows NULL;
+                                                        //  such take pointer cannot be retrieved either with GetActiveTake()
+                                                        //  or with reaper.GetTake(item, take_idx), or with
+                                                        //  reaper.GetTake(item, reaper.GetMediaItemInfo_Value(item, 'I_CURTAKE'))
+                                                        //  even though it's included in the total take count.
+                                                        //  When such take is the topmost its attribute is absent in the chunk
+                                                        //  and the data of the next valid take are listed under TAKE attribute.
+    TAKE SEL                                            // Third take start. SEL only appears if this take is active 
+                                                        // in a selected item;
+    NAME "The second take"                              // Take name
+    TAKEVOLPAN 0.0 1.0 -1.0                             // Take volume and pan settings
+                                                        //  field 1, float, take pan
+                                                        //  field 2, float, take volume, if negative 'Invert phase' setting is enabled
+                                                        //  field 3, float, take pan law
+    SOFFS 0.000                                         // Take slip offset (in seconds)
+    PLAYRATE 1.000 1 0.000 -1                           // see PLAYRATE above
+    CHANMODE 1                                          // see CHANMODE above
+    GUID {4EB7779B-D570-4CCF-8739-161D2D32C154}         // Take id. Leave it alone
+    <SOURCE WAVE                                        // Take source details
+    FILE "C:\Full\Path\To\AudioFile reversed.wav"       // Source filename
+    >                                                   // Source section end
+>                                                       // Item section end
+
+--------------------------------------------------------------------------------------------------------------------
+
+MIDI Item
+
+<ITEM                                                   // Item section start
+    POSITION 12.000                                     // see Audio item state chunk above
+    SNAPOFFS 0.000                                      // ...
+    LENGTH 8.815                                        // ...
+    LOOP 1                                              // ...
+    ALLTAKES 0                                          // ...
+    SEL 1                                               // ...
+    FADEIN 1 0.0 0.0                                    // ...
+    FADEOUT 1 0.0 0.0                                   // ...
+    MUTE 0                                              // ...
+    IGUID {967EE770-4144-472A-89D6-B72BB910A916}        // ...
+    NAME "MIDI item"                                    // ...
+    VOLPAN 1.0 0.0 1.0 -1.0                             // ...
+    SOFFS 0.000 0.000                                   // Slip offset (in seconds; the second field is always twice the first field)
+    PLAYRATE 1.000 1 0.000 -65536                       // ...
+    CHANMODE 0                                          // ...
+    GUID {9C93A652-09A2-4A46-9E1B-EF83EB7CED29}         // ...
+    <SOURCE MIDI                                        // Source section start
+        HASDATA 1 960 QN                                // Does the item have any data? PPQ resolution in ticks per quarter note
+        e 300 90 2b 60                                  // Standard MIDI message
+                                                        //  field 1, e - selected, E - not selected
+                                                        //  field 2, int, msg start offset
+                                                        //  field 3, MIDI status byte (message type + channel number)
+                                                        //    0x80 = Note Off, channel 0
+                                                        //    0x9F = Note On, channel 15
+                                                        //    0xB4 = Control Change, channel 4
+                                                        //  field 4, Data1, depends on the message type (eg. note number)
+                                                        //  field 5, Data2, depends on the message type (eg. velocity)
+        e 60 80 2b 00                                   // selected msg, offset 60, note off, note 2b, velocity 0
+        <X 286306 0                                     // SysEx section start (SysEx midi message, variable length)
+                                                        //  field 1, x - selected, X - not selected
+                                                        //  field 2, ??
+                                                        //  field 3, ??
+          8AECAwQF9w==                                  // (Base64 encoded)
+        >                                               // SysEx section end
+        E 540 b0 7b 00                                  // unselected msg, offset 540, Control Change , all notes off (cc123)
+        GUID {9DAB52C8-6257-4A4E-9E60-323514C0DB9B}     // Take id
+        IGNTEMPO 0 120.00000000 4 4                     // Ignore project tempo, override with new settings
+                                                        //  field 1, int, ignore on/off
+                                                        //  field 2, float, tempo used to override project tempo
+                                                        //  field 3-4, int, time signature to override project time signature
+        VELLANE 128 97 0                                // Velocity/CC lane settings
+                                                        //  field 1, int, lane type
+                                                        //    -1 = velocity
+                                                        //    0-119 = CC #0 - CC #119
+                                                        //    128 = pitch bend
+                                                        //    129 = program
+                                                        //    130 = channel pressure
+                                                        //    131 = bank/program select
+                                                        //    132 = text events
+                                                        //    133 = sysex
+                                                        //    166 = notaion events
+                                                        //  field 2, int, height of the lane in MIDI editor mode
+                                                        //  field 3, int, height of the lane in inline editor mode
+        BANKPROGRAMFILE "C:\Path\To\GM.reabank"         // Path to ReaBank file used by the current item
+        CFGEDITVIEW 3787.8 0.1 0 48 0 0 0               // Somehow related to H/V zoom levels and scrollbar positions
+        CFGEDIT 1 1 0 1 1 16 1 1 1 1 1 0.06250000 0 0   // MIDI editor window configuration data
+        1024 768 0 2 0 0 0.00000000 0 0 0 1 1 64        //  field 1, int, ??
+                                                        //  field 2, int (bool), sync editor transport to project transport
+                                                        //  field 3, int, ??
+                                                        //  field 4, int (bool), show velocity handles
+                                                        //  field 5, int (bool), show note names
+                                                        //  field 6, int, MIDI editor view mode
+                                                        //    0  = piano roll, rectangle
+                                                        //    1  = named notes, rectangle
+                                                        //    5  = event list, rectangle
+                                                        //    8  = piano roll, triangle
+                                                        //    9  = named notes, triangle
+                                                        //    13 = event list, triangle
+                                                        //    16 = piano roll, diamond
+                                                        //    17 = named notes, diamond
+                                                        //    21 = event list, diamond
+                                                        //  field 7, int, ??
+                                                        //  field 8, int (bool), move CCs with notes
+                                                        //  field 9, int, channel for new events
+                                                        //  field 10, int (bool), snap to grid
+                                                        //  field 11, int (bool), show grid
+                                                        //  field 12, float, grid length, in quarter notes
+                                                        //  field 13, field 14, int, (last-used UNmaximized) X and Y coords 
+                                                        //  of upper left corner of ME window
+                                                        //  field 15, field 16, int, (last-used UNmaximized) X and Y coords 
+                                                        //  of bottom right corner of ME window
+                                                        //  field 17, int (bool), dock editor window
+                                                        //  field 18, int, note row view modes
+                                                        //    0 = show all rows
+                                                        //    1 = hide unused rows
+                                                        //    2 = hide unused and unnamed rows
+                                                        //  field 19, int, state of Timebase setting
+                                                        //    0 = project beats
+                                                        //    1 = project sync
+                                                        //    2 = project time
+                                                        //    4 = source beats
+                                                        //  field 20, int, state of Color mode setting
+                                                        //    0 = velocity
+                                                        //    1 = channel
+                                                        //    2 = pitch
+                                                        //    4 = source
+                                                        //  field 21, float, note length of last drawn note in beats.ticks
+                                                        //  if the option 'Drawing or selecting a note sets the new note length'
+                                                        //  is enabled because it changes 'Note:' setting in the pull-up menu
+                                                        //  at the bottom of the MIDI Editor window, or if the setting is changed
+                                                        //  manually
+                                                        //  field 22, int, re-use editor window
+                                                        //    0 = off
+                                                        //    1 = re-use MIDI editor window
+                                                        //    2 = re-use MIDI editor window, keeping current item secondary
+                                                        //  field 23, int (bool), show velocity numbers
+                                                        //  field 24, int (bool), ME window maximized to full-screen
+                                                        //  field 25, int (bool), swing enabled
+                                                        //  field 26, float, swing % as fraction
+                                                        //  field 27 ??
+                                                        //  field 28 ??
+                                                        //  field 29 ??
+                                                        //  field 30 ??
+        EVTFILTER 0 -1 -1 -1 -1 0 1                     // Event filter settings
+                                                        //  field 1, int (16-bit mask), state of channel checkboxes
+                                                        //    0000000000000000 (0)     - "All" is checked, 1-16 unchecked
+                                                        //    1111111111111111 (65536) - "All" is checked along with 1-16
+                                                        //    1000000000000001 (32769) -  1 (LSB) and 16 (MSB) are selected
+                                                        //    etc.
+                                                        //  field 2, int, Event type
+                                                        //    -1  = <all>
+                                                        //    144 = Note
+                                                        //    160 = Poly Aftertouch
+                                                        //    176 = Control Change (CC)
+                                                        //    192 = Program Change (PC)
+                                                        //    208 = Channel Aftertouch
+                                                        //    224 = Pitch
+                                                        //    240 = Sysex/Meta
+                                                        //  field 3, int, parameter field (range: 0-127)
+                                                        //  field 4, int, value Low field (range: 0-127)
+                                                        //  field 5, int, value High field (range: 0-127)
+                                                        //  field 6, int, draw events on channel setting (range: 0-15)
+                                                        //  field 7, int (bool), enable filter
+    >                                                   // Source section end
+>                                                       // Item section end
+MIDI Event -> field 2 above... This is the number of ticks (it's ok, I'll tell you in a minute) since the last event or (if this is the first MIDI Event) the start of the Item.
+Ticks then. A tick is a small slice of a beat, so the number of Ticks per second varies with the BPM (Beats Per Minute) of the music.
+<wiki math markup> <math>1 beat = 2.6041666666666666666666666666667e-4 \times 240 \times 16</math> </wiki math markup>
+1 beat = 2.6041666666666666666666666666667e-4 * 240 * 16
+The MIDI format used in REAPER State Chunks and .rpp files is documented here State Chunk And RPP MIDI Format.
+
+--------------------------------------------------------------------------------------------------------------------
+
+Envelope
+
+Envelopes appear to share most of their characteristics though there may be some differences in how point values are used. Needs more testing
+Envelope types include:
+VOLENV - Track (pre FX)/Take volume (0.0 to 2.0)
+VOLENV2 - Track (post FX) volume (0.0 to 2.0)
+VOLENV3 - Track trim volume (0 to 2)
+PANENV - Track (pre FX)/Take pan (-1.0 to 1.0)
+PANENV2 - Track (post FX) pan (-1.0 to 1.0)
+DUALPANENVL - Track pan (left) (pre-FX) (-1 to 1) in 'Dual pan' pan mode
+DUALPANENV - Track pan (right) (pre-FX) (-1 to 1) in 'Dual pan' pan mode
+DUALPANENVL2 - Track pan (left) (-1 to 1) in 'Dual pan' pan mode
+DUALPANENV2 - Track pan (right) (-1 to 1) in 'Dual pan' pan mode
+WIDTHENV - Track (pre FX) stereo width (-1 to 1) in 'Stereo pan' pan mode
+WIDTHENV2 - Track stereo width (-1 to 1) in 'Stereo pan' pan mode
+MUTEENV - Track mute (0.0 to 1.0)
+AUXVOLENV - Track send volume (0.0 to 2.0)
+AUXPANENV - Track sendpan (-1.0 to 1.0)
+AUXMUTEENV - Track send mute (0.0 to 1.0)
+TEMPOENVEX - Master tempo
+MASTERPLAYSPEEDENV - Master playrate
+PARMENV - Plugin parameter (value range is defined by additional parameters after type tag)
+
+<VOLENV2                                            // Type. PARMENV has additional fields on this line (see below)
+    EGUID {1A24257D-0EE1-4D1C-8BF7-7D795608ED97}    // Envelope GUID
+    ACT 1 -1                                        // field 1, int (bool) Active, field 2 ??
+    VIS 1 1 1.0                                     // Visibility
+                                                    //   field 1, int (bool), visible
+                                                    //   field 2, int (bool), show in lane
+                                                    //   field 3, deprecated value, always 1.0 (source: schwa [p=2198426])
+    LANEHEIGHT 0 0                                  // Lane height
+                                                    //   field 1, int, height in pixels, corresponds to the value associated 
+                                                    //   with 'I_TCPH' parameter of GetEnvelopeInfo_Value() function
+                                                    //   which is envelope control panel height including padding between
+                                                    //   it and the lower env control panel
+                                                    //   field 2, int, ??
+    ARM 1                                           // Armed, int (bool)
+    DEFSHAPE 0 -1 -1                                // field 1 - Default point shape, int
+                                                    //   0 = Linear
+                                                    //   1 = Square
+                                                    //   2 = Slow Start/End
+                                                    //   3 = Fast Start
+                                                    //   4 = Fast End
+                                                    //   5 = Bezier
+                                                    // field 2, int, pitch envelope range
+                                                    // field 3, int, pitch envelope snap setting
+                                                    // -1=global default, otherwise these are the LSB and MSB of the "pitchenvrange" 
+                                                    // config variable, i.e. Preferences -> Editing Behavior -> Envelope Display ->
+                                                    // Default pitch envelope range: ... semitones, snap: ... 
+                                                    // (source: schwa [p=2198426])
+    <EXT                                            // Extension-specific persistent data which can be added 
+                                                    // with GetSetEnvelopeInfo_String() function
+                                                    // using 'P_EXT' parameter
+    parmname string                                 //  field 1, string - parmname, set with the function namesake argument
+    >                                               //  field 2, string - string, set with the function stringNeedBig argument; 
+                                                    //  to delete, pass this argument as an empty string
+    
+    POOLEDENVINST 6 1.375 0.39917615841563 0.114936 0.354826 1 0.5 1 1 0 0 1280 0 0 0.012 0 // Automation item (AI) properties
+                                                                                            // field 1, int, pool index, 
+                                                                                            // pooled instances have the same index 
+                                                                                            // (greater by 1 than the one displayed
+                                                                                            // by default in the Name field of AI									    
+                                                                                            // Properties window);
+                                                                                            // field 2, float/double, Position (sec);
+                                                                                            // field 3, float/double, Length (sec);
+                                                                                            // field 4, float/double, Start offset (sec);
+                                                                                            // field 5, float/double, Play rate;
+                                                                                            // field 6, int (bool), selected;
+                                                                                            // field 7, float, Baseline, 0 = -100, 
+                                                                                            // 0.5 = 0, 1 = 100;
+                                                                                            // field 8, float, Amplitude, -2 = -200, 
+                                                                                            // 1 = 100, 2 = 200;
+                                                                                            // Baseline/amplitude affects pooled copies;
+                                                                                            // field 9, int (bool), Loop, 1 on, 0 off
+                                                                                            // field 10, float/double, Position in QN  
+                                                                                            // (only used in certain contexts);
+                                                                                            // field 11, Length in QN
+                                                                                            // (only used in certain contexts);
+                                                                                            // field 12, int, 1 based index of AI since
+                                                                                            // starting the project, incremented even if
+                                                                                            // older AIs were deleted and regardless of
+                                                                                            // the AI being pooled;
+                                                                                            // field 13, int, muted;
+                                                                                            // field 14, float/double, Start offset in QN 
+                                                                                            // (only used in certain contexts);
+                                                                                            // field 15, float/double, Transition time (sec)
+                                                                                            // field 16, int, volume envelope maximum 
+                                                                                            // when this instance was created (matches the 1|4 
+                                                                                            // bits of the "volenvrange" config variable: 
+                                                                                            // 0=+6dB, 1=+0dB, 4=+12dB, 5=+24dB, i.e. 
+                                                                                            // Preferences -> Editing Behavior ->
+                                                                                            // Envelope Display-> Volume envelope range); 
+                                                                                            // (source: schwa [p=2198410])
+											    
+    PT 3.000000 -0.2 5 0 0 0 -0.7               // Envelope point definition
+                                                //  field 1, float, position (seconds)
+                                                //  field 2, float, value
+                                                //  field 3, int, shape (-1 = envelope default?)
+                                                //  field 4, int, optional, ?? (TEMPOENVEX time sig = 65536 * 
+                                                //  time signature denominator + time signature numerator)
+                                                //  field 5, int (bool), selected (optional)
+                                                //  field 6, int, ?? (optional)
+                                                //  field 7, float, bezier tension (optional)
+>
+
+PARMENV contains extra data denoting which plugin parameter is controlled and what the minimum, maximum and default values are.
+
+<PARMENV 1 0.0 1469.0 734.5                     // Type
+<PARMENV 5:_1__Feedback 0 2 1                   // field 1, int, param index - 0-based top to bottom.
+<PARMENV 5:_Sample_start_offset 0 2 1           // Since builds 6.48 or 6.52 names of ReaPlugs parameters are also specified 
+                                                // in the format _paramname or _param_name
+                                                // Previously only plugin wrapper 'wet', 'bypass' and 'delta' (since 6.37) 
+                                                // parameter names were displayed without being preceded by	the underscore,
+                                                // e.g. 31:wet, 12:bypass, 17:delta;
+                                                // REAPER tags additional bypass, wet & delta params onto the end, in that order
+                                                // field 2, float, minimum value 
+                                                // field 3, float, maximum value
+                                                // field 4, float, center/default value
+   /* snip */
+>
+
+--------------------------------------------------------------------------------------------------------------------
+
+Track/Take FX
+
+Plugin chains appear to be the same for both tracks and item takes, with the exception that the chunk name is different.
+    <FXCHAIN                                                  // FXCHAIN for track or TAKEFX for take
+    WNDRECT 0 42 716 227                                      // FX Window position
+                                                              //  field 1, int, top
+                                                              //  field 2, int, left
+                                                              //  field 3, int, width
+                                                              //  field 4, int, height
+    SHOW 0                                                    //  field 1, int, index of an FX currently open in the chain 
+                                                              // (NOT zero based)
+    LASTSEL 1                                                 // Index of selected plugin (zero based), int
+    DOCKED 0                                                  // FX window is docked, int (bool)
+	
+                                                              // --- Start of first plugin definition
+    BYPASS 0 0                                                //  Plugin bypass state
+                                                              //   field 1, int (bool), bypassed
+                                                              //   field 2, int (bool), offline
+    <VST "VST: SomePlugin" "SomePlugin.dll" 0 "Sax offender"  //  Plugin data, see details below
+        (see VST(i) plugin info below)                        //
+    >                                                         //
+    WET 0.5                                                   //  Amount of plugin wet output set on the plugin UI wrapper, 
+                                                              //  if not 100%;
+    PRESETNAME "stock - Basic 11 band"                        //  Name of current plugin preset selected in the preset drop-down list;
+                                                              //  In VST3 plugins may list .vstpreset file path enclosed within quotes,
+                                                              //  e.g. "C:\VST3 presets\test4.vstpreset"
+    FLOATPOS 0 0 0 0                                          //  Plugin floating window pos, int;
+                                                              //  FLOAT - plugin UI is open in a floating window; FLOATPOS - plugin UI 
+                                                              //  is NOT open in a floating window;
+                                                              //  field 1 - top; field 2 - left; field 3 - width; field 4 - height;
+                                                              //  If at least field 3 or 4 is 0, plugin window doesn't float							       
+
+    PARMALIAS 3 "Compression alias"                           // Names and indices of aliased FX parameters
+    PARMALIAS 4 "DS Freq"                                     // field 1, int, 0-based index of the parameter;
+    PARMALIAS 6 Delay                                         // field 2, string, parameter alias, within quotes if contains spaces
+    PARMALIAS 7 Squeeze                                       // or includes a hash (#) character;
+                                                              // Since presumably build 6.48 REAPER parameter index is followed by
+                                                              // parameter identifier (if available, the one returned by 
+                                                              // FX_GetParamIdent functions) or the plugin internal parameter index
+                                                              // separated by a colon
+    PARMALIAS 8:_Max_voices Alias                             // RS5k/LV2 pattern
+    PARMALIAS 9:0 "Alias new"                                 // VST3/CLAP pattern
+    PARMALIAS 10:bypass "bypass alias"                        // Since build 7.49 plugin wrapper built-in parameters Bypass/Wet/Delta
+                                                              // are allowed to be aliased as well; the format differs from plugin native
+                                                              // parameter in that the colon is followed by parameter identifier without
+                                                              // preceding underscore and where the 1st character isn't capitalized.
+
+    FXID {1191A7FE-F583-477E-8416-D9F0F58226CD}               //  Plugin id, leave it alone
+    
+                                  // -- Start of Parameter modulation settings
+                                  //
+    <PROGRAMENV 12:bypass 0       //  One block per each parameter with engaged parameter modulation
+                                  //   field 1, int, parameter index (zero based)
+                                  //   Plugin wrapper parameters, such as Bypass here, are named, 
+                                  //   plugin native parameters are only referenced by their indices
+                                  //   field 2, bool, 0 - enabled, 1 - bypassed  
+                                  //   (set by (un)ticking checkbox 'Enable parameter modulation' 
+                                  //   in Parameter modulation dialogue)
+      PARAMBASE 0.5               //   float, 'Baseline value (envelope overrides)' in the range of 0-1;
+      LFO 1                       //   bool, 'LFO' checkbox, 0 - disabled, 1 - enabled,
+                                  //   all LFO related parameters are only present in the block 
+                                  //   if this setting is 1;
+      LFOWT 1 0                   //   field 1, float, LFO Strength, 0 - 0.0%, 1 - 100.0%;
+                                  //   field 2, int, LFO Direction, -1 - negative, 0 - center, 
+                                  //   1 - positive;
+      AUDIOCTL 0                  //   bool, 'Audio control signal (sidechain)' checkbox, 0 - disabled, 
+                                  //   1 - enabled;
+                                  //   all audio control related parameters are only present in the block 
+                                  //   if this setting is 1;
+      AUDIOCTLWT 1 1              //   field 1, float, Strength, 0 - 0.0%, 1 - 100.0%;
+                                  //   field 2, int, Direction, -1 - negative, 0 - center, 1 - positive;
+      LFOSHAPE 0                  //   int, 0 - sine, 1 - square, 2 - saw L, 3 - saw R, 4 - triangle, 
+                                  //   5 - random;
+      LFOSYNC 0 0 0               //   field 1, bool, Tempo sync, 0 - disabled, 1 - enabled;
+                                  //   field 2 - ??
+                                  //   field 3, bool, Phase reset, 0 - On seek/loop (deterministic 
+                                  //   output), 1 - Free running (non-deterministic output);
+      LFOSPEED 0.124573 0         //   field 1, float, Speed in the range of 0 - 0 Hz, 
+                                  //   0.124573 (center) - 1 Hz, 1 - 8.000 Hz;
+                                  //   if Tempo sync is enabled: 0 - 8 QN, 0.9 (center) - 1 QN, 
+                                  //   1 - 0.25 QN;
+                                  //   field 2, float, Phase in the range of 0 - 1;
+      CHAN 0                      //   int, Track audio channel number, mono channels count is 0-based, 
+                                  //   stereo channel is incremented by 2 for each next stereo pairs 
+                                  //   starting from 0, e.g. 0 - 1+2, 2 - 3+4, 4 - 5+6, 6 - 7+8 etc.;
+      STEREO 0                    //   bool, 0 - mono channel is selected in 'Track audio channel' menu, 
+                                  //   1 - stereo channel is selected;
+      RMS 0 0                     //   field 1, float, Attack time in the range of 0 - 1000 ms;
+                                  //   field 2, float, Release time in the range of 0 - 1000 ms;
+      DBLO -60                    //   float, 'Min volume' setting in the range of -60.00 - 11.9 dB 
+                                  //   (although readout shows 12.00);
+      DBHI 12                     //   float, 'Max volume' setting in the range of -59.9 - 12.00 dB 
+                                  //   (although readout shows -60.00);
+      X2 0.5                      //   float, 'Audio control signal shaping' node X coordinate 
+                                  //   in the range of 0 - 1;
+      Y2 0.5                      //   float, 'Audio control signal shaping' node Y coordinate 
+                                  //   in the range of 0 - 1;
+      PLINK 1 2:-1 6 0            //  Parameter modulation linkage data
+                                  //   field 1, float, param modulation Scale value
+                                  //   -1 - -100%, 0 - 0%, 1 - 100% and everything in between as decimals;
+                                  //   field 2, int, a colon delimited pair of the Master parameter 
+                                  //   0-based index and a difference between the Master plugin and 
+                                  //   the current (Slave) plugin indices (also 0-based) in the FX chain, 
+                                  //   negative difference indicates that the Master plugin sits earlier
+                                  //   in the chain, difference 0 means self-linking (within same plugin)
+                                  //   field 2 contains -100 when the parameter is linked to MIDI;
+                                  //   field 3, int, Master parameter 0-based index, may or may not be 
+                                  //   formatted as as a colon delimited pair of the Master parameter 
+                                  //   index and either its name or its internal index inside the Master  
+                                  //   plugin, e.g. 6:5, where 5 is the index assigned to the parameter 
+                                  //   inside the plugin, or 6:_SafeBass, where SafeBass is the parameter 
+                                  //   name, VST3 plugins seem to tend to have indices rather than names, 
+                                  //   with 3d party plugins this piece of data if incorrect will render 
+                                  //   parameter modulation inoperable, BUT its complete absence won't  
+                                  //   affect the functionality, if second integer of the field 2 is 0
+                                  //   field 3 integer refers to the index of the Master parameter within 
+                                  //   the same plugin. Both fields 2 and 3 contain -1 when option 
+                                  //   'Link from MIDI or FX parameter' is enabled but the parameter
+                                  //   isn't linked and there's no linkage to MIDI;
+                                  //   field 4, float, param modulation Offset value
+                                  //   -1 - -100%, 0 - 0%, 1 - 100% and everything in between as decimals;
+      MIDIPLINK 0 0 176 14        //  Parameter modulation MIDI linkage data
+                                  //   field 1, int, MIDI bus number (0-15);
+                                  //   field 2, int, MIDI channel number (1-16);
+                                  //   field 3, int, MIDI message type code: 176 - CC, 144 - Note, 
+                                  //   160 - Aftertouch, 192 - Program Change, 208 - Channel Pressure, 
+                                  //   224 - Pitch;
+                                  //   field 4, int, message number (0-127) if CC type message (176), 
+                                  //   including numbers of 14 bit messages (128-159), note number (0-127)
+                                  //   if Note type message (144) or Aftertouch type message (160), 
+                                  //   and 0 if another message type;
+                                  //   if MIDI linkage is enabled the modified PLINK data are kept 
+                                  //   in the chunk but not vice versa;
+      MODWND 0 204 147 552 506    //  Parameter modulaition dialogue data                       
+                                  //   field 1, bool, parameter modulation dialogue state,
+    >                             //   0 - closed, 1 - open, the element is added if parameter 
+                                  //   modulation dialogue was opened at least once
+                                  //   fields 2-5, pixel, parameter modulation dialogue coordinates: 
+                                  //   left, top, right, bottom 
+                                  //
+                                      //  --- Start of parameter envelopes for this plugin.
+                                      //      One block for each non-empty envelope.
+    <PARMENV 2 0.0 1.0 0.5            //      First parameter envelope
+        (see envelope chunk info)     //      (irrelevant for Input and Monitor FX)
+    >                                 //
+                                      //  --- End of parameter envelopes
+							      
+                                  //  NOTE: If both envelope (PARMENV) and parameter modulation  
+                                  //  (PROGRAMENV) are enabled for the same plugin parameter 
+                                  //  the PARMENV data are followed by PROGRAMENV data.
+							      
+                                  //  -- Start of MIDI/OSC controller assignments
+    PARMLEARN 0 1968 2            //  field 1, int, parameter idx
+    PARMLEARN 1 2736 2            //  field 2, int, a number assigned by REAPER to a MIDI controller e.g. 
+    PARMLEARN 2 944 2             //  (CC0 = 176, CC1 = 432, 944 = CC3, 1968 = CC7, 2736 =  CC10), 
+                                  //  the step equals 256;
+                                  //  In CC Mode: Absolute - CC0 = 176, Relative 1 - CC0 = 65712,  
+                                  //  Relative 2 - CC0 = 131248, Relative 3 - CC0 = 196784, 
+                                  //  Toggle - CC0 = 262320;
+                                  //  field 3, int, 2 - Soft takeover (absolute mode only) or 2+0, 
+                                  //  1 - Enable only when track or item is selected, 3 - 1+2, 
+                                  //  4 - Enable only when effect configuration is focused, 
+                                  //  20 - Enable only when effect configuration is visible, 
+                                  //  0 - Arm envelope for selected parameter;
+                                  //  -- End of MIDI/OSC controller assignments
+							      
+    PARM_TCP 12:bypass 13:wet 4 2 0       //  Show in track controls (FX params visible in TCP/MCP), irrelevant  
+                                          //  for Input, Take and Monitor FX;
+                                          //  Plugin wrapper parameters format is index:name (wet, bypass, delta),   
+                                          //  ReaPlugs and VST2 plugin own params are referenced  
+                                          //  by their indices only, the indices count is 0-based;
+                                          //  Since build 6.48 (wasn't able to figure out which change in the 
+                                          //  changelog refers to this) for ReaPlugs and some VST2 plugins 
+                                          //  the format includes FX parameter identifiers, returned by 
+                                          //  FX_GetParamIdent functions, e.g. 
+                                          //  PARM_TCP 4:_1__Length 7:_1__Hipass 10:_1__Volume
+                                          //  Examples of VST3 plugins format: 
+                                          //  1) 0:1652125811 1:1835232512 3:1835232514;
+                                          //  2) 0:720135338 1:720135339 2:720135340;
+                                          //  3) 0:65536 1:0 8:7, where the first number is the REAPER assigned 
+                                          //  0-based index and the second one is plugin's own internal index.
+
+							      
+    WAK 0 0                       //  WAK = Want All Keys 
+                                  //  (https://forums.cockos.com/showthread.php?p=2420594)
+                                  //  field 1, bool, 1 - 'Send all keyboard input to plug-in' option 
+                                  //  is enabled in the FX instance RMB context menu or FX chain 'FX' menu
+                                  //  field 2, int, 1 - show embedded FX UI on TCP, 2 - show on MCP
+    PARALLEL 1                    //  field 1, int, appears in the chunk of the FX instance which PRECEDES
+                                  //  an instance for which either of the following options is enabled:
+                                  //  1 - option 'Run selected FX in parallel with previous FX' is enabled;
+                                  //  2 - option 'Run selected FX in parallel with previous FX (merge MIDI)' 
+                                  //  is enabled (since REAPER 7).
+
+   CONTAINER_PARM 1 0 15:_Global_Gain ""  // Parameters of FX inside a container, mapped to container;
+   CONTAINER_PARM 2 0 2:_BW_Low_Shelf ""  // field 1, int, 1-based index of the mapped parameter instance,
+                                          // when some parameters are unpapped and others are mapped the indexing 
+                                          // isn't reset but continues to be incremented from the greatest index
+                                          // of the mapped parameter, i.e. if current parameter, indexed 1,
+                                          // is unmapped, the list will start from 2 and next mapped parameter
+                                          // will be assigned index 3, likewise if an unmapped parameter
+                                          // was in the middle of the list, the resulting indexing sequence will 
+                                          // have a gap, only the last mapped parameter index is maintained
+                                          // when a parameter it's assigned to is unmapped and another one
+                                          // is mapped in its stead or the same parameter is mapped again;
+                                          // field 2, int, 0-based index of FX instance inside the container;
+                                          // field 3, int, original 0-based index of the mapped parаmeter 
+                                          // in the source plugin;
+                                          // field 4, string, FX parameter identifier, the one returned with
+                                          // the function FX_GetParamIdent;
+                                          // field 5, empty string within quotes, ????
+							      
+    <CONTAINER Container ""       // --- Start of FX container definition (since REAPER 7)
+                                  // "" - container isn't named; as usual, names with spaces are enclosed
+                                  // within quotes, otherwise no quotes;
+      CONTAINER_CFG 4 4 2 0       // field 1, int, number of container channels;
+                                  // field 2, int, number of container inputs; 
+                                  // field 3, int, number of container outputs; 
+                                  // field 4 ??
+      <IN_PINS                    // The Input pin indices are not listed if all container Input pins 
+      >                           // are mapped to the track channels with corresponding indices: 
+                                  // 0 to 0, 1 to 1 etc., the count is 0-based;
+    ----------------------        //
+      <IN_PINS                    // If all container Input pins are disabled, or only some
+       PIN 0                      // while others are mapped to the corresponding track channels 
+       PIN 1                      // (see above), only indices of disabled pins are listed in the block,
+       PIN 2                      // here pins 1-4 (0-3 in 0-based count);
+       PIN 3                      //
+      >                           //
+    ----------------------        //
+      <IN_PINS                    // If container Input pins are mapped to track channels whose
+       PIN 0                      // indices differ from the Input pins mapped to them, these are 
+       PIN 1 0                    // listed as pairs of indices: Input pin 2 is mapped to track channel 1,
+       PIN 2                      // Input pin 4 is mapped to track channel 3, in the chunk the count is
+       PIN 3 2                    // 0-based; two other entries refer to disabled container Input pins.
+      >                           //
+      <OUT_PINS                   // The principle of FX container Input pin representation described 
+       PIN 0 2                    // above applies to FX container Output pins as well; here Output pin 1 
+       PIN 1 3                    // is mapped to track channel 3, Output pin 2 - to track channel 4,
+      >                           // Output pins 3 & 4 are mapped to tracks channels with corresponding indices, 
+                                  // i.e. 3 & 4 hence these are not listed;
+                                  //
+    -- Here regular FX chain chunk follows --            // FX containers are nestable, so inside this FX chain chunk another 
+       ........                                          // container block may be found;
+      >                                                  //
+                                                         // Each FX container is followed by these lines,
+      FLOATPOS 0 0 0 0                                   // same as in FX chunk
+      FXID {CA586787-591F-4157-B5B3-888AB9F19CE3}        //
+      PARMALIAS 0:1 "My parameter alias 1"               // Alias of a parameter of a plugin inside the containter
+      PARMALIAS 1:2 Alias2                               // which was aliased at the container level
+                                                         // field 1, int, index of the alias instance, 0-based, always
+                                                         // sequential;
+                                                         // field 2, int, 1-based index of the mapped parameter, identical
+                                                         // to field 1 value of CONTAINER_PARM attribute (see above);
+                                                         // field 3, string, parameter alias, within quotation marks
+                                                         // if contains spaces;
+                                                         // Since build 7.49 container built-in parameters Bypass/Wet/Delta
+                                                         // are allowed to be aliased as well (see details in the description
+                                                         // of plugin PARMALIAS attribute above).
+      PARM_TCP 0:1 1:3 2:5                               // List of parameters mapped to the container, shown in track 
+                                                         // controls (FX params visible in TCP/MCP), irrelevant  
+                                                         // for Input, Take and Monitor FX;
+                                                         // field 1, int, 0-based index of the parameter in the list
+                                                         // of the mapped parameters within the container;
+                                                         // field 2, int, 1-based index of the mapped parameter, identical
+                                                         // to field 1 value of CONTAINER_PARM attribute (see above).
+      WAK 0 0                                            //
+      PARALLEL 1                                         // Optional (since REAPER 7), depending on whether either of the
+                                                         // following options is enabled for the FOLLOWING FX/Container instance
+                                                         // 1 - 'Run selected FX in parallel with previous FX';
+                                                         // 2 - 'Run selected FX in parallel with previous FX (merge MIDI)'.
+     CONTAINER_PARM 1 0 0:1 ""                           // Parameters of a nested container mapped to the current container.
+     CONTAINER_PARM 2 0 1:2 ""                           // The difference from the data of source plugin parameters mapped
+                                                         // to a parent container (see above) is that field 3 is 0-based index 
+                                                         // of the parameter in the mapped parameters list of the nested 
+                                                         // container while field 4 is 1-based index of such parameter, 
+                                                         // the order of these indices depends on the order in which parameters 
+                                                         // were mapped to the current container, when a parameter is unmapped 
+                                                         // and then mapped again its entry is added last.
+                                                         //  --- FX container definition end
+
+     <COMMENT                                            //  Plugin comment. Not present if no comment.
+        Y29tbWVudA==                                     //   Binary data, probably best to leave it alone
+     >                                                   //  
+	
+                                                         // --- Start of second plugin definition
+     BYPASS 0 0                                          //  ...
+     <JS "Guitar/tremolo" ""                             //  Start of JS plugin data
+         (see Jesusonic plugin info below)               //
+     >                                                   //
+     JS_DIMS 489 305                                     //  Dimensions of JS plugin UI
+     FLOATPOS 0 0 0 0                                    //  ...
+     FXID {BE5D3334-6675-4DAD-AFDD-F4489878D82A}         //  ...
+     WAK 0 0                                             //  ...
+     <COMMENT                                            //  ...
+         Y29tbWVudA==                                    //  ...
+     >                                                   //  ...
+
+    >                                                    // --- End of FX section
+
+
+--------------------------------------------------------------------------------------------------------------------
+
+VST/AU/DX(i) Plugins
+
+    <VST "VST: SomePlugin" "SomePlugin.dll" 0 "Sax offender"  //  Start of VST/AU/DX plugin data
+                                                              //   field 1, str, default name
+                                                              //   field 2, str, filename
+                                                              //   field 3, int, ??
+                                                              //   field 4, str, display name (default used if empty), if no name 
+                                                              //   is set by the user then "" is displayed, custom names are only 
+                                                              //   encolsed within quotes if they have spaces, so one word names 
+                                                              //   don't have quotes;
+    RmFkbe9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAA==  //  Binary data, leave it alone (variable number of lines)
+    AgAAAAAAAAAwAAAAAAAAAAAAEADvvq3eDfCt3sP1qD4zMzM/AAAAPw==  //
+    mplZPwAAAAAAAAA/MzMzP83MzD4AAAAAAABAP1Jlc29uYW50IEZpbA==  //  
+    dGVyAA==                                                  //
+    >                                                         //  End of VST plugin data
+
+--------------------------------------------------------------------------------------------------------------------
+
+Jesusonic Plugin
+
+For the sake of formatting, the plugin data has been truncated.
+    <JS "Guitar/tremolo" ""                                   //  Start of JS plugin data
+                                                              //   field 1, str, the format is "folder name/file name"
+                                                              //   field 2, str, display name (if empty the name from 
+                                                              //  reaper-jsfx.ini is used), "" is displayed if no name is set  
+                                                              //  by the user, custom names are only enclosed within quotes 
+                                                              //  if they have spaces, so one word names don't have quotes;
+        4.0 -6.0 0.0 - - - - - - - - - - - - - - - - - - - -  //  Data, 64 fields of float or '-' separated by spaces
+    >                                                         //  End of JS plugin data
+
+--------------------------------------------------------------------------------------------------------------------
+
+Video Processor plugin
+
+   <VIDEO_EFFECT "Video processor" ""                                               //  Start of Video Processor plugin data				  	
+      <CODE                                                                         //  Stores the entire preset code
+   	|// Screensaver (Monitoring FX only - blanks screen after no change)            //
+   	|//@param 1:sec 'Timeout (seconds)' 10 1 240 120.5 1                            //
+   	|//@param 2:r 'Color Red' 0 0 1 .5 .01                                          //
+   	|//@param 3:g 'Color Green' 0 0 1 .5 .01                                        //
+   	|//@param 4:b 'Color Blue' 0 0 1 .5 .01                                         //
+   	|                                                                               //
+   	|now = time_precise();                                                          //
+   	|input_info(0) && (!held || gfx_img_getptr(held) != gfx_img_getptr(0)) ? (      //
+   	|  gfx_img_free(held);                                                          //
+   	|  held = gfx_img_hold(0);                                                      //
+   	|  timeout = now;                                                               //
+   	|);                                                                             //
+   	|                                                                               //
+   	|timeout > 0 ? (                                                                //
+   	|  now > timeout+sec ? (                                                        //
+   	|    gfx_set(r,g,b);                                                            //
+   	|    gfx_fillrect(0,0,project_w,project_h);                                     //
+   	|    gfx_img_free(held);                                                        //
+   	|    timeout = held = 0;                                                        //
+   	|  ) : ui_get_state(0,0,0, 0.1+now - (timeout+sec));                            //
+   	|);                                                                             //
+       >                                                                            //
+    CODEPARM 10.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000      //  Control parameters
+ 	0.0000000000 1.0000000000 0.5000000000 0.0000000000 0.0000000000 0.1000000000   // 
+ 	0.5000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000   //
+ 	0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000   // 
+ 	0.0000000000                                                                    //
+    >                                                                               //  End of Video Processor plugin data
+
+--------------------------------------------------------------------------------------------------------------------
+
+Freeze data chunk, storing data for unfreezing
+
+<FXCHAIN                                                                                                // Start of track regular FXCHAIN chunk
+ WNDRECT 32 60 745 420                                                                                  //
+ SHOW 0                                                                                                 //
+ LASTSEL 0                                                                                              //
+ DOCKED 0                                                                                               //
+>                                                                                                       //
+                                                                                                        // -------Start of a FREEZE chunk 
+ <FREEZE 0                                                                                              // field 1, ?? 
+   <FXCHAIN                                                                                             // A regular FXCHAIN chunk storing track FX, 
+    WNDRECT 32 60 745 420                                                                               // if any, which are removed on freezing.
+    SHOW 0                                                                                              // If FX have never been inserted on the 
+    LASTSEL 0                                                                                           // track FXCHAIN chunk is not added.
+    DOCKED 0                                                                                            // Last line of FXCHAIN chunk before 
+                                                                                                        // closure if FX existed on the track at some 
+                                                                                                        // point in the past but were absent at the 
+                                                                                                        // moment of last freezing.
+    BYPASS 0 0 0                                                                                        //
+    <VST "VST: ReaDelay (Cockos)" readelay.dll 0 "" 1919247468<5653547265646C72656164656C617900> ""     //
+      bGRlcu5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAATAAAAAEAAAAAABAA                  //
+      AAAAAAAAAAABAAAALAAAAAIAAAAAAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAIA8nNEHMwAAgD8AAAAAAACAPwAAgD8AAIA/  //
+     AAAAPw==AAAQAAAA                                                                                   //
+    >                                                                                                   //
+    FLOATPOS 0 0 0 0                                                                                    //
+    FXID {FF92D48D-1B63-44E6-A44F-EF996F9E2228}                                                         //
+    WAK 0 0                                                                                             //
+  >                                                                                                     //
+  <ITEM {26E45913-BFEA-417E-8F96-1C61EE6E3FE4}                                                          // Original ITEM chunk (before freezing), 
+     POSITION 0.5                                                                                       // looks the same as any item chunk.
+     SNAPOFFS 0                                                                                         //
+     LENGTH 1.27340136054422                                                                            //
+     LOOP 0                                                                                             //
+     ALLTAKES 0                                                                                         //
+     FADEIN 1 0 0 1 0 0 0                                                                               //
+     FADEOUT 1 0 0 1 0 0 0                                                                              //
+     MUTE 0 0                                                                                           //
+     COLOR 31464893 R                                                                                   //
+     SEL 1                                                                                              //
+     IGUID {26E45913-BFEA-417E-8F96-1C61EE6E3FE4}                                                       //
+     IID 1                                                                                              //
+     NAME THREE                                                                                         //
+     VOLPAN 1 0 1 -1                                                                                    //		
+     SOFFS 0                                                                                            //
+     PLAYRATE 1 0 0 -1 0 0.0025                                                                         //
+     CHANMODE 0                                                                                         //
+     GUID {7A1C7B3D-7FB6-4FA1-9F0B-1FC41AAEA61D}                                                        //
+     <SOURCE WAVE                                                                                       //
+       FILE "C:\Users\Admin\Documents\REAPER Media\reaper.wav"                                          //
+     >                                                                                                  //
+     <TAKEFX                                                                                            // A regular TAKEFX chunk if the original item 
+       WNDRECT 32 60 745 420                                                                            // had FX before freezing.
+       SHOW 0                                                                                           //
+       LASTSEL 0                                                                                        //
+       DOCKED 0                                                                                         //
+       BYPASS 0 0 0                                                                                     //
+       <VST "VST: ReaDelay (Cockos)" readelay.dll 0 "" 1919247468<5653547265646C72656164656C617900> ""	//
+         bGRlcu5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAATAAAAAEAAAAAABAA               //
+         AAAAAAAAAAABAAAALAAAAAIAAAAAAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAIA8nNEHMwAAgD8AAAAAAACAPw         //
+        AAgD8AAIA/AAAAPw==AAAQAAA                                                                       //
+        >                                                                                               //
+       FLOATPOS 0 0 0 0                                                                                 //
+       FXID {63C343BD-C1AF-4CB0-9668-EA07D62D32A0}                                                      //
+       WAK 0 0                                                                                          //
+     >                                                                                                  //
+     <PITCHENV                                                                                          // Envelope chunk data if before freezing 
+       EGUID {8955C719-553C-4494-879E-286ECE31C437}                                                     // item had active take envelopes.
+       ACT 0 -1                                                                                         //
+       VIS 0 1 1                                                                                        //
+       LANEHEIGHT 0 0                                                                                   //
+       ARM 0                                                                                            //
+       DEFSHAPE 0 -1 -1                                                                                 //
+       PT 2.58540135 9 0                                                                                //
+     >                                                                                                  //
+   >                                                                                                    //
+>                                                                                                       // -------End of FREEZE chunk
+<ITEM                                                                                                   // Frozen item chunk, part 
+                                                                                                        // of the TRACK chunk 
+  POSITION 0.5                                                                                          //
+  .........                                                                                             //
+  <SOURCE WAVE                                                                                          //
+    FILE "C:\Users\Admin\Documents\REAPER Media\reaper_freeze.wav"                                      //
+  >                                                                                                     //
+>                                                                                                       //
+

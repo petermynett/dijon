@@ -1,0 +1,43 @@
+{
+  "song_name": "the blackest crow",
+  "input_url": "https://www.youtube.com/watch?v=gHa70BLg7B8",
+  "downloaded": {
+    "mp3": "Bruce-Molsky-&-Julie-Fowlis-_-The-Blackest-Crow-_-Transatlantic-Sessions-_-BBC-ALBA_gHa70BLg7B8.mp3",
+    "mp4": null,
+    "json": "Bruce-Molsky-&-Julie-Fowlis-_-The-Blackest-Crow-_-Transatlantic-Sessions-_-BBC-ALBA_gHa70BLg7B8.json",
+    "thumbnail": "Bruce-Molsky-&-Julie-Fowlis-_-The-Blackest-Crow-_-Transatlantic-Sessions-_-BBC-ALBA_gHa70BLg7B8.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 3953348,
+    "thumbnail_size_bytes": 45600
+  },
+  "yt_dlp": {
+    "id": "gHa70BLg7B8",
+    "webpage_url": "https://www.youtube.com/watch?v=gHa70BLg7B8",
+    "title": "Bruce Molsky & Julie Fowlis | The Blackest Crow | Transatlantic Sessions | BBC ALBA",
+    "channel": "BBC ALBA",
+    "channel_id": "UC9QfDPou5ir62PFnMePbqDg",
+    "channel_url": "https://www.youtube.com/channel/UC9QfDPou5ir62PFnMePbqDg",
+    "description": "@BruceMolskyMusic, @juliefowlismusic agus caraidean le ‘The Blackest Crow' air program Transatlantic Sessions Dlùth An Dàimh air BBC ALBA. \n\nBruce Molsky, Julie Fowlis & friends perform ‘The Blackest Crow’ from the BBC ALBA programme, Transatlantic Sessions Dlùth An Dàimh.\n\n#Transatlanticsessions #iPlayer #BBCALBA \n\n---------- \n\nLàrach-lìn a ' phrògram 👉 https://www.bbc.co.uk/programmes/m00116jl\n\n---------- \n\nFo-Sgrìobh gu BBC ALBA agus brùth air a' 🔔 👉 https://bit.ly/BBCALBAsubscribe \nFaic seo agus barrachd air BBC iPlayer 👉 https://bbc.co.uk/tv/bbcalba \n\n---------- \n\n Faic sin air sòisealtan eile\n 🔎 X : https://twitter.com/bbcalba \nInstagram: https://instagram.com/bbc.alba \nFacebook: https://facebook.com/bbcalba",
+    "duration": 215,
+    "view_count": 11839,
+    "like_count": 282,
+    "upload_date": "20240510",
+    "timestamp": 1715382018,
+    "tags": [
+      "BBC ALBA",
+      "BBC",
+      "Gaelic",
+      "Gàidhlig",
+      "Music",
+      "Bruce Molsky",
+      "Julie Fowlis",
+      "The Blackest Crow"
+    ],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi_webp/gHa70BLg7B8/maxresdefault.webp"
+  }
+}

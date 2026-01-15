@@ -1,0 +1,41 @@
+{
+  "song_name": "whiskey before breakfast",
+  "input_url": "https://www.youtube.com/watch?v=IK3xkLtqo7g",
+  "downloaded": {
+    "mp3": "Doc-Watson-(ft.-Bryan-Sutton)---_Whiskey-Before-Breakfast__IK3xkLtqo7g.mp3",
+    "mp4": null,
+    "json": "Doc-Watson-(ft.-Bryan-Sutton)---_Whiskey-Before-Breakfast__IK3xkLtqo7g.json",
+    "thumbnail": "Doc-Watson-(ft.-Bryan-Sutton)---_Whiskey-Before-Breakfast__IK3xkLtqo7g.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 5569628,
+    "thumbnail_size_bytes": 73913
+  },
+  "yt_dlp": {
+    "id": "IK3xkLtqo7g",
+    "webpage_url": "https://www.youtube.com/watch?v=IK3xkLtqo7g",
+    "title": "Doc Watson (ft. Bryan Sutton) - \"Whiskey Before Breakfast\"",
+    "channel": "solutioncow",
+    "channel_id": "UCnqRuGWModCPhp8-d2W0JZQ",
+    "channel_url": "https://www.youtube.com/channel/UCnqRuGWModCPhp8-d2W0JZQ",
+    "description": "Doc Watson performing \"Whiskey Before Breakfast\" from the album \"Best of the Sugar Hill Years\" with Bryan Sutton. Also appears on Bryan Sutton's album \"Not Too Far From The Tree.\"",
+    "duration": 176,
+    "view_count": 229549,
+    "like_count": 1531,
+    "upload_date": "20110327",
+    "timestamp": 1301216036,
+    "tags": [
+      "Doc Watson",
+      "Americana",
+      "Whiskey Before Breakfast",
+      "folk",
+      "Bryan Sutton",
+      "Not Too Far From The Tree"
+    ],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/IK3xkLtqo7g/maxresdefault.jpg"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "song_name": "I'll fly away",
+  "input_url": "https://www.youtube.com/watch?v=uA4JyAONd_I",
+  "downloaded": {
+    "mp3": "Johnny-Cash---I'll-Fly-Away_uA4JyAONd_I.mp3",
+    "mp4": null,
+    "json": "Johnny-Cash---I'll-Fly-Away_uA4JyAONd_I.json",
+    "thumbnail": "Johnny-Cash---I'll-Fly-Away_uA4JyAONd_I.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 2851580,
+    "thumbnail_size_bytes": 17898
+  },
+  "yt_dlp": {
+    "id": "uA4JyAONd_I",
+    "webpage_url": "https://www.youtube.com/watch?v=uA4JyAONd_I",
+    "title": "Johnny Cash - I'll Fly Away",
+    "channel": "Beñat Eskauriatza",
+    "channel_id": "UCXYcZyKoVd0OXHGsFnKms9Q",
+    "channel_url": "https://www.youtube.com/channel/UCXYcZyKoVd0OXHGsFnKms9Q",
+    "description": "I'll Fly Away - written by Albert E. Brumley\r\n\r\nSong covered by Johnny Cash for his album \"My Mother's Hymn Book\". The song is also included on the \"Unearthed\" box set. \r\n\r\n\r\nSome glad morning when this life is over, \r\nI'll fly away. \r\nTo a home on God's celestial shore, \r\nI'll fly away. \r\n\r\nI'll fly away, O Glory, \r\nI'll fly away. (In the morning) \r\nWhen I die, Hallelujah, bye and bye, \r\nI'll fly away. \r\n\r\nWhen the shadows of this life are gone, \r\nI'll fly away. \r\nLike a bird from prison bars has flown \r\nI'll fly away. \r\n\r\nI'll fly away, O Glory, \r\nI'll fly away. (In the morning) \r\nWhen I die, Hallelujah, bye and bye, \r\nI'll fly away. \r\n\r\nJust a few more weary days and then, \r\nI'll fly away. \r\nTo a land where joy shall never end, \r\nI'll fly away. \r\n\r\nI'll fly away, O Glory, \r\nI'll fly away. (In the morning) \r\nWhen I die, Hallelujah, bye and bye, \r\nI'll fly away.",
+    "duration": 110,
+    "view_count": 3213498,
+    "like_count": 18421,
+    "upload_date": "20100316",
+    "timestamp": 1268764555,
+    "tags": [
+      "Johnny",
+      "Cash",
+      "Hank",
+      "Williams",
+      "Unearthed",
+      "Mother's",
+      "Himn",
+      "Book"
+    ],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/uA4JyAONd_I/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AH-BIAC4AOKAgwIABABGHIgSigqMA8=&rs=AOn4CLCQrBlpMbJkmM4zHR-yStZpvosueg"
+  }
+}

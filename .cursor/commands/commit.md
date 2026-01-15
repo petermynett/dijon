@@ -5,9 +5,9 @@
 - `git status`
 - `git diff --stat`
 
-If no tracked changes are present:
+If no changes are present (tracked or untracked):
 - Fail with:
-❌ Nothing to commit (no tracked changes).
+❌ Nothing to commit (working tree clean).
 
 ---
 
@@ -15,7 +15,6 @@ If no tracked changes are present:
 
 These conditions DO NOT stop the commit. They are reported for visibility.
 
-- Untracked files present
 - File deletions among tracked files
 - New directories detected
 - Changes under:
@@ -23,24 +22,37 @@ These conditions DO NOT stop the commit. They are reported for visibility.
 - `db/snapshots/`
 - `env/`
 - `ztemp/`
-- Large untracked files (>2 MB)
 
 Warnings are summarized before committing.
 
-Untracked files are excluded unless `--include-new` is specified.
+---
+
+## Hard Blockers (Secrets + Large Files)
+
+The following conditions STOP execution:
+
+### 1) Secret paths staged (from `.gitignore` Secrets section)
+
+Fail if any staged path matches:
+- `.secrets/**`
+- `.env`
+- `.env.*` (except `.env.example`)
+
+### 2) Any staged file is larger than 2 MB
+
+Fail if any staged file (added/modified) exceeds 2 MB.
+
+Implementation notes (must be performed after staging):
+- Enumerate staged paths using `git diff --cached --name-only -z`
+- Ignore deleted paths when checking file sizes
+- Report the offending paths clearly before failing
 
 ---
 
 ## Staging Policy
 
-Default behavior:
-- Stage tracked changes only:
-- `git add -u`
-
-If `--include-new` is specified:
-- Stage all changes:
+Stage all changes (tracked, untracked, and deletions):
 - `git add -A`
-- Exclude untracked files larger than 2 MB and warn.
 
 If staging fails:
 - Hard fail:
@@ -48,6 +60,7 @@ If staging fails:
 
 After staging:
 - Show `git status`
+- Run hard-block scans (Secrets + Large Files)
 
 ---
 
@@ -126,6 +139,12 @@ Run sequentially, aborting on failure:
 - Warn (do not fail) if fetch fails
 
 2. Verify sync:
+- Print refs:
+  - `git branch --show-current`
+  - `git rev-parse --abbrev-ref @{u}`
+- Print SHAs:
+  - `git rev-parse HEAD`
+  - `git rev-parse @{u}`
 - Compare:
   - `git rev-parse HEAD`
   - `git rev-parse @{u}`
@@ -151,6 +170,5 @@ Warnings never block execution.
 
 - Commit early.
 - Commit often.
-- Tracked changes are safe.
-- Untracked changes are opt-in.
+- Untracked changes are first-class.
 - Automation should help you ship, not ask permission.

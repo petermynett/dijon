@@ -1,0 +1,45 @@
+{
+  "song_name": "I'll fly away",
+  "input_url": "https://www.youtube.com/watch?v=1BPoMIQHwpo",
+  "downloaded": {
+    "mp3": "Alison-Krauss---I'll-fly-away_1BPoMIQHwpo.mp3",
+    "mp4": null,
+    "json": "Alison-Krauss---I'll-fly-away_1BPoMIQHwpo.json",
+    "thumbnail": "Alison-Krauss---I'll-fly-away_1BPoMIQHwpo.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 5826020,
+    "thumbnail_size_bytes": 13053
+  },
+  "yt_dlp": {
+    "id": "1BPoMIQHwpo",
+    "webpage_url": "https://www.youtube.com/watch?v=1BPoMIQHwpo",
+    "title": "Alison Krauss - I'll fly away",
+    "channel": "todaysdayintime",
+    "channel_id": "UC5iAopFE6g2QPKhU61SkVBA",
+    "channel_url": "https://www.youtube.com/channel/UC5iAopFE6g2QPKhU61SkVBA",
+    "description": "Alison Krauss - I'll fly away",
+    "duration": 244,
+    "view_count": 14603851,
+    "like_count": 90521,
+    "upload_date": "20080410",
+    "timestamp": 1207864677,
+    "tags": [
+      "Alison",
+      "Krauss",
+      "I'll",
+      "fly",
+      "away",
+      "alfordch",
+      "jesus",
+      "god",
+      "love",
+      "nature"
+    ],
+    "categories": [
+      "Entertainment"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/1BPoMIQHwpo/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AH-BIAC4AOKAgwIABABGCEgWShyMA8=&rs=AOn4CLD9VgoQzKBAjr3h4hCMvJskHDVbkA"
+  }
+}

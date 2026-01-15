@@ -1,0 +1,34 @@
+{
+  "song_name": "the blackest crow",
+  "input_url": "https://www.youtube.com/watch?v=NEDHzPnEIZ0",
+  "downloaded": {
+    "mp3": "Blackest-Crow---Guitar-2---AJAM-Tune-&-Songbook_NEDHzPnEIZ0.mp3",
+    "mp4": null,
+    "json": "Blackest-Crow---Guitar-2---AJAM-Tune-&-Songbook_NEDHzPnEIZ0.json",
+    "thumbnail": "Blackest-Crow---Guitar-2---AJAM-Tune-&-Songbook_NEDHzPnEIZ0.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 4843436,
+    "thumbnail_size_bytes": 27298
+  },
+  "yt_dlp": {
+    "id": "NEDHzPnEIZ0",
+    "webpage_url": "https://www.youtube.com/watch?v=NEDHzPnEIZ0",
+    "title": "Blackest Crow - Guitar 2 - AJAM Tune & Songbook",
+    "channel": "Alleghany JAM",
+    "channel_id": "UCY1stc5-Ty4fn3hlkF45jXw",
+    "channel_url": "https://www.youtube.com/channel/UCY1stc5-Ty4fn3hlkF45jXw",
+    "description": "Song:  The Blackest Crow (As Time Draws Near)\n\nInstrument: Guitar 2\n\nTeacher: Carl Jones\n\nTuning: Standard\n\nRecorded for Alleghany JAM (Junior Appalachian Musicians) after school music program.\n\nThis is a beautiful old song Tommy Jarrell sang with the banjo in D. \n\nHere it is arranged for fingerpick guitar in G (capo 7th fret to be in D). \n\nThis is a review video for the Alleghany JAM Tune & Songbook which contains over a 100 pages of song words, chord photos, heritage musician bios plus fiddle, banjo, guitar, mandolin and dulcimer tablature, chords, and music. This book is available at www.alleghanyjam.com",
+    "duration": 255,
+    "view_count": 2464,
+    "like_count": 75,
+    "upload_date": "20200913",
+    "timestamp": 1599962915,
+    "tags": [],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi_webp/NEDHzPnEIZ0/sddefault.webp"
+  }
+}

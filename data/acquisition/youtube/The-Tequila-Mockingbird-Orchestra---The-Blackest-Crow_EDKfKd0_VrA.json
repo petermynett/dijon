@@ -1,0 +1,53 @@
+{
+  "song_name": "the blackest crow",
+  "input_url": "https://www.youtube.com/watch?v=EDKfKd0_VrA",
+  "downloaded": {
+    "mp3": "The-Tequila-Mockingbird-Orchestra---The-Blackest-Crow_EDKfKd0_VrA.mp3",
+    "mp4": null,
+    "json": "The-Tequila-Mockingbird-Orchestra---The-Blackest-Crow_EDKfKd0_VrA.json",
+    "thumbnail": "The-Tequila-Mockingbird-Orchestra---The-Blackest-Crow_EDKfKd0_VrA.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 7960124,
+    "thumbnail_size_bytes": 53430
+  },
+  "yt_dlp": {
+    "id": "EDKfKd0_VrA",
+    "webpage_url": "https://www.youtube.com/watch?v=EDKfKd0_VrA",
+    "title": "The Tequila Mockingbird Orchestra - The Blackest Crow",
+    "channel": "AnalogSongs",
+    "channel_id": "UCVhKCFPCOcjqjooKtEGPLBw",
+    "channel_url": "https://www.youtube.com/channel/UCVhKCFPCOcjqjooKtEGPLBw",
+    "description": "Kurt and Patrick of The Tequila Mockingbird Orchestra perform an old Bluegrass track in woods of Molega, NS.\r\nwww.thepicturehouse.ca\r\nhttp://www.thetequilamockingbirdorchestra.com/",
+    "duration": 253,
+    "view_count": 8535,
+    "like_count": 34,
+    "upload_date": "20111118",
+    "timestamp": 1321632548,
+    "tags": [
+      "Laurie Lewis",
+      "James Reams",
+      "Dirk Powell",
+      "Tim O'Brien",
+      "John Herrmann",
+      "Analog Songs",
+      "analogsongs",
+      "The Picture House",
+      "Cameron Dexter",
+      "Stephen Cooper",
+      "Katy Hopkins",
+      "Chris Ball",
+      "Stacy Kaulback",
+      "Molega",
+      "Nova Scotia",
+      "Canada",
+      "Victoria",
+      "British Columbia"
+    ],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/EDKfKd0_VrA/maxresdefault.jpg"
+  }
+}
