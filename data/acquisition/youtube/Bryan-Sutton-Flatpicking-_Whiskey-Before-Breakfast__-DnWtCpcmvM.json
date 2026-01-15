@@ -1,0 +1,45 @@
+{
+  "song_name": "whiskey before breakfast",
+  "input_url": "https://www.youtube.com/watch?v=-DnWtCpcmvM",
+  "downloaded": {
+    "mp3": "Bryan-Sutton-Flatpicking-_Whiskey-Before-Breakfast__-DnWtCpcmvM.mp3",
+    "mp4": null,
+    "json": "Bryan-Sutton-Flatpicking-_Whiskey-Before-Breakfast__-DnWtCpcmvM.json",
+    "thumbnail": "Bryan-Sutton-Flatpicking-_Whiskey-Before-Breakfast__-DnWtCpcmvM.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 1111964,
+    "thumbnail_size_bytes": 71179
+  },
+  "yt_dlp": {
+    "id": "-DnWtCpcmvM",
+    "webpage_url": "https://www.youtube.com/watch?v=-DnWtCpcmvM",
+    "title": "Bryan Sutton Flatpicking \"Whiskey Before Breakfast\"",
+    "channel": "ArtistWorks",
+    "channel_id": "UCpYohGnVR-Z4kjysac0W7jA",
+    "channel_url": "https://www.youtube.com/channel/UCpYohGnVR-Z4kjysac0W7jA",
+    "description": "Get FREE lessons from Bryan Sutton and others here: https://tfir.es/AWFreeLessons\n\nEXPLORE All Our Schools: https://tfir.es/48AnINc\nSUBSCRIBE to ArtistWorks on YouTube for more videos: https://tfir.es/AWYouTube\n\nBryan Sutton (http://artistworks.com/bryan-sutton) is in the ArtistWorks Studio in Napa, CA this week recording more guitar lessons for all his online guitar students. Here he is demonstrating some of the best flatpicking guitar skills around on the classic bluegrass song, \"Whiskey Before Breakfast\", which happens to be a featured topic in his new guitar lessons, coming soon! \n\nThere is a lot of new and exciting stuff coming soon to the Online Bluegrass Guitar School with Bryan Sutton so stay tuned....\n\nIf you have not already, be sure to visit the link for more information about Bryan's online guitar school, which includes some free sample lessons. Students have unlimited access to all of Bryan's in depth guitar curriculum - covering all aspects of bluegrass guitar and flatpicking from beginner to advanced. \n\nAll of Bryan's students can also submit their own videos of themselves playing directly to Bryan for his personal review. He will watch your practice video and then respond with his own video where he will let you know what you should focus on in order to improve.  Bryan's response video gets paired together with the student submission and made available for all of his online students to see. So as a student, you can watch all the Video Exchanges™ that Bryan has recorded - which there are hundreds of and more being recorded all the time! You never know, the advice he gives someone else might just apply to you too.  For more information on how Video Exchange™ learning works visit http://artistworks.com.\n\nBryan Sutton is an undisputed master of flatpicking and aside from his solo career is a sought out Nashville session player and also plays guitar in the legendary bluegrass band Hot Rize.",
+    "duration": 62,
+    "view_count": 285315,
+    "like_count": 1321,
+    "upload_date": "20140910",
+    "timestamp": 1410382661,
+    "tags": [
+      "artistworks",
+      "Bryan Sutton (Musical Artist)",
+      "Guitar (Musical Instrument)",
+      "Music Education (Field Of Study)",
+      "Bluegrass (Musical Genre)",
+      "flatpicking",
+      "Acoustic Guitar (Musical Instrument)",
+      "Guitarist (Profession)",
+      "Whiskey Before Breakfast",
+      "flatpick guitar"
+    ],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/-DnWtCpcmvM/maxresdefault.jpg"
+  }
+}

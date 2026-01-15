@@ -1,0 +1,46 @@
+{
+  "song_name": "whiskey before breakfast",
+  "input_url": "https://www.youtube.com/watch?v=twq7ueew5_s",
+  "downloaded": {
+    "mp3": "Julian-Lage-&-Chris-Eldridge---Whiskey-Before-Breakfast_twq7ueew5_s.mp3",
+    "mp4": null,
+    "json": "Julian-Lage-&-Chris-Eldridge---Whiskey-Before-Breakfast_twq7ueew5_s.json",
+    "thumbnail": "Julian-Lage-&-Chris-Eldridge---Whiskey-Before-Breakfast_twq7ueew5_s.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 14272988,
+    "thumbnail_size_bytes": 51246
+  },
+  "yt_dlp": {
+    "id": "twq7ueew5_s",
+    "webpage_url": "https://www.youtube.com/watch?v=twq7ueew5_s",
+    "title": "Julian Lage & Chris Eldridge - Whiskey Before Breakfast",
+    "channel": "OldFirstBrooklyn",
+    "channel_id": "UCTKg9g1NS--O4a4ji3Puolw",
+    "channel_url": "https://www.youtube.com/channel/UCTKg9g1NS--O4a4ji3Puolw",
+    "description": "From the Fifth Annual Brooklyn Bluegrass Bash to benefit the restoration of historic landmark, Old First Reformed Church in Park Slope, Brooklyn. Learn more: http://www.razoo.com/story/Old-First-Restoration-Fund\nJL and Critter News: www.lageeldridge.com\nSocial media by Twangbox®: http://twangbox.com\nBradley Klein w. Jerry Aquino - Recorded live at The Bell House in Brooklyn, NY.",
+    "duration": 465,
+    "view_count": 136335,
+    "like_count": 1350,
+    "upload_date": "20170114",
+    "timestamp": 1484401584,
+    "tags": [
+      "Old First Brooklyn",
+      "Twangbox",
+      "Bradley Klein",
+      "Brad Klein",
+      "bluegrass bash",
+      "julian lage",
+      "chris eldridge",
+      "michael daves",
+      "punch brothers",
+      "chris thile",
+      "prairie home companion"
+    ],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi_webp/twq7ueew5_s/maxresdefault.webp"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "song_name": "the blackest crow",
+  "input_url": "https://www.youtube.com/watch?v=xRymjGRq_t8",
+  "downloaded": {
+    "mp3": "The-Blackest-Crow---Heather-Cartwright-and-Sam-Mabbett_xRymjGRq_t8.mp3",
+    "mp4": null,
+    "json": "The-Blackest-Crow---Heather-Cartwright-and-Sam-Mabbett_xRymjGRq_t8.json",
+    "thumbnail": "The-Blackest-Crow---Heather-Cartwright-and-Sam-Mabbett_xRymjGRq_t8.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 8828396,
+    "thumbnail_size_bytes": 38730
+  },
+  "yt_dlp": {
+    "id": "xRymjGRq_t8",
+    "webpage_url": "https://www.youtube.com/watch?v=xRymjGRq_t8",
+    "title": "The Blackest Crow - Heather Cartwright and Sam Mabbett",
+    "channel": "Heather Cartwright Music",
+    "channel_id": "UCM_DHO6zQqC69UW0hxqFKnw",
+    "channel_url": "https://www.youtube.com/channel/UCM_DHO6zQqC69UW0hxqFKnw",
+    "description": "This is our arrangement of a lovely traditional American song.",
+    "duration": 311,
+    "view_count": 1115,
+    "like_count": 43,
+    "upload_date": "20240811",
+    "timestamp": 1723392176,
+    "tags": [],
+    "categories": [
+      "Music"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/xRymjGRq_t8/maxresdefault.jpg"
+  }
+}

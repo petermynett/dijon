@@ -1,0 +1,34 @@
+{
+  "song_name": "whiskey before breakfast",
+  "input_url": "https://www.youtube.com/watch?v=amYbUEGCdOY",
+  "downloaded": {
+    "mp3": "Norman-Blake-Whiskey-Before-Breakfast_amYbUEGCdOY.mp3",
+    "mp4": null,
+    "json": "Norman-Blake-Whiskey-Before-Breakfast_amYbUEGCdOY.json",
+    "thumbnail": "Norman-Blake-Whiskey-Before-Breakfast_amYbUEGCdOY.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 6129044,
+    "thumbnail_size_bytes": 74023
+  },
+  "yt_dlp": {
+    "id": "amYbUEGCdOY",
+    "webpage_url": "https://www.youtube.com/watch?v=amYbUEGCdOY",
+    "title": "Norman Blake Whiskey Before Breakfast",
+    "channel": "USG- 64",
+    "channel_id": "UCHap5KIyUnu40LgivG-3xhw",
+    "channel_url": "https://www.youtube.com/channel/UCHap5KIyUnu40LgivG-3xhw",
+    "description": "",
+    "duration": 214,
+    "view_count": 22051,
+    "like_count": 180,
+    "upload_date": "20131214",
+    "timestamp": 1387026663,
+    "tags": [],
+    "categories": [
+      "People & Blogs"
+    ],
+    "live_status": "not_live",
+    "is_live": false,
+    "thumbnail": "https://i.ytimg.com/vi/amYbUEGCdOY/maxresdefault.jpg"
+  }
+}
