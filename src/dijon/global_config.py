@@ -28,6 +28,8 @@ ACQUISITION_DIR: Path = DATA_DIR / "acquisition"
 RAW_DIR: Path = DATA_DIR / "raw"
 NORMAL_DIR: Path = DATA_DIR / "normal"
 OPTIMIZED_DIR: Path = DATA_DIR / "optimized"
+ANNOTATIONS_DIR: Path = DATA_DIR / "annotations"
+# Legacy: kept for backward compatibility, but deprecated
 OVERRIDES_DIR: Path = DATA_DIR / "overrides"
 
 # Logs directories

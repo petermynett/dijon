@@ -90,7 +90,7 @@ Protected evidence (e.g. acquisition data) must never be deleted or edited.
 ### Data contracts and manifests
 
 - Follow all data rules defined in **DATA.md**
-- Do not edit acquisition, raw, or override data in place
+- Do not edit acquisition, raw, or annotation data in place
 - Do not invent new manifest fields, schemas, or ID formats
 - Do not retroactively rewrite file identifiers
 

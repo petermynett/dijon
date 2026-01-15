@@ -4,7 +4,7 @@ This module provides standardized functions for:
 - Generating file_id values (SRC-YYMM-SEQ format)
 - Reading and writing manifest.csv files
 - Computing file checksums
-- Resolving effective raw files (raw + overrides precedence)
+- Resolving effective raw files (raw + annotations precedence)
 - Supporting multiple manifest types (raw, upstream, derived) with type-specific schemas
 """
 
@@ -669,36 +669,39 @@ def get_active_files(
 
 def resolve_effective_raw_path(
     raw_dir: Path,
-    overrides_dir: Path,
+    annotations_dir: Path,
     file_id: str,
     rel_path: str,
 ) -> Path | None:
-    """Resolve effective raw file path (overrides take precedence over raw).
+    """Resolve effective raw file path (overriding annotations take precedence over raw).
 
-    Per stage-first structure: check data/overrides/<source_key>/<file_id>.* first,
-    then data/raw/<source_key>/<file_id>.*.
+    Per stage-first structure: check data/annotations/<source_key>/<file_id>.* first
+    for overriding annotations, then data/raw/<source_key>/<file_id>.*.
 
     Args:
         raw_dir: Directory for raw files (data/raw/<source_key>/).
-        overrides_dir: Directory for override files (data/overrides/<source_key>/).
+        annotations_dir: Directory for annotation files (data/annotations/<source_key>/).
         file_id: File ID (e.g., "RCP-2412-001").
         rel_path: Relative path from manifest (e.g., "raw/RCP-2412-001.jpg").
 
     Returns:
-        Path to effective raw file, or None if neither override nor raw exists.
+        Path to effective raw file, or None if neither overriding annotation nor raw exists.
 
     Note:
-        Extension is inferred from rel_path. If override exists with different
-        extension, it still takes precedence.
+        Extension is inferred from rel_path. If overriding annotation exists with different
+        extension, it still takes precedence. Multiple overriding annotations for the same
+        file_id result in ambiguity (caller must handle this case).
     """
     # Extract extension from rel_path
     rel_path_obj = Path(rel_path)
     ext = rel_path_obj.suffix
 
-    # Check override first
-    override_path = overrides_dir / f"{file_id}{ext}"
-    if override_path.exists():
-        return override_path
+    # Check for overriding annotations first
+    # TODO: Implement proper annotation schema and filtering for "overriding" flag
+    # For now, check if annotation file exists (simple file-based check)
+    annotation_path = annotations_dir / f"{file_id}{ext}"
+    if annotation_path.exists():
+        return annotation_path
 
     # Check raw (rel_path is like "raw/<file_id>.ext", extract filename)
     raw_filename = rel_path_obj.name
@@ -712,7 +715,7 @@ def resolve_effective_raw_path(
 def verify_manifest_integrity(
     manifest_path: Path,
     raw_dir: Path,
-    overrides_dir: Path,
+    annotations_dir: Path,
     profile: ManifestType = "raw",
 ) -> list[str]:
     """Verify integrity of all active manifest entries.
@@ -720,12 +723,12 @@ def verify_manifest_integrity(
     Checks that:
     - Files exist at rel_path
     - SHA256 checksums match
-    - Override files exist if referenced
+    - Overriding annotation files exist if referenced
 
     Args:
         manifest_path: Path to manifest.csv file.
         raw_dir: Directory for raw files (data/raw/<source_key>/).
-        overrides_dir: Directory for override files (data/overrides/<source_key>/).
+        annotations_dir: Directory for annotation files (data/annotations/<source_key>/).
         profile: Manifest profile type ("raw", "upstream", or "derived"). Defaults to "raw".
 
     Returns:
@@ -744,9 +747,9 @@ def verify_manifest_integrity(
             continue
 
         # Resolve effective path
-        effective_path = resolve_effective_raw_path(raw_dir, overrides_dir, file_id, rel_path)
+        effective_path = resolve_effective_raw_path(raw_dir, annotations_dir, file_id, rel_path)
         if effective_path is None:
-            errors.append(f"File {file_id} not found at {rel_path} or override")
+            errors.append(f"File {file_id} not found at {rel_path} or overriding annotation")
             continue
 
         # Verify checksum

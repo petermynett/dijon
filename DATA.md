@@ -13,7 +13,7 @@ DATA.md is authoritative for:
 
 - data classification and lifecycle
 - immutability and deletion rules
-- precedence and override semantics
+- precedence and annotation semantics
 - rebuildability and provenance guarantees
 
 If a rule about data meaning or lifecycle appears elsewhere, **DATA.md wins**.
@@ -26,7 +26,7 @@ This repository currently commits to the following data classes:
 
 1. **Acquisition** — protected upstream evidence  
 2. **Raw** — canonical system of record  
-3. **Overrides** — canonical modifier layer applied on top of raw
+3. **Annotations** — canonical asserted truth and interpretations
 
 Additional derived or analytical stages may be introduced later.  
 They are intentionally not specified here.
@@ -39,7 +39,7 @@ They are intentionally not specified here.
 
 - Artifacts under `data/acquisition/` are acquisition data
 - Artifacts under `data/raw/` are raw data
-- Overrides live in their own filesystem locations and are referenced by manifests
+- Artifacts under `data/annotations/` are annotation data
 
 Manifests may describe relationships and precedence, but **stage is determined by location**, not metadata alone.
 
@@ -59,10 +59,12 @@ These rules are strict:
   - never edited or replaced
   - canonical rebuild root
 
-- **Overrides**
+- **Annotations**
   - append-only
   - never edited or replaced
-  - express corrections or alternative interpretations
+  - represent manual judgments, labels, corrections, and alternative readings
+  - may attach to any stable entity (e.g., performances, tunes, sources, segments, or dataset-level objects)
+  - not assumed rebuildable and must be treated as protected, non-deletable canonical inputs
 
 If something is wrong, the fix is expressed by **adding new data**, not modifying history.
 
@@ -87,10 +89,7 @@ When in doubt, treat artifacts as protected and non-mutable.
 ## Canonical meaning and precedence
 
 - **Raw data is canonical** for system meaning
-- **Overrides modify raw** without mutating it
-- Overrides may represent corrections, reinterpretations, or precedence rules
-- During downstream resolution:  
-  **override > raw**
+- **Annotations** accompany canonical artifacts without mutating them
 
 Precedence must be resolvable via data layout and/or manifests.  
 Notebooks must not be the only place where “truth” is decided.
@@ -101,7 +100,7 @@ Notebooks must not be the only place where “truth” is decided.
 
 The system aims to guarantee:
 
-- **Rebuildability**: downstream artifacts can be regenerated from acquisition + raw + overrides
+- **Rebuildability**: downstream artifacts can be regenerated from acquisition + raw + annotations
 - **Traceability**: it is possible to determine how an artifact was produced
 
 Minimum guarantee for stable outputs:
@@ -116,14 +115,14 @@ Implementation details may evolve, but these guarantees must hold.
 
 Manual data is expected and supported, including:
 
-- annotations
+- annotations (canonical asserted truth and interpretations)
 - corrections
 - labels
-- overrides
+- alternative readings
 
-Manual inputs may be more authoritative than upstream sources, but they must be represented explicitly as data (typically via overrides), never by mutating acquisition or raw files.
+Manual inputs may be more authoritative than upstream sources, but they must be represented explicitly as annotations, never by mutating acquisition or raw files.
 
-History is not required: only the **latest declared intent** must be available.
+Annotations are append-only and accumulate; multiple annotations may coexist for the same entity without requiring a single "correct" interpretation.
 
 ---
 
@@ -133,7 +132,7 @@ Derived or analytical data is not yet formally classified.
 
 Current posture:
 
-- **All data above raw/overrides is considered derived and rebuildable unless explicitly documented otherwise**
+- **All data above raw/annotations is considered derived and rebuildable unless explicitly documented otherwise**
 - Derived artifacts should be safe to delete and regenerate
 - Agents must not delete derived artifacts without explicit approval
 
@@ -156,7 +155,7 @@ Hard rules:
 - **Never delete**:
   - acquisition
   - raw
-  - overrides
+  - annotations
 
 - **Derived artifacts (including databases)**:
   - rebuildable by default
@@ -190,4 +189,4 @@ When new data stages are introduced, this contract should be extended by:
 
 Until then, the data contract is intentionally small:
 
-**acquisition → raw → overrides → (derived, rebuildable)**
+**acquisition + raw + annotations → (derived, rebuildable)**
