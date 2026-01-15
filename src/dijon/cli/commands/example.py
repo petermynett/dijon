@@ -101,7 +101,7 @@ def load_command(
 ) -> None:
     """Load and validate canonical raw files for the example source.
     
-    Resolves effective raw files (raw + overrides precedence) and validates
+    Resolves effective raw files (raw + overriding annotations precedence) and validates
     manifest integrity. Does not write canonical data.
     """
     cli = BaseCLI("example")
@@ -109,13 +109,13 @@ def load_command(
     def _load() -> dict:
         source = get_source()
         raw_dir = source.get_raw_dir()
-        overrides_dir = source.get_overrides_dir()
+        annotations_dir = source.get_annotations_dir()
         manifest_path = source.get_manifest_path()
         
         result = load(
             source_key=source.source_key,
             raw_dir=raw_dir,
-            overrides_dir=overrides_dir,
+            annotations_dir=annotations_dir,
             manifest_path=manifest_path,
             dry_run=dry_run,
         )

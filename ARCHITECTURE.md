@@ -81,6 +81,7 @@ Research happens primarily above the stable core.
 - Filesystem-backed representations of data lifecycle
 - Encode *where* data is in the system, not *what it means*
 - Meaning and mutability rules are defined in DATA.md
+- Annotations are a canonical side-layer input that can attach to any stable entity
 
 ### Database
 - Query accelerator over filesystem-backed data
@@ -143,8 +144,10 @@ Detailed rules are defined in DATA.md.
 
 ## Manual truth, comparison, and uncertainty
 
-- Manual annotations live in the filesystem
-- They are treated as **labeled interpretations**
+- Manual annotations live in the filesystem under `data/annotations/`
+- They are treated as **canonical asserted truth and interpretations**
+- Annotations are append-only and may attach to any stable entity (performances, tunes, sources, segments, or dataset-level objects)
+- Some annotations may be marked as overriding for downstream resolution
 - Automated outputs may coexist alongside manual truth
 - Automated processes must never overwrite manual truth
 - Parallel hypotheses and partial results are valid outcomes

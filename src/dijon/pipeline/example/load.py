@@ -19,7 +19,7 @@ from ...utils._manifest import (
 def load(
     source_key: str,
     raw_dir: Path,
-    overrides_dir: Path,
+    annotations_dir: Path,
     manifest_path: Path,
     *,
     dry_run: bool = False,
@@ -27,14 +27,14 @@ def load(
     """Load and validate canonical raw files for the example source.
 
     This verb:
-    - Resolves effective raw files (raw + overrides precedence)
+    - Resolves effective raw files (raw + overriding annotations precedence)
     - Validates manifest integrity
     - Does NOT write canonical data (only validates)
 
     Args:
         source_key: Source identifier (e.g., "example").
         raw_dir: Directory for raw files (data/raw/<source_key>/).
-        overrides_dir: Directory for override files (data/overrides/<source_key>/).
+        annotations_dir: Directory for annotation files (data/annotations/<source_key>/).
         manifest_path: Path to manifest.csv file.
         dry_run: If True, simulate the operation without reading files.
 
@@ -64,7 +64,7 @@ def load(
         }
 
     # Verify manifest integrity
-    errors = verify_manifest_integrity(manifest_path, raw_dir, overrides_dir, profile="raw")
+    errors = verify_manifest_integrity(manifest_path, raw_dir, annotations_dir, profile="raw")
 
     # Get active files
     active_files = get_active_files(manifest_path, profile="raw")
@@ -74,11 +74,11 @@ def load(
     for row in active_files:
         file_id = row["file_id"]
         rel_path = row["rel_path"]
-        effective_path = resolve_effective_raw_path(raw_dir, overrides_dir, file_id, rel_path)
+        effective_path = resolve_effective_raw_path(raw_dir, annotations_dir, file_id, rel_path)
         if effective_path:
             resolved_files.append({"file_id": file_id, "path": str(effective_path)})
         else:
-            errors.append(f"File {file_id} not found at {rel_path} or override")
+            errors.append(f"File {file_id} not found at {rel_path} or overriding annotation")
 
     success = len(errors) == 0
 

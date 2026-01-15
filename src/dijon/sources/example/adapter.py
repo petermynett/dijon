@@ -6,8 +6,8 @@ from pathlib import Path
 
 from ...global_config import (
     ACQUISITION_DIR,
+    ANNOTATIONS_DIR,
     NORMAL_DIR,
-    OVERRIDES_DIR,
     RAW_DIR,
 )
 
@@ -45,12 +45,12 @@ class ExampleSource:
         """
         return NORMAL_DIR / self.source_key
 
-    def get_overrides_dir(self) -> Path:
-        """Get the overrides directory for this source.
+    def get_annotations_dir(self) -> Path:
+        """Get the annotations directory for this source.
         
-        Returns: data/overrides/<source_key>/
+        Returns: data/annotations/<source_key>/
         """
-        return OVERRIDES_DIR / self.source_key
+        return ANNOTATIONS_DIR / self.source_key
 
     def get_manifest_path(self) -> Path:
         """Get the manifest path for this source.
