@@ -142,9 +142,10 @@ Types:
 Rules:
 - Use REAL newlines
 - No literal `\n`
-- Write message to temp file
+- Write message to temp file in workspace (e.g., `.git/COMMIT_MSG` or use `mktemp` in workspace)
 - Commit with:
 `git commit -F <temp-file>`
+- If temp file creation fails, hard fail before attempting commit
 
 ---
 
