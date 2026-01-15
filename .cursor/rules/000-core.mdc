@@ -50,7 +50,4 @@ Stop and ask before performing or proposing:
 - Follow the package sourcing policy defined in `AGENTS.md`.
 
 ## Output requirements
-At the end of the task, output:
-- `Rules applied:` followed by the list of rules used.
-- `Consulted:` followed by authoritative docs read (if any).
-- Canary phrase: `RULES_OK`
+Focus on delivering recommendations and results. Omit meta-information about rules applied, consulted docs, notes, or canary phrases unless explicitly requested by the user.

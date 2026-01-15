@@ -53,13 +53,6 @@ At the end of the task, clearly state test status using one of:
 
 Include exact command(s) where applicable.
 
-## End-of-Task Summary (Required)
+## End-of-Task Summary
 
-End every task with a short summary in this exact structure:
-
-- **Rules applied:** list rule filenames
-- **Consulted:** authoritative docs read (or `none`)
-- **Notes:** anything the user should be aware of
-- **Canary:** `RULES_OK`
-
-No additional commentary after the canary.
+Omit the end-of-task summary unless explicitly requested by the user. Focus on delivering recommendations and results only.
