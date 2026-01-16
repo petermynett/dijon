@@ -1,6 +1,6 @@
 """Pipeline orchestration layer.
 
-Pipeline modules are organized by verb (acquire, ingest, load, reset), with datasource-specific
+Pipeline modules are organized by verb (acquire, ingest, load), with datasource-specific
 implementations as modules within each verb package:
 - `pipeline/acquire/youtube.py` - YouTube acquisition
 - `pipeline/ingest/youtube.py` - YouTube ingestion
