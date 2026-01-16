@@ -9,7 +9,7 @@ import pytest
 
 from dijon.pipeline.acquire.youtube import acquire
 from dijon.pipeline.ingest.youtube import ingest
-from dijon.utils._manifest import read_manifest
+from dijon.utils.manifest import read_manifest
 
 
 @pytest.mark.integration

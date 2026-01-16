@@ -51,6 +51,13 @@ data/**/*.tif
 data/**/*.tiff
 data/**/*.webp
 
+# --- Reaper files ---
+reaper/markers/Backups/**/*.rpp-bak
+reaper/markers/Media/**/*
+
+# --- JSON files (tracked) ---
+!data/**/*.json
+
 *.pdf
 !docs/**/*.pdf
 

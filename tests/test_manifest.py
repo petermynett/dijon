@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from dijon.utils._manifest import (
+from dijon.utils.manifest import (
     append_manifest_row,
     build_manifest_index,
     normalize_meta_json,

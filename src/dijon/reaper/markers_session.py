@@ -6,13 +6,14 @@ import json
 import re
 import subprocess
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 from dijon.global_config import AUDIO_MARKERS_DIR, PROJECT_ROOT, RAW_DIR
 
 # Template path
 REAPER_DIR = PROJECT_ROOT / "reaper"
-DEFAULT_TEMPLATE = REAPER_DIR / "default.RPP"
+DEFAULT_TEMPLATE = REAPER_DIR / "examples" / "default.RPP"
 MARKERS_DIR = REAPER_DIR / "markers"
 
 
@@ -57,6 +58,38 @@ def _get_source_type(audio_file: Path) -> str:
     return source_type
 
 
+def _generate_marker_lines(markers: list[dict]) -> list[str]:
+    """Generate RPP MARKER lines from marker JSON data.
+
+    Args:
+        markers: List of marker dictionaries with keys: number, position, name,
+                 color, flags, locked, guid
+
+    Returns:
+        List of MARKER lines in RPP format.
+    """
+    # Sort markers by number to ensure correct order
+    sorted_markers = sorted(markers, key=lambda m: m.get("number", 0))
+    
+    marker_lines = []
+    for marker in sorted_markers:
+        number = marker.get("number", 0)
+        position = marker.get("position", 0.0)
+        name = marker.get("name", "")
+        color = marker.get("color", 0)
+        flags = marker.get("flags", 0)
+        locked = marker.get("locked", 1)
+        guid = marker.get("guid", "")
+        guid_char = "B"  # Default guid_char
+        unknown = 0  # Default unknown value
+        
+        # Format: MARKER <number> <position> <name> <color> <flags> <locked> <guid_char> <guid> <unknown>
+        marker_line = f"  MARKER {number} {position} {name} {color} {flags} {locked} {guid_char} {guid} {unknown}"
+        marker_lines.append(marker_line)
+    
+    return marker_lines
+
+
 def _generate_track_chunk(
     audio_file: Path,
     track_guid: str,
@@ -89,7 +122,7 @@ def _generate_track_chunk(
     SEL 0
     REC 0 0 1 0 0 0 0 0
     VU 64
-    TRACKHEIGHT 0 0 0 0 0 0 0
+    TRACKHEIGHT 385 0 0 0 0 0 0
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
@@ -132,6 +165,8 @@ def create_markers_session(
 ) -> dict:
     """Create a new Reaper markers session from an audio file.
 
+    If a session file already exists, it will be deleted and replaced.
+
     Args:
         audio_file: Path to source RAW audio file.
         dry_run: If True, simulate without writing files.
@@ -150,6 +185,10 @@ def create_markers_session(
     if not audio_file.is_absolute():
         audio_file = RAW_DIR / "audio" / audio_file.name
 
+    # If no extension, presume it's .mp3
+    if not audio_file.suffix:
+        audio_file = audio_file.with_suffix(".mp3")
+
     audio_file = audio_file.resolve()
     if not audio_file.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_file}")
@@ -160,10 +199,9 @@ def create_markers_session(
     # Compute output paths
     session_path = MARKERS_DIR / f"{audio_file.stem}_markers.RPP"
 
+    # Delete existing session file if it exists (overwrite behavior)
     if session_path.exists():
-        raise FileExistsError(
-            f"Session file already exists: {session_path}. Refusing to overwrite."
-        )
+        session_path.unlink()
 
     # Get audio duration
     length = _get_audio_duration(audio_file)
@@ -176,6 +214,30 @@ def create_markers_session(
     track_id = track_guid
     item_guid = str(uuid.uuid4()).upper()
     take_guid = str(uuid.uuid4()).upper()
+
+    # Check for existing marker annotation file
+    annotation_file = AUDIO_MARKERS_DIR / f"{audio_file.stem}_markers.json"
+    markers_data = None
+    
+    if annotation_file.exists():
+        try:
+            annotation_json = json.loads(annotation_file.read_text())
+            
+            # Handle backward compatibility: old format without entries array
+            if "entries" not in annotation_json:
+                # Old format: convert to new format structure
+                old_markers = annotation_json.get("markers", [])
+                markers_data = {
+                    "markers": old_markers,
+                }
+            else:
+                # New format: use newest entry (first in entries array)
+                entries = annotation_json.get("entries", [])
+                if entries:
+                    markers_data = entries[0]
+        except (json.JSONDecodeError, KeyError) as e:
+            # If we can't parse, continue without markers
+            pass
 
     # Read template
     template_content = DEFAULT_TEMPLATE.read_text()
@@ -190,9 +252,29 @@ def create_markers_session(
         length=length,
     )
 
-    # Inject track before final closing >
-    # Find the last > that closes the project
+    # Parse template into lines
     lines = template_content.splitlines()
+    
+    # Find insertion points
+    # 1. Find TEMPOENVEX closing tag (for marker insertion)
+    tempoenv_closing_idx = None
+    for i, line in enumerate(lines):
+        if "<TEMPOENVEX" in line:
+            # Find the matching closing > (should be within next 10 lines)
+            for j in range(i + 1, min(len(lines), i + 10)):
+                if lines[j].strip() == ">":
+                    tempoenv_closing_idx = j
+                    break
+            break
+    
+    # 2. Find PROJBAY line (markers go before this)
+    projbay_idx = None
+    for i, line in enumerate(lines):
+        if "<PROJBAY" in line:
+            projbay_idx = i
+            break
+    
+    # 3. Find final closing > (for track insertion)
     last_closing_idx = None
     for i in range(len(lines) - 1, -1, -1):
         stripped = lines[i].strip()
@@ -202,8 +284,24 @@ def create_markers_session(
 
     if last_closing_idx is None:
         raise ValueError("Template file missing closing >")
+    
+    # Insert markers if we have marker data
+    if markers_data and markers_data.get("markers"):
+        marker_lines = _generate_marker_lines(markers_data["markers"])
+        
+        if projbay_idx is not None:
+            # Insert markers before PROJBAY (preferred location)
+            lines[projbay_idx:projbay_idx] = marker_lines
+            # Update last_closing_idx since we added lines
+            last_closing_idx += len(marker_lines)
+        elif tempoenv_closing_idx is not None:
+            # Insert markers after TEMPOENVEX closing (fallback)
+            lines[tempoenv_closing_idx + 1:tempoenv_closing_idx + 1] = marker_lines
+            # Update last_closing_idx since we added lines
+            last_closing_idx += len(marker_lines)
+        # If neither found, skip marker insertion (shouldn't happen with valid template)
 
-    # Insert track chunk before the closing >
+    # Insert track chunk before the final closing >
     lines.insert(last_closing_idx, track_chunk.rstrip())
     new_content = "\n".join(lines)
 
@@ -240,6 +338,42 @@ def create_markers_session(
         "audio_file": str(audio_file.resolve()),
         "length": length,
     }
+
+
+def _markers_are_equal(markers1: list[dict], markers2: list[dict]) -> bool:
+    """Compare two marker lists for equality.
+    
+    Compares markers by their essential properties: name, position, number,
+    color, flags, and locked status. GUIDs are not compared as they may
+    change even if the marker content is the same.
+    
+    Args:
+        markers1: First list of marker dictionaries.
+        markers2: Second list of marker dictionaries.
+    
+    Returns:
+        True if markers are equal, False otherwise.
+    """
+    if len(markers1) != len(markers2):
+        return False
+    
+    # Sort both lists by number for comparison
+    sorted1 = sorted(markers1, key=lambda m: m.get("number", 0))
+    sorted2 = sorted(markers2, key=lambda m: m.get("number", 0))
+    
+    for m1, m2 in zip(sorted1, sorted2):
+        # Compare essential marker properties
+        if (
+            m1.get("name") != m2.get("name")
+            or abs(m1.get("position", 0.0) - m2.get("position", 0.0)) > 1e-9  # Float comparison with tolerance
+            or m1.get("number") != m2.get("number")
+            or m1.get("color") != m2.get("color")
+            or m1.get("flags") != m2.get("flags")
+            or m1.get("locked") != m2.get("locked")
+        ):
+            return False
+    
+    return True
 
 
 def read_markers(rpp_file: Path) -> dict:
@@ -297,31 +431,133 @@ def read_markers(rpp_file: Path) -> dict:
         # If it doesn't end with _markers, add it
         stem = stem + "_markers"
     
-    # Write JSON output file (overwrites if exists)
     output_file = AUDIO_MARKERS_DIR / f"{stem}.json"
     
-    # Format markers as single-line objects
-    marker_lines = []
-    for marker in markers_sorted:
-        marker_json = json.dumps(marker, separators=(",", ":"))
-        marker_lines.append(f"    {marker_json}")
+    # Generate timestamp for this entry
+    timestamp = datetime.now().isoformat()
+    rpp_file_path = str(rpp_file.resolve())
     
-    # Build formatted JSON output
-    json_output = "{\n"
-    json_output += f'  "rpp_file": {json.dumps(str(rpp_file.resolve()))},\n'
-    json_output += f'  "count": {len(markers)},\n'
-    json_output += "  \"markers\": [\n"
-    json_output += ",\n".join(marker_lines)
-    json_output += "\n  ]\n"
-    json_output += "}"
+    # Prepare new entry
+    new_entry = {
+        "timestamp": timestamp,
+        "count": len(markers),
+        "markers": markers_sorted,
+    }
     
-    output_file.write_text(json_output)
+    # Track whether we add a new entry
+    entry_added = False
+    
+    # Check if output file already exists
+    if output_file.exists():
+        # Read existing JSON
+        try:
+            existing_data = json.loads(output_file.read_text())
+            
+            # Handle backward compatibility: convert old format to new format
+            if "entries" not in existing_data:
+                # Old format: convert to new format
+                old_rpp_file = existing_data.get("rpp_file", rpp_file_path)
+                old_count = existing_data.get("count", 0)
+                old_markers = existing_data.get("markers", [])
+                
+                # Create entries array with old data
+                existing_data = {
+                    "rpp_file": old_rpp_file,
+                    "entries": [
+                        {
+                            "timestamp": timestamp,  # Use current timestamp for old data
+                            "count": old_count,
+                            "markers": old_markers,
+                        }
+                    ],
+                }
+            
+            # Validate that rpp_file matches
+            existing_rpp_file = existing_data.get("rpp_file")
+            if existing_rpp_file != rpp_file_path:
+                raise ValueError(
+                    f"RPP file mismatch: existing file references {existing_rpp_file}, "
+                    f"but new file is {rpp_file_path}"
+                )
+            
+            # Check if markers have changed by comparing with most recent entry
+            entries = existing_data.get("entries", [])
+            if entries:
+                most_recent_markers = entries[0].get("markers", [])
+                if _markers_are_equal(markers_sorted, most_recent_markers):
+                    # Markers are identical, don't add new entry
+                    output_data = existing_data
+                else:
+                    # Markers have changed, prepend new entry
+                    entries.insert(0, new_entry)
+                    existing_data["entries"] = entries
+                    output_data = existing_data
+                    entry_added = True
+            else:
+                # No existing entries, add the new one
+                existing_data["entries"] = [new_entry]
+                output_data = existing_data
+                entry_added = True
+            
+            # Write combined structure
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            # If we can't parse existing file, start fresh
+            output_data = {
+                "rpp_file": rpp_file_path,
+                "entries": [new_entry],
+            }
+            entry_added = True
+    else:
+        # New file: create structure with single entry
+        output_data = {
+            "rpp_file": rpp_file_path,
+            "entries": [new_entry],
+        }
+        entry_added = True
+    
+    # Only write file if we added a new entry or if it's a new file
+    if entry_added:
+        # Format JSON output
+        # Format markers as single-line objects within each entry
+        formatted_entries = []
+        for entry in output_data["entries"]:
+            marker_lines = []
+            for marker in entry["markers"]:
+                marker_json = json.dumps(marker, separators=(",", ":"))
+                marker_lines.append(f"      {marker_json}")
+            
+            entry_json = "    {\n"
+            entry_json += f'      "timestamp": {json.dumps(entry["timestamp"])},\n'
+            entry_json += f'      "count": {entry["count"]},\n'
+            entry_json += '      "markers": [\n'
+            entry_json += ",\n".join(marker_lines)
+            entry_json += "\n      ]\n"
+            entry_json += "    }"
+            formatted_entries.append(entry_json)
+        
+        json_output = "{\n"
+        json_output += f'  "rpp_file": {json.dumps(output_data["rpp_file"])},\n'
+        json_output += '  "entries": [\n'
+        json_output += ",\n".join(formatted_entries)
+        json_output += "\n  ]\n"
+        json_output += "}"
+        
+        output_file.write_text(json_output)
+        
+        # Delete the source RPP file after successful write
+        try:
+            rpp_file.unlink()
+        except OSError:
+            # Log but don't fail the operation if deletion fails
+            # (e.g., file already deleted, permissions issue)
+            pass
 
     return {
         "success": True,
         "markers": markers_sorted,
         "output_file": str(output_file),
         "count": len(markers),
+        "entry_added": entry_added,
     }
 
 
@@ -329,7 +565,8 @@ def read_all_markers() -> dict:
     """Read marker data from all RPP files in the markers directory.
 
     Searches reaper/markers for *.RPP files, extracts markers from each,
-    and writes JSON output files to data/audio-markers (overwriting existing).
+    and writes JSON output files to data/audio-markers (prepending new entries
+    if files already exist, preserving historical data).
 
     Returns:
         Dictionary with processing results for all files.

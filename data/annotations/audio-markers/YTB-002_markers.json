@@ -1,0 +1,20 @@
+{
+  "rpp_file": "/Users/petermynett/dev/active/dijon/reaper/markers/YTB-002_markers.RPP",
+  "entries": [
+    {
+      "timestamp": "2026-01-16T04:59:00.691055",
+      "count": 9,
+      "markers": [
+      {"name":"F1.A1","position":107.97816666666644,"number":1,"color":0,"flags":0,"locked":1,"guid":"{3170B2C1-BFB0-5A45-AAD1-B4CA7FB8AB0E}"},
+      {"name":"F1.A2","position":122.78162881457156,"number":2,"color":0,"flags":0,"locked":1,"guid":"{CEAD7202-04AA-844E-8FC4-D4B4FAD5AAAF}"},
+      {"name":"F1.B1","position":137.38512384000055,"number":3,"color":0,"flags":0,"locked":1,"guid":"{F1237309-2B7E-2846-BEBA-314F892C8550}"},
+      {"name":"F1.B2","position":151.92842599416852,"number":4,"color":0,"flags":0,"locked":1,"guid":"{7D664F4C-49E6-3648-84BE-BE8660B5448E}"},
+      {"name":"S1.A1","position":166.7900051837907,"number":5,"color":8,"flags":0,"locked":1,"guid":"{989865D6-2C9E-5A4E-B179-CDED0AEC84DD}"},
+      {"name":"S1.A2","position":181.2436875000017,"number":6,"color":0,"flags":0,"locked":1,"guid":"{2C5B009A-553D-D742-A073-5820BC8917DC}"},
+      {"name":"S1.B1","position":195.83902559285707,"number":7,"color":0,"flags":0,"locked":1,"guid":"{70AE7613-BB5C-3E42-ABB1-BA4FAF50C2D9}"},
+      {"name":"S1.B2","position":210.79863372945087,"number":8,"color":0,"flags":0,"locked":1,"guid":"{F023DAD6-FFBD-334A-97AE-1A98EACFC77F}"},
+      {"name":"/S1","position":227.5741465710246,"number":9,"color":0,"flags":0,"locked":1,"guid":"{B40251D0-FE55-D14D-9F0E-2422E329E7E3}"}
+      ]
+    }
+  ]
+}

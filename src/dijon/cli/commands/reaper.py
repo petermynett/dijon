@@ -53,22 +53,23 @@ def create_markers_command(
     )
 
 
-@app.command("read-markers")
-def read_markers_command(
+@app.command("write-markers")
+def write_markers_command(
     rpp_file: Annotated[
         Path | None,
         typer.Argument(help="Path to Reaper project (.RPP) file. If not provided, processes all RPP files in reaper/markers"),
     ] = None,
 ) -> None:
-    """Read marker data from Reaper project file(s).
+    """Write marker data from Reaper project file(s) to JSON annotations.
 
     If rpp_file is provided, parses markers from that file.
     If not provided, searches reaper/markers for all *.RPP files and processes each.
-    Writes JSON output to data/audio-markers (overwrites existing files).
+    Writes JSON output to data/annotations/audio-markers (prepends new entries
+    if files already exist, preserving historical data).
     """
     cli = BaseCLI("reaper")
 
-    def _read() -> dict:
+    def _write() -> dict:
         if rpp_file is None:
             result = read_all_markers()
         else:
@@ -76,12 +77,12 @@ def read_markers_command(
         return result
 
     if rpp_file is None:
-        pre_message = "Reading markers from all RPP files in markers directory..."
+        pre_message = "Writing markers from all RPP files in markers directory..."
     else:
-        pre_message = f"Reading markers from {rpp_file.name}..."
+        pre_message = f"Writing markers from {rpp_file.name}..."
 
     cli.handle_cli_operation(
-        operation="read-markers",
-        op_callable=_read,
+        operation="write-markers",
+        op_callable=_write,
         pre_message=pre_message,
     )
