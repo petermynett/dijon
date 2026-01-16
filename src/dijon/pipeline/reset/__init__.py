@@ -1,1 +1,0 @@
-"""Reset verb package."""
