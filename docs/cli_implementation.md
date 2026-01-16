@@ -18,7 +18,30 @@ Follow the document hierarchy: `README.md` → `ARCHITECTURE.md` → `DATA.md` �
 CLI → pipeline → sources
 ```
 
-The CLI layer is a thin wrapper around pipeline verbs. Pipeline verbs coordinate data layer transitions. Sources provide dataset-specific adapters.
+The CLI layer is a **lightweight router** that delegates all substantive work to pipeline verbs. Pipeline verbs coordinate data layer transitions. Sources provide dataset-specific adapters.
+
+### CLI Structure
+
+The CLI follows a **one file per top-level command** structure:
+
+- `src/dijon/cli/main.py` - Entry point that registers command groups
+- `src/dijon/cli/base.py` - Shared utilities (logging, error handling, formatting)
+- `src/dijon/cli/commands/<verb>.py` - One file per top-level command (e.g., `acquire.py`, `ingest.py`, `reaper.py`)
+
+Each command file:
+- Defines a Typer app with subcommands
+- Acts as a **thin wrapper**: parse args → call pipeline function → format result
+- Uses `BaseCLI` utilities from `base.py` for consistent error handling and formatting
+- Contains **no domain logic** - all logic lives in `pipeline/`
+
+### Lightweight Router Philosophy
+
+The CLI is intentionally thin:
+- **Parse**: Validate and parse command-line arguments
+- **Dispatch**: Call the appropriate pipeline function with parsed arguments
+- **Present**: Format results using `BaseCLI` utilities
+
+All domain logic, data transformations, and business rules belong in the `pipeline/` layer, not in CLI command files.
 
 ### Source Registry
 
@@ -122,7 +145,16 @@ Key safety rules (from the guardrail):
 
 For complete guardrail details, see `.cursor/rules/200-cli-implementation.mdc`.
 
-## Reference Implementation
+## Command File Pattern
 
-See `src/{{ package_name }}/cli/commands/example.py` and `src/{{ package_name }}/pipeline/example/` for a working reference implementation.
+Each command file in `src/dijon/cli/commands/` follows this pattern:
+
+1. Import pipeline functions and utilities
+2. Create a Typer app for the top-level command
+3. Define subcommands as thin wrappers that:
+   - Parse arguments using Typer annotations
+   - Call pipeline functions with parsed arguments
+   - Use `BaseCLI.handle_cli_operation()` for consistent error handling and result formatting
+
+See `src/dijon/cli/commands/acquire.py`, `ingest.py`, and `reaper.py` for working examples.
 
