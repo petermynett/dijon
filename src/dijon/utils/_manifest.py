@@ -1,7 +1,7 @@
 """Shared utilities for manifest.csv management and file_id generation.
 
 This module provides standardized functions for:
-- Generating file_id values (SRC-YYMM-SEQ format)
+- Generating file_id values (SRC-SEQ format)
 - Reading and writing manifest.csv files
 - Computing file checksums
 - Resolving effective raw files (raw + annotations precedence)
@@ -204,22 +204,18 @@ def generate_next_file_id(
 ) -> str:
     """Generate next available file_id by checking existing manifest entries.
 
-    Finds the highest sequence number for the given dataset_code and YYMM,
+    Finds the highest sequence number for the given dataset_code,
     then increments it.
 
     Args:
         dataset_code: Dataset code (uppercase, 3 chars recommended).
         manifest_path: Path to manifest.csv file.
-        ingest_date: Date for YYMM component. Defaults to current UTC date.
+        ingest_date: Unused, kept for backward compatibility.
 
     Returns:
         File ID string with next available sequence number.
     """
-    if ingest_date is None:
-        ingest_date = datetime.now(UTC)
-
-    yymm = ingest_date.strftime("%y%m")
-    prefix = f"{dataset_code.strip().upper()}-{yymm}-"
+    prefix = f"{dataset_code.strip().upper()}-"
 
     # Read manifest to find max sequence
     max_seq = 0
