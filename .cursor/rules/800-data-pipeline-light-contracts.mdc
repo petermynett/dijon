@@ -17,6 +17,9 @@ This rule is a **guardrail**. Detailed workflows and data-layer descriptions liv
 ## Default Safety
 
 - Treat source/canonical inputs as read-only by default
+  - data/acquisitions
+  - data/raw
+  - data/annotations
 - Prefer deterministic transforms (safe to delete/rebuild derived outputs)
 - Do not depend on ambient state (cwd, local machine paths, ad-hoc files)
 
@@ -35,7 +38,6 @@ Stop and ask before doing or proposing:
 If code writes data:
 
 - Output paths must be explicit (configured, passed in, or clearly documented)
-- Avoid writing into the project `data/` tree by default unless that is the intended contract
 - If an output already exists, require an explicit overwrite/replace mode (or write to a new path)
 
 ## Documentation Sync
