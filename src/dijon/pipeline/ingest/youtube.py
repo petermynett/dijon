@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ...global_config import DATA_DIR
+from ...sources.registry import get_source_code
 from ...utils._manifest import (
     append_manifest_row,
     compute_file_checksum,
@@ -241,7 +242,7 @@ def _ingest_bundle(
 
     if dry_run:
         ingest_date = datetime.now(UTC)
-        file_id = generate_next_file_id("YTB", raw_manifest_path, ingest_date)
+        file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path, ingest_date)
         return {
             "status": "ingested",
             "file_id": file_id,
@@ -252,7 +253,7 @@ def _ingest_bundle(
 
     # Generate file_id
     ingest_date = datetime.now(UTC)
-    file_id = generate_next_file_id("YTB", raw_manifest_path, ingest_date)
+    file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path, ingest_date)
 
     # Copy MP3 to raw layer
     raw_file = raw_dir / f"{file_id}.mp3"
