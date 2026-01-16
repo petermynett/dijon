@@ -7,7 +7,9 @@ from typing import Annotated
 
 import typer
 
-from ...pipeline.example import acquire, ingest, load
+from ...pipeline.acquire.example import acquire
+from ...pipeline.ingest.example import ingest
+from ...pipeline.load.example import load
 from ...sources.example import get_source
 from ..base import BaseCLI, format_result, handle_errors
 

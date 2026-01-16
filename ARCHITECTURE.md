@@ -39,8 +39,8 @@ The architecture intentionally favors **under-restriction early**.
 At a high level, this is a **CLI-orchestrated Python system** for:
 
 - acquiring external artifacts
-- staging them into structured datasets
-- indexing them for efficient access
+- staging them into structured datasets (ingest is the verb that moves data from acquisition to raw)
+- indexing them for efficient access (tracked with manifests.csv)
 - supporting comparative analysis in notebooks
 
 The CLI coordinates work.  
@@ -67,9 +67,10 @@ Research happens primarily above the stable core.
 ## Core subsystems (authoritative)
 
 ### Sources
-- Acquire external artifacts and normalize inputs
-- Pure adapters: no database access, no orchestration, no analysis
+- acquires data from the outside world into the data pipelines
 - The only place upstream messiness should live
+- Acquire external artifacts and basic normalization
+- Pure adapters: no database access, no orchestration, no analysis
 
 ### Pipeline
 - Orchestrates movement between dataset stages
@@ -147,24 +148,12 @@ Detailed rules are defined in DATA.md.
 - Manual annotations live in the filesystem under `data/annotations/`
 - They are treated as **canonical asserted truth and interpretations**
 - Annotations are append-only and may attach to any stable entity (performances, tunes, sources, segments, or dataset-level objects)
-- Some annotations may be marked as overriding for downstream resolution
 - Automated outputs may coexist alongside manual truth
 - Automated processes must never overwrite manual truth
 - Parallel hypotheses and partial results are valid outcomes
 
 Comparison across performances is expected to occur primarily in notebooks.  
 Tune identity is explicit, filesystem-backed, and may be indexed by the database.
-
----
-
-## Extension philosophy
-
-This architecture supports:
-- new MIR techniques
-- new repertoires and representations
-- new comparative and visual questions
-
-It avoids early commitment to fixed analysis pipelines or evaluation schemes.
 
 ---
 

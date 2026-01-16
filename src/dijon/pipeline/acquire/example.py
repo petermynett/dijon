@@ -62,4 +62,3 @@ def acquire(
         "acquisition_file": str(example_file),
         "acq_sha256": acq_sha256,
     }
-

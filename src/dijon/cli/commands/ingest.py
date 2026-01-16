@@ -8,7 +8,7 @@ from typing import Annotated
 import typer
 
 from ...global_config import ACQUISITION_DIR, DATA_DIR, RAW_DIR
-from ...pipeline.youtube.ingest import ingest
+from ...pipeline.ingest.youtube import ingest
 from ..base import BaseCLI
 
 app = typer.Typer(
