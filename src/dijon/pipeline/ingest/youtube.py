@@ -12,7 +12,7 @@ from pathlib import Path
 
 from ...global_config import DATA_DIR
 from ...sources.registry import get_source_code
-from ...utils._manifest import (
+from ...utils.manifest import (
     append_manifest_row,
     compute_file_checksum,
     generate_next_file_id,

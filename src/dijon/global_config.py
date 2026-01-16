@@ -19,8 +19,6 @@ PROJECT_ROOT: Path = PACKAGE_ROOT.parent.parent
 
 # Core Names
 PROJECT_NAME = "dijon"
-PACKAGE_NAME = "dijon"
-
 
 # Data directories
 DATA_DIR: Path = PROJECT_ROOT / "data"

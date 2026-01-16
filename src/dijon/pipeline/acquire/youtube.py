@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 from ...global_config import DATA_DIR
-from ...utils._manifest import (
+from ...utils.manifest import (
     append_manifest_row,
     compute_file_checksum,
     normalize_meta_json,
