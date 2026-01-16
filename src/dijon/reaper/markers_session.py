@@ -146,9 +146,9 @@ def create_markers_session(
     """
     audio_file = Path(audio_file)
 
-    # If not absolute, assume it's in data/raw/youtube/
+    # If not absolute, assume it's in data/raw/audio/
     if not audio_file.is_absolute():
-        audio_file = RAW_DIR / "youtube" / audio_file.name
+        audio_file = RAW_DIR / "audio" / audio_file.name
 
     audio_file = audio_file.resolve()
     if not audio_file.exists():
