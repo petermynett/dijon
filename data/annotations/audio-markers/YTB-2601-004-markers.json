@@ -1,0 +1,11 @@
+{
+  "rpp_file": "/Users/petermynett/dev/active/dijon/reaper/markers/YTB-2601-004-markers.RPP",
+  "count": 5,
+  "markers": [
+    {"name":"I","position":11.00267707910158,"number":1,"color":8,"flags":0,"locked":1,"guid":"{15D1A122-C9DF-5343-8610-7D0F9C72235D}"},
+    {"name":"1A1","position":12.17831250000015,"number":2,"color":8,"flags":0,"locked":1,"guid":"{4E179119-1350-3040-BAC8-166DB3EDEA43}"},
+    {"name":"1A2","position":24.21360342676241,"number":3,"color":8,"flags":0,"locked":1,"guid":"{4A269095-A466-8141-B100-5A4D099568E9}"},
+    {"name":"1B1","position":36.17130089754645,"number":4,"color":8,"flags":0,"locked":1,"guid":"{5695E171-E82F-DB43-942D-371855AEA277}"},
+    {"name":"1B2","position":48.24231249999681,"number":5,"color":8,"flags":0,"locked":1,"guid":"{C623FCC5-4A3D-3640-BA23-26A87C594452}"}
+  ]
+}

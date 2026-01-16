@@ -29,6 +29,7 @@ RAW_DIR: Path = DATA_DIR / "raw"
 NORMAL_DIR: Path = DATA_DIR / "normal"
 OPTIMIZED_DIR: Path = DATA_DIR / "optimized"
 ANNOTATIONS_DIR: Path = DATA_DIR / "annotations"
+AUDIO_MARKERS_DIR: Path = ANNOTATIONS_DIR / "audio-markers"
 # Legacy: kept for backward compatibility, but deprecated
 OVERRIDES_DIR: Path = DATA_DIR / "overrides"
 
