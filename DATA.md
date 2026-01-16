@@ -74,7 +74,7 @@ If something is wrong, the fix is expressed by **adding new data**, not modifyin
 
 The immutability rules above are **agent guardrails** by default.
 
-**Exception (case-by-case)**: With explicit human approval **and explicit implications stated**, manifest/metadata files (especially under `data/acquisition/`) may be rewritten during iterative development.
+**Exception (case-by-case)**: With explicit human approval **and explicit implications stated**, manifest/metadata files may be rewritten during iterative development.
 
 This exception:
 - applies **case-by-case** with explicit approval
@@ -100,7 +100,7 @@ Notebooks must not be the only place where “truth” is decided.
 
 The system aims to guarantee:
 
-- **Rebuildability**: downstream artifacts can be regenerated from acquisition + raw + annotations
+- **Rebuildability**: downstream artifacts can be regenerated from raw + annotations. Raw can be regenerated from acquisitions.
 - **Traceability**: it is possible to determine how an artifact was produced
 
 Minimum guarantee for stable outputs:
@@ -132,7 +132,7 @@ Derived or analytical data is not yet formally classified.
 
 Current posture:
 
-- **All data above raw/annotations is considered derived and rebuildable unless explicitly documented otherwise**
+- **All data downstream of raw/annotations is considered derived and rebuildable unless explicitly documented otherwise**
 - Derived artifacts should be safe to delete and regenerate
 - Agents must not delete derived artifacts without explicit approval
 

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from dijon.pipeline.youtube.acquire import acquire
-from dijon.pipeline.youtube.ingest import ingest
+from dijon.pipeline.acquire.youtube import acquire
+from dijon.pipeline.ingest.youtube import ingest
 from dijon.utils._manifest import read_manifest
 
 

@@ -125,4 +125,3 @@ def ingest(
         "message": f"Ingested {acquisition_file.name} as {file_id}",
         "already_ingested": False,
     }
-
