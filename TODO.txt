@@ -1,3 +1,7 @@
 - acquire Jazz1460
 - normalize audio ingestion: sample rate, gain normal (small limit?), bit depth. ...TRIM non-music?
 - fix commit commands
+
+Reaper default:
+    - larger track, vertical zoom on waveform
+    - markers dialog box open on start

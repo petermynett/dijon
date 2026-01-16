@@ -8,6 +8,7 @@ from .base import configure_logging, format_result
 from .commands.acquire import app as acquire_app
 from .commands.db import app as db_app
 from .commands.example import app as example_app
+from .commands.reaper import app as reaper_app
 from .commands.tree import tree_command
 
 configure_logging()
@@ -19,6 +20,7 @@ app = typer.Typer(
 app.add_typer(acquire_app, name="acquire")
 app.add_typer(db_app, name="db")
 app.add_typer(example_app, name="example")
+app.add_typer(reaper_app, name="reaper")
 
 
 @app.command("tree")
