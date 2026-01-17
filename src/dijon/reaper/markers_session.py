@@ -340,6 +340,36 @@ def create_markers_session(
     }
 
 
+def _order_markers_in_entry(entry: dict) -> dict:
+    """Order markers by position and renumber them sequentially.
+    
+    Takes an entry dict with a markers list, sorts markers by position
+    (ascending), and renumbers them sequentially starting from 1.
+    Updates the count field to match the number of markers.
+    
+    Args:
+        entry: Dictionary with 'markers' list and optionally 'count' field.
+    
+    Returns:
+        Modified entry dict with ordered and renumbered markers.
+    """
+    markers = entry.get("markers", [])
+    
+    # Sort markers by position (ascending)
+    sorted_markers = sorted(markers, key=lambda m: m.get("position", 0.0))
+    
+    # Renumber markers sequentially starting from 1
+    for i, marker in enumerate(sorted_markers, start=1):
+        marker["number"] = i
+    
+    # Create new entry with ordered markers
+    ordered_entry = entry.copy()
+    ordered_entry["markers"] = sorted_markers
+    ordered_entry["count"] = len(sorted_markers)
+    
+    return ordered_entry
+
+
 def _markers_are_equal(markers1: list[dict], markers2: list[dict]) -> bool:
     """Compare two marker lists for equality.
     
@@ -416,7 +446,7 @@ def read_markers(rpp_file: Path) -> dict:
             "guid": match.group(8),  # GUID is group 8 (after guid_char)
         })
 
-    # Sort markers by number
+    # Sort markers by number (for initial parsing)
     markers_sorted = sorted(markers, key=lambda m: m["number"])
 
     # Create output directory if needed
@@ -437,12 +467,15 @@ def read_markers(rpp_file: Path) -> dict:
     timestamp = datetime.now().isoformat()
     rpp_file_path = str(rpp_file.resolve())
     
-    # Prepare new entry
+    # Prepare new entry (will be ordered below)
     new_entry = {
         "timestamp": timestamp,
         "count": len(markers),
         "markers": markers_sorted,
     }
+    
+    # Order markers by position and renumber sequentially
+    new_entry = _order_markers_in_entry(new_entry)
     
     # Track whether we add a new entry
     entry_added = False
@@ -484,7 +517,8 @@ def read_markers(rpp_file: Path) -> dict:
             entries = existing_data.get("entries", [])
             if entries:
                 most_recent_markers = entries[0].get("markers", [])
-                if _markers_are_equal(markers_sorted, most_recent_markers):
+                # Compare ordered markers (new_entry has been ordered)
+                if _markers_are_equal(new_entry["markers"], most_recent_markers):
                     # Markers are identical, don't add new entry
                     output_data = existing_data
                 else:
@@ -554,10 +588,137 @@ def read_markers(rpp_file: Path) -> dict:
 
     return {
         "success": True,
-        "markers": markers_sorted,
+        "markers": new_entry["markers"],  # Return ordered markers
         "output_file": str(output_file),
-        "count": len(markers),
+        "count": new_entry["count"],  # Return updated count
         "entry_added": entry_added,
+    }
+
+
+def order_markers_in_file(file_path: Path) -> dict:
+    """Order markers in a single JSON file by position and renumber sequentially.
+    
+    Reads a marker JSON file, processes each entry to order markers by position
+    and renumber them sequentially, then writes the file back with the same
+    formatting style.
+    
+    Args:
+        file_path: Path to the marker JSON file to process.
+    
+    Returns:
+        Dictionary with success status, file path, and counts.
+    
+    Raises:
+        FileNotFoundError: If file_path doesn't exist.
+        json.JSONDecodeError: If file is not valid JSON.
+    """
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"Marker file not found: {file_path}")
+    
+    # Read existing JSON
+    try:
+        data = json.loads(file_path.read_text())
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"Invalid JSON in {file_path}: {e.msg}", e.doc, e.pos)
+    
+    # Process each entry
+    entries = data.get("entries", [])
+    if not entries:
+        return {
+            "success": True,
+            "file": str(file_path),
+            "entries_processed": 0,
+            "message": "No entries found in file",
+        }
+    
+    ordered_entries = []
+    for entry in entries:
+        ordered_entry = _order_markers_in_entry(entry)
+        ordered_entries.append(ordered_entry)
+    
+    # Update data with ordered entries
+    data["entries"] = ordered_entries
+    
+    # Format JSON output (same style as read_markers)
+    formatted_entries = []
+    for entry in ordered_entries:
+        marker_lines = []
+        for marker in entry["markers"]:
+            marker_json = json.dumps(marker, separators=(",", ":"))
+            marker_lines.append(f"      {marker_json}")
+        
+        entry_json = "    {\n"
+        entry_json += f'      "timestamp": {json.dumps(entry["timestamp"])},\n'
+        entry_json += f'      "count": {entry["count"]},\n'
+        entry_json += '      "markers": [\n'
+        entry_json += ",\n".join(marker_lines)
+        entry_json += "\n      ]\n"
+        entry_json += "    }"
+        formatted_entries.append(entry_json)
+    
+    json_output = "{\n"
+    json_output += f'  "rpp_file": {json.dumps(data["rpp_file"])},\n'
+    json_output += '  "entries": [\n'
+    json_output += ",\n".join(formatted_entries)
+    json_output += "\n  ]\n"
+    json_output += "}"
+    
+    # Write file back
+    file_path.write_text(json_output)
+    
+    return {
+        "success": True,
+        "file": str(file_path),
+        "entries_processed": len(ordered_entries),
+        "total_markers": sum(entry["count"] for entry in ordered_entries),
+    }
+
+
+def order_all_marker_files() -> dict:
+    """Order markers in all JSON files in the audio-markers directory.
+    
+    Finds all *_markers.json files in AUDIO_MARKERS_DIR, processes each file
+    to order markers by position and renumber them sequentially.
+    
+    Returns:
+        Dictionary with success status and processing results for all files.
+    """
+    # Find all marker JSON files
+    marker_files = sorted([
+        f for f in AUDIO_MARKERS_DIR.glob("*_markers.json")
+        if f.is_file()
+    ])
+    
+    if not marker_files:
+        return {
+            "success": True,
+            "processed": 0,
+            "files": [],
+            "message": "No marker files found in audio-markers directory",
+        }
+    
+    results = []
+    for marker_file in marker_files:
+        try:
+            result = order_markers_in_file(marker_file)
+            results.append({
+                "file": result["file"],
+                "entries_processed": result["entries_processed"],
+                "total_markers": result.get("total_markers", 0),
+                "success": True,
+            })
+        except Exception as e:
+            results.append({
+                "file": str(marker_file),
+                "success": False,
+                "error": str(e),
+            })
+    
+    return {
+        "success": True,
+        "processed": len(marker_files),
+        "files": results,
     }
 
 

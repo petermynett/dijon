@@ -12,3 +12,10 @@ https://abcnotation.com/
 Skenkerian analysis
 Review classical phrase structure
 Classify cadences: AC, HC, PC, DC
+
+
+Make small list of test data
+Hook up google collab for note books
+include small audio set in github  (or not?)
+get notebooks working
+start calculating some derived data

@@ -7,7 +7,12 @@ from typing import Annotated
 
 import typer
 
-from ...reaper.markers_session import create_markers_session, read_all_markers, read_markers
+from ...reaper.markers_session import (
+    create_markers_session,
+    order_all_marker_files,
+    read_all_markers,
+    read_markers,
+)
 from ..base import BaseCLI, handle_errors
 
 app = typer.Typer(
@@ -85,4 +90,25 @@ def write_markers_command(
         operation="write-markers",
         op_callable=_write,
         pre_message=pre_message,
+    )
+
+
+@app.command("order-markers")
+def order_markers_command() -> None:
+    """Order markers in all JSON files by position and renumber sequentially.
+    
+    Processes all *_markers.json files in data/annotations/audio-markers,
+    sorts markers by position (time) within each entry, and renumbers them
+    sequentially (1, 2, 3...) so numbers match chronological order.
+    """
+    cli = BaseCLI("reaper")
+
+    def _order() -> dict:
+        result = order_all_marker_files()
+        return result
+
+    cli.handle_cli_operation(
+        operation="order-markers",
+        op_callable=_order,
+        pre_message="Ordering markers in all marker files...",
     )

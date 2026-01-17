@@ -52,8 +52,8 @@ data/**/*.tiff
 data/**/*.webp
 
 # --- Reaper files ---
-reaper/markers/Backups/**/*.rpp-bak
-reaper/markers/Media/**/*
+reaper/**/*.rpp-bak
+reaper/**/Media/**/*
 
 # --- JSON files (tracked) ---
 !data/**/*.json
@@ -77,3 +77,7 @@ tmp/
 temp/
 build/
 dist/
+
+# --- Personal --- #
+TODO.txt
+TODO.md
