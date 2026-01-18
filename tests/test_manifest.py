@@ -150,7 +150,7 @@ class TestManifestProfiles:
             source_name="test1.txt",
             schema_version="1",
             profile="raw",
-            file_id="TEST-2412-001",
+            file_id="TEST-001",
             ingested_at="2024-12-01T00:00:00Z",
             acq_sha256="def456",
         )
@@ -165,7 +165,7 @@ class TestManifestProfiles:
                 source_name="test2.txt",
                 schema_version="1",
                 profile="raw",
-                file_id="TEST-2412-001",  # Duplicate
+                file_id="TEST-001",  # Duplicate
                 ingested_at="2024-12-01T00:00:00Z",
                 acq_sha256="def456",
             )
@@ -180,7 +180,7 @@ class TestManifestProfiles:
                 source_name="test2.txt",
                 schema_version="1",
                 profile="raw",
-                file_id="TEST-2412-002",
+                file_id="TEST-002",
                 ingested_at="2024-12-01T00:00:00Z",
                 acq_sha256="def456",
             )
@@ -195,7 +195,7 @@ class TestManifestProfiles:
                 source_name="test2.txt",
                 schema_version="1",
                 profile="raw",
-                file_id="TEST-2412-002",
+                file_id="TEST-002",
                 ingested_at="2024-12-01T00:00:00Z",
                 acq_sha256="def456",
             )
@@ -310,7 +310,7 @@ class TestAppendManifestRow:
             schema_version="1",
             profile="raw",
             validate="row",
-            file_id="TEST-2412-001",
+            file_id="TEST-001",
             ingested_at="2024-12-01T00:00:00Z",
             acq_sha256="def456",
         )
@@ -332,7 +332,7 @@ class TestAppendManifestRow:
             schema_version="1",
             profile="raw",
             validate="full",
-            file_id="TEST-2412-001",
+            file_id="TEST-001",
             ingested_at="2024-12-01T00:00:00Z",
             acq_sha256="def456",
         )
@@ -347,7 +347,7 @@ class TestAppendManifestRow:
             schema_version="1",
             profile="raw",
             validate="full",
-            file_id="TEST-2412-002",
+            file_id="TEST-002",
             ingested_at="2024-12-01T00:00:00Z",
             acq_sha256="def456",
         )
@@ -372,7 +372,7 @@ class TestValidateManifest:
             source_name="test.txt",
             schema_version="1",
             profile="raw",
-            file_id="TEST-2412-001",
+            file_id="TEST-001",
             ingested_at="2024-12-01T00:00:00Z",
             acq_sha256="def456",
         )
@@ -388,7 +388,7 @@ class TestValidateManifest:
         # (If the header is missing required fields, read_manifest() raises.)
         rows = [
             {
-                "file_id": "TEST-2412-001",
+                "file_id": "TEST-001",
                 "rel_path": "raw/test.txt",
                 "status": "active",
                 "sha256": "",
@@ -411,7 +411,7 @@ class TestValidateManifest:
         # Write manifest with duplicates manually
         rows = [
             {
-                "file_id": "TEST-2412-001",
+                "file_id": "TEST-001",
                 "rel_path": "raw/test1.txt",
                 "status": "active",
                 "sha256": "abc123",
@@ -421,7 +421,7 @@ class TestValidateManifest:
                 "schema_version": "1",
             },
             {
-                "file_id": "TEST-2412-001",  # Duplicate file_id
+                "file_id": "TEST-001",  # Duplicate file_id
                 "rel_path": "raw/test2.txt",
                 "status": "active",
                 "sha256": "xyz789",
@@ -445,12 +445,12 @@ class TestBuildManifestIndex:
         """Test that index is built correctly for uniqueness fields."""
         rows = [
             {
-                "file_id": "TEST-2412-001",
+                "file_id": "TEST-001",
                 "rel_path": "raw/test1.txt",
                 "sha256": "abc123",
             },
             {
-                "file_id": "TEST-2412-002",
+                "file_id": "TEST-002",
                 "rel_path": "raw/test2.txt",
                 "sha256": "xyz789",
             },
@@ -461,8 +461,8 @@ class TestBuildManifestIndex:
         assert "sha256" in index
         assert "rel_path" in index
 
-        assert "TEST-2412-001" in index["file_id"]
-        assert "TEST-2412-002" in index["file_id"]
+        assert "TEST-001" in index["file_id"]
+        assert "TEST-002" in index["file_id"]
         assert "abc123" in index["sha256"]
         assert "xyz789" in index["sha256"]
 
@@ -470,7 +470,7 @@ class TestBuildManifestIndex:
         """Test that index ignores empty values."""
         rows = [
             {
-                "file_id": "TEST-2412-001",
+                "file_id": "TEST-001",
                 "rel_path": "",  # Empty
                 "sha256": "abc123",
             },

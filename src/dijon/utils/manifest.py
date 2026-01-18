@@ -11,7 +11,6 @@ This module provides standardized functions for:
 import csv
 import hashlib
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -162,20 +161,18 @@ def normalize_meta_json(meta_json: str) -> str:
         raise ValueError(f"meta_json must be valid JSON: {e}")
 
 
-def generate_file_id(dataset_code: str, ingest_date: datetime | None = None) -> str:
-    """Generate a new file_id in SRC-YYMM-SEQ format.
+def generate_file_id(dataset_code: str) -> str:
+    """Generate a new file_id in SRC-SEQ format.
 
-    Format: SRC-YYMM-SEQ
+    Format: SRC-SEQ
     - SRC: dataset code (e.g., "RCP", "TXN", "GEO")
-    - YYMM: ingest year+month (e.g., "2412" for Dec 2024)
     - SEQ: zero-padded sequence number (starts at 001)
 
     Args:
         dataset_code: Dataset code (uppercase, 3 chars recommended).
-        ingest_date: Date for YYMM component. Defaults to current UTC date.
 
     Returns:
-        File ID string (e.g., "RCP-2412-001").
+        File ID string (e.g., "RCP-001").
 
     Raises:
         ValueError: If dataset_code is empty or invalid.
@@ -185,35 +182,30 @@ def generate_file_id(dataset_code: str, ingest_date: datetime | None = None) -> 
 
     dataset_code = dataset_code.strip().upper()
 
-    if ingest_date is None:
-        ingest_date = datetime.now(UTC)
-
-    yymm = ingest_date.strftime("%y%m")
-
-    # Find next sequence number for this dataset+month
+    # Find next sequence number for this dataset
     # This requires reading the manifest, so we'll need the manifest path
     # For now, return format - caller will need to check for collisions
     # TODO: Consider passing manifest_path to auto-increment sequence
-    return f"{dataset_code}-{yymm}-001"
+    return f"{dataset_code}-001"
 
 
 def generate_next_file_id(
     dataset_code: str,
     manifest_path: Path,
-    ingest_date: datetime | None = None,
 ) -> str:
     """Generate next available file_id by checking existing manifest entries.
 
     Finds the highest sequence number for the given dataset_code,
     then increments it.
 
+    Format: SRC-SEQ (e.g., "ABC-003")
+
     Args:
         dataset_code: Dataset code (uppercase, 3 chars recommended).
         manifest_path: Path to manifest.csv file.
-        ingest_date: Unused, kept for backward compatibility.
 
     Returns:
-        File ID string with next available sequence number.
+        File ID string with next available sequence number (SRC-SEQ format).
     """
     prefix = f"{dataset_code.strip().upper()}-"
 
@@ -500,7 +492,7 @@ def append_manifest_row(
         profile: Manifest profile type ("raw", "upstream", or "derived"). Defaults to "raw".
         validate: Validation mode. "row" (default) validates only the new row.
             "full" also validates the entire manifest before writing.
-        file_id: Canonical file ID (SRC-YYMM-SEQ). Required for "raw" profile.
+        file_id: Canonical file ID (SRC-SEQ). Required for "raw" profile.
         ingested_at: ISO8601 timestamp. Required for "raw" profile.
         acq_sha256: SHA256 checksum of the acquisition file. Required for "raw" profile.
         supersedes_file_id: Previous file_id if this replaces another (optional).
@@ -677,8 +669,8 @@ def resolve_effective_raw_path(
     Args:
         raw_dir: Directory for raw files (data/raw/<source_key>/).
         annotations_dir: Directory for annotation files (data/annotations/<source_key>/).
-        file_id: File ID (e.g., "RCP-2412-001").
-        rel_path: Relative path from manifest (e.g., "raw/RCP-2412-001.jpg").
+        file_id: File ID (e.g., "RCP-001").
+        rel_path: Relative path from manifest (e.g., "raw/RCP-001.jpg").
 
     Returns:
         Path to effective raw file, or None if neither overriding annotation nor raw exists.
