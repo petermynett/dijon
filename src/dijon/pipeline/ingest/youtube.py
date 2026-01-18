@@ -241,8 +241,7 @@ def _ingest_bundle(
         return {"status": "skipped"}
 
     if dry_run:
-        ingest_date = datetime.now(UTC)
-        file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path, ingest_date)
+        file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path)
         return {
             "status": "ingested",
             "file_id": file_id,
@@ -253,7 +252,7 @@ def _ingest_bundle(
 
     # Generate file_id
     ingest_date = datetime.now(UTC)
-    file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path, ingest_date)
+    file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path)
 
     # Copy MP3 to raw layer
     raw_file = raw_dir / f"{file_id}.mp3"
