@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from dijon.global_config import AUDIO_MARKERS_DIR, PROJECT_ROOT, RAW_DIR
+from dijon.global_config import AUDIO_MARKERS_DIR, PROJECT_ROOT, RAW_AUDIO_DIR
 
 # Template path
 REAPER_DIR = PROJECT_ROOT / "reaper"
@@ -181,9 +181,9 @@ def create_markers_session(
     """
     audio_file = Path(audio_file)
 
-    # If not absolute, assume it's in data/raw/audio/
+    # If not absolute, assume it's in data/datasets/raw/audio/
     if not audio_file.is_absolute():
-        audio_file = RAW_DIR / "audio" / audio_file.name
+        audio_file = RAW_AUDIO_DIR / audio_file.name
 
     # If no extension, presume it's .mp3
     if not audio_file.suffix:

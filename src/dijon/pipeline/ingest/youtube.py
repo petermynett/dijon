@@ -36,7 +36,7 @@ def ingest(
 
     Args:
         acquisition_dir: Directory containing YouTube acquisition files.
-        raw_dir: Directory for raw files (data/raw/audio/).
+        raw_dir: Directory for raw files (data/datasets/raw/audio/).
         raw_manifest_path: Path to raw manifest.csv file.
         acquisition_manifest_path: Path to acquisition manifest.csv file.
         data_dir: Data directory root for rel_path normalization. Defaults to DATA_DIR.
