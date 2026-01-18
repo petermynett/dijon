@@ -7,7 +7,7 @@ from typing import Annotated
 
 import typer
 
-from ...global_config import ACQUISITION_DIR, DATA_DIR, RAW_DIR
+from ...global_config import ACQUISITION_DIR, DATA_DIR, RAW_AUDIO_DIR
 from ...pipeline.ingest.youtube import ingest
 from ..base import BaseCLI
 
@@ -26,7 +26,7 @@ def ingest_youtube(
 ) -> None:
     """Ingest YouTube acquisition MP3s into the raw layer.
 
-    Scans YouTube acquisition files and copies MP3s to data/raw/audio/
+    Scans YouTube acquisition files and copies MP3s to data/datasets/raw/audio/
     with manifest entries. This command is idempotent: re-running will
     skip already-ingested files.
     """
@@ -34,7 +34,7 @@ def ingest_youtube(
 
     def _ingest() -> dict:
         acquisition_dir = ACQUISITION_DIR / "youtube"
-        raw_dir = RAW_DIR / "audio"
+        raw_dir = RAW_AUDIO_DIR
         raw_manifest_path = raw_dir / "manifest.csv"
         acquisition_manifest_path = acquisition_dir / "manifest.csv"
 
