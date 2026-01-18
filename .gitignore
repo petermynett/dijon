@@ -22,12 +22,6 @@ Thumbs.db
 .env.*
 !.env.example
 
-# --- CAPS files ---
-README.md
-AGENTS.md
-AGENTS_CURSOR.md
-ARCHITECTURE.md
-DATA.md
 
 # --- CURSOR files ---
 .cursorignore
