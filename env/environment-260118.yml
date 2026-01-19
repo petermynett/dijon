@@ -1,0 +1,17 @@
+name: dijon
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - setuptools
+  - wheel
+
+  # dev tooling (conda-forge)
+  - typer
+  - pytest
+  - ruff
+
+  # schema + fast JSON I/O
+  - pydantic
+  - orjson

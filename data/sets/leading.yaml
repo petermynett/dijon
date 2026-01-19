@@ -1,0 +1,14 @@
+version: 1
+paths: data/datasets/raw/audio/
+kind: audio
+desc: small set of songs and perfs to lead the proof-of-concept
+items:
+- file_id: YTB-001
+  song_name: I'll fly away
+  source_name: Alison-Krauss---I'll-fly-away_1BPoMIQHwpo.mp3
+  message: ''
+  url: https://www.youtube.com/watch?v=1BPoMIQHwpo
+- file_id: ''
+  song_name: ''
+  message: ''
+  url: ''

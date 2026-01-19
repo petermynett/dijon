@@ -7,6 +7,7 @@ from .commands.acquire import app as acquire_app
 from .commands.clean import app as clean_app
 from .commands.ingest import app as ingest_app
 from .commands.reaper import app as reaper_app
+from .commands.sets import app as sets_app
 
 configure_logging()
 app = typer.Typer(
@@ -18,6 +19,7 @@ app.add_typer(acquire_app, name="acquire")
 app.add_typer(clean_app, name="clean")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(reaper_app, name="reaper")
+app.add_typer(sets_app, name="sets")
 
 
 def main() -> None:

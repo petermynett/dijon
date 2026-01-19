@@ -2,16 +2,17 @@ name: dijon
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
-  - pip
-  - setuptools
-  - wheel
-
-  # dev tooling (conda-forge)
-  - typer
-  - pytest
-  - ruff
-
-  # schema + fast JSON I/O
-  - pydantic
   - orjson
+  - pip
+  - pydantic
+  - pytest
+  - python=3.12
+  - pyyaml
+  - ruff
+  - setuptools
+  - typer
+  - wheel
+  - pip:
+    - dijon==0.1.0
+
+prefix: "/opt/homebrew/Caskroom/miniforge/base/envs/dijon"
