@@ -3,10 +3,12 @@
 ## Objective
 Generate a single, copy-pasteable commit message that includes:
 - a clear 5–20 line commit message, and
-- a complete list of files that were added, modified, or removed
+- a complete list of files that were added, modified, or removed.
 
 This command is read-only.
 Do NOT run `git add`, `git commit`, or `git push`.
+
+The output is only the commit message text, not a shell command.
 
 ---
 
@@ -26,6 +28,42 @@ Optional (only if needed to understand intent):
 
 Output ONE single block of plain text that represents the full commit message.
 Do NOT split output into multiple sections or UI panels.
+
+### CRITICAL: QUOTING & SAFETY RULES (MANDATORY)
+
+The commit message MUST NOT cause failure when used with `git commit -m "<message>"`.
+
+To guarantee this:
+
+1) DO NOT include any unescaped double quotes (")
+- Either remove them entirely, or replace them with:
+  - nothing
+  - parentheses
+  - backticks (`), or
+  - typographic double quotes (“ and ”)
+- Fidelity does not matter. Safety matters.
+
+2) DO NOT include any single quotes (')
+- Either remove them, or replace them with:
+  - nothing
+  - backticks (`), or
+  - typographic apostrophes (’)
+- Never output a literal ASCII single quote (').
+
+3) DO NOT use shell escaping patterns
+- Do NOT output sequences like: \", \', or '\''
+- The output must be safe without requiring the user to think about escaping.
+
+4) Filenames that contain quotes
+- If a file path contains ' or ", sanitize the rendered path by removing or replacing those characters.
+- Exact filename fidelity is NOT required; stability is.
+
+5) If in doubt
+- Delete the problematic character.
+
+If any of the above rules are violated, the output is incorrect.
+
+---
 
 ### Required structure (all part of the commit message)
 
@@ -53,3 +91,15 @@ Do NOT split output into multiple sections or UI panels.
 - Only include sections that have at least one file
 - No blank lines between sections or between list items
 - Each file path is on its own line, prefixed with `- `
+- Apply the quote-safety rules above to every rendered file path
+
+---
+
+### Output constraints (hard rules)
+- Output plain text only
+- No markdown
+- No explanations
+- No shell commands
+- No code fences
+- No surrounding quotes
+- No trailing commentary
