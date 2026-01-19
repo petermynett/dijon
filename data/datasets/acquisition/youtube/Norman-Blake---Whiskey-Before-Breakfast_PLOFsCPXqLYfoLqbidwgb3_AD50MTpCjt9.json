@@ -1,0 +1,26 @@
+{
+  "song_name": "Whiskey Before Breakfast",
+  "user_message": "Norman Blake, studio. w/ Fiddler's dram",
+  "input_url": "https://www.youtube.com/watch?v=Tu1Ve1p7QF0&list=PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9&index=13",
+  "downloaded": {
+    "mp3": "Norman-Blake---Whiskey-Before-Breakfast_PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9.mp3",
+    "mp4": null,
+    "json": "Norman-Blake---Whiskey-Before-Breakfast_PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9.json",
+    "thumbnail": "Norman-Blake---Whiskey-Before-Breakfast_PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9.jpg",
+    "subtitles": [],
+    "mp3_size_bytes": 7419884,
+    "thumbnail_size_bytes": 13734
+  },
+  "yt_dlp": {
+    "id": "PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9",
+    "webpage_url": "https://www.youtube.com/playlist?list=PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9",
+    "title": "Norman Blake - Whiskey Before Breakfast",
+    "channel": "Blues Berry",
+    "channel_id": "UCERcgwr6gFjlDB1kQotueyA",
+    "channel_url": "https://www.youtube.com/channel/UCERcgwr6gFjlDB1kQotueyA",
+    "description": "",
+    "view_count": 28830,
+    "tags": [],
+    "thumbnail": "https://i.ytimg.com/vi/iN4di4JFob4/hqdefault.jpg?sqp=-oaymwExCNACELwBSFryq4qpAyMIARUAAIhCGAHwAQH4Af4JgALQBYoCDAgAEAEYfyA_KDMwDw==&rs=AOn4CLBATWVvAv3vUD_R1OtZegfYBuErtQ"
+  }
+}

@@ -8,7 +8,75 @@ items:
   source_name: Alison-Krauss---I'll-fly-away_1BPoMIQHwpo.mp3
   message: ''
   url: https://www.youtube.com/watch?v=1BPoMIQHwpo
-- file_id: ''
-  song_name: ''
+
+- file_id: YTB-002
+  song_name: the blackest crow
   message: ''
-  url: ''
+  url: https://www.youtube.com/watch?v=NEDHzPnEIZ0
+  source_name: Blackest-Crow---Guitar-2---AJAM-Tune-&-Songbook_NEDHzPnEIZ0.mp3
+
+- file_id: YTB-003
+  song_name: the blackest crow
+  message: ''
+  url: https://www.youtube.com/watch?v=gHa70BLg7B8
+  source_name: Bruce-Molsky-&-Julie-Fowlis-_-The-Blackest-Crow-_-Transatlantic-Sessions-_-BBC-ALBA_gHa70BLg7B8.mp3
+
+- file_id: YTB-004
+  song_name: whiskey before breakfast
+  message: ''
+  url: https://www.youtube.com/watch?v=-DnWtCpcmvM
+  source_name: Bryan-Sutton-Flatpicking-_Whiskey-Before-Breakfast__-DnWtCpcmvM.mp3
+
+- file_id: YTB-005
+  song_name: Whiskey Before Breakfast
+  message: ''
+  url: https://www.youtube.com/watch?v=IK3xkLtqo7g
+  source_name: Doc-Watson-(ft.-Bryan-Sutton)---_Whiskey-Before-Breakfast__IK3xkLtqo7g.mp3
+
+- file_id: YTB-006
+  song_name: I'll Fly Away
+  message: ''
+  url: https://www.youtube.com/watch?v=g_XrwCmVOm8
+  source_name: I'll-Fly-Away---Gloria-Spencer-[1976-Gospel]_g_XrwCmVOm8.mp3
+
+- file_id: YTB-007
+  song_name: I'll Fly Away
+  message: ''
+  url: https://www.youtube.com/watch?v=FFkiVy79ZRw
+  source_name: I'll-Fly-Away_FFkiVy79ZRw.mp3
+
+- file_id: YTB-008
+  song_name: I'll Fly Away
+  message: ''
+  url: https://www.youtube.com/watch?v=juHtN7hjtc4
+  source_name: I'll-Fly-Away_juHtN7hjtc4.mp3
+
+- file_id: YTB-009
+  song_name: I'll Fly Away
+  message: ''
+  url: https://www.youtube.com/watch?v=lFamN-oXRMQ
+  source_name: I'll-Fly-Away_lFamN-oXRMQ.mp3
+
+- file_id: YTB-010
+  song_name: Whiskey Before Breakfast
+  message: ''
+  url: https://www.youtube.com/playlist?list=PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9
+  source_name: Norman-Blake---Whiskey-Before-Breakfast_PLOFsCPXqLYfoLqbidwgb3_AD50MTpCjt9.mp3
+
+- file_id: YTB-011
+  song_name: Blackest Crow
+  message: ''
+  url: https://www.youtube.com/watch?v=4cYdD8Trv9A
+  source_name: The-Blackest-Crow_4cYdD8Trv9A.mp3
+
+- file_id: YTB-012
+  song_name: Blackest Crow
+  message: ''
+  url: https://www.youtube.com/watch?v=EDKfKd0_VrA
+  source_name: The-Tequila-Mockingbird-Orchestra---The-Blackest-Crow_EDKfKd0_VrA.mp3
+
+- file_id: YTB-013
+  song_name: Whiskey Before Breakfast
+  message: ''
+  url: https://www.youtube.com/watch?v=mW6Vwdb8n-Q
+  source_name: Whiskey-Before-Breakfast_mW6Vwdb8n-Q.mp3
