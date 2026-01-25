@@ -34,9 +34,25 @@ def template_file(project_root: Path) -> Path:
 @pytest.fixture
 def test_audio_file(project_root: Path) -> Path:
     """Create a test audio file."""
-    audio_file = project_root / "data" / "raw" / "youtube" / "test-audio.mp3"
+    audio_file = project_root / "data" / "datasets" / "raw" / "audio" / "test-audio.wav"
     audio_file.parent.mkdir(parents=True, exist_ok=True)
-    audio_file.write_bytes(b"fake mp3 content")
+    # Create a minimal valid WAV file header (44 bytes)
+    wav_header = (
+        b"RIFF"
+        + (36).to_bytes(4, "little")  # file size - 8
+        + b"WAVE"
+        + b"fmt "
+        + (16).to_bytes(4, "little")  # fmt chunk size
+        + (1).to_bytes(2, "little")  # audio format (PCM)
+        + (1).to_bytes(2, "little")  # num channels (mono)
+        + (48000).to_bytes(4, "little")  # sample rate
+        + (96000).to_bytes(4, "little")  # byte rate
+        + (2).to_bytes(2, "little")  # block align
+        + (16).to_bytes(2, "little")  # bits per sample
+        + b"data"
+        + (0).to_bytes(4, "little")  # data chunk size
+    )
+    audio_file.write_bytes(wav_header)
     return audio_file
 
 
@@ -71,7 +87,7 @@ def test_create_markers_session_dry_run(
 
     assert result["success"] is True
     assert "Would create" in result["message"]
-    assert result["session_path"].endswith("test-audio-markers.RPP")
+    assert result["session_path"].endswith("test-audio_markers.RPP")
     assert result["audio_file"] == str(test_audio_file.resolve())
 
     # Session file should not exist
@@ -108,9 +124,9 @@ def test_create_markers_session_creates_file(
     content = session_path.read_text()
     assert "<TRACK {" in content
     assert "<ITEM" in content
-    assert "<SOURCE MP3" in content
+    assert "<SOURCE WAVE" in content
     assert str(test_audio_file.resolve()) in content
-    assert "test-audio.mp3" in content
+    assert "test-audio.wav" in content
 
 
 def test_create_markers_session_uses_absolute_paths(
@@ -293,7 +309,7 @@ def test_create_markers_session_file_not_found(
 
     with pytest.raises(FileNotFoundError):
         create_markers_session(
-            audio_file=Path("/nonexistent/audio.mp3"),
+            audio_file=Path("/nonexistent/audio.wav"),
             dry_run=False,
             open_session=False,
         )

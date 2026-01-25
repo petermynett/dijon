@@ -98,7 +98,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",
@@ -109,7 +109,7 @@ items:
             },
             {
                 "file_id": "YTB-002",
-                "rel_path": "raw/audio/YTB-002.mp3",
+                "rel_path": "raw/audio/YTB-002.wav",
                 "status": "active",
                 "sha256": "def456",
                 "acq_sha256": "def456",
@@ -182,7 +182,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",
@@ -245,7 +245,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",
@@ -308,7 +308,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",
@@ -375,7 +375,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",
@@ -437,7 +437,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",
@@ -495,7 +495,7 @@ items:
         manifest_rows = [
             {
                 "file_id": "YTB-001",
-                "rel_path": "raw/audio/YTB-001.mp3",
+                "rel_path": "raw/audio/YTB-001.wav",
                 "status": "active",
                 "sha256": "abc123",
                 "acq_sha256": "abc123",

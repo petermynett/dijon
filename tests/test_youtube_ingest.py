@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -12,15 +13,37 @@ from dijon.pipeline.ingest.youtube import ingest
 from dijon.utils.manifest import read_manifest
 
 
+def _create_test_mp3(output_path: Path, duration_seconds: float = 1.0) -> None:
+    """Create a valid test MP3 file using ffmpeg.
+
+    Generates a simple sine wave audio file that ffmpeg can process.
+    """
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel", "error",
+            "-nostdin",
+            "-f", "lavfi",
+            "-i", f"sine=frequency=440:duration={duration_seconds}",
+            "-acodec", "libmp3lame",
+            "-y",
+            str(output_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
 @pytest.mark.integration
-def test_ingest_copies_mp3_to_raw(project_root: Path) -> None:
-    """Test that ingest copies MP3 files to raw directory."""
+def test_ingest_normalizes_audio_to_wav(project_root: Path) -> None:
+    """Test that ingest normalizes audio files to canonical WAV format."""
     # Setup: create acquisition directory with test files
-    acquisition_dir = project_root / "data" / "acquisition" / "youtube"
+    acquisition_dir = project_root / "data" / "datasets" / "acquisition" / "youtube"
     acquisition_dir.mkdir(parents=True, exist_ok=True)
     acquisition_manifest_path = acquisition_dir / "manifest.csv"
 
-    raw_dir = project_root / "data" / "raw" / "youtube"
+    raw_dir = project_root / "data" / "datasets" / "raw" / "audio"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_manifest_path = raw_dir / "manifest.csv"
 
@@ -47,9 +70,9 @@ def test_ingest_copies_mp3_to_raw(project_root: Path) -> None:
     info_json_file = acquisition_dir / f"{base_name}.json"
     info_json_file.write_text(json.dumps(info_json_data, indent=2))
 
-    # Create asset files
-    mp3_content = b"fake mp3 content for ingest test"
-    (acquisition_dir / f"{base_name}.mp3").write_bytes(mp3_content)
+    # Create valid test MP3 file
+    mp3_path = acquisition_dir / f"{base_name}.mp3"
+    _create_test_mp3(mp3_path, duration_seconds=1.0)
     (acquisition_dir / f"{base_name}.jpg").write_bytes(b"fake jpg content")
 
     # First, run acquire to create acquisition manifest
@@ -82,10 +105,11 @@ def test_ingest_copies_mp3_to_raw(project_root: Path) -> None:
     assert raw_row["status"] == "active"
     assert raw_row["acq_sha256"]  # Should have acq_sha256
 
-    # Verify raw file exists and has correct content
+    # Verify raw file exists and is WAV format
     raw_file_path = project_root / "data" / raw_row["rel_path"]
     assert raw_file_path.exists()
-    assert raw_file_path.read_bytes() == mp3_content
+    assert raw_file_path.suffix == ".wav"
+    assert raw_file_path.stat().st_size > 0  # File has content
 
     # Verify meta_json has required fields
     meta_json = json.loads(raw_row["meta_json"])
@@ -102,11 +126,11 @@ def test_ingest_copies_mp3_to_raw(project_root: Path) -> None:
 @pytest.mark.integration
 def test_ingest_ignores_thumbnails(project_root: Path) -> None:
     """Test that ingest ignores thumbnail files."""
-    acquisition_dir = project_root / "data" / "acquisition" / "youtube"
+    acquisition_dir = project_root / "data" / "datasets" / "acquisition" / "youtube"
     acquisition_dir.mkdir(parents=True, exist_ok=True)
     acquisition_manifest_path = acquisition_dir / "manifest.csv"
 
-    raw_dir = project_root / "data" / "raw" / "youtube"
+    raw_dir = project_root / "data" / "datasets" / "raw" / "audio"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_manifest_path = raw_dir / "manifest.csv"
 
@@ -132,7 +156,8 @@ def test_ingest_ignores_thumbnails(project_root: Path) -> None:
     info_json_file = acquisition_dir / f"{base_name}.json"
     info_json_file.write_text(json.dumps(info_json_data, indent=2))
 
-    (acquisition_dir / f"{base_name}.mp3").write_bytes(b"mp3 content")
+    # Create valid test MP3 file
+    _create_test_mp3(acquisition_dir / f"{base_name}.mp3")
     (acquisition_dir / f"{base_name}.jpg").write_bytes(b"jpg content")
 
     # Run acquire
@@ -153,11 +178,11 @@ def test_ingest_ignores_thumbnails(project_root: Path) -> None:
         dry_run=False,
     )
 
-    # Should only ingest MP3, not jpg
+    # Should only ingest audio, not jpg
     assert result["ingested"] == 1
 
-    # Verify only MP3 files in raw directory
-    raw_files = list(raw_dir.glob("*.mp3"))
+    # Verify only WAV files in raw directory
+    raw_files = list(raw_dir.glob("*.wav"))
     assert len(raw_files) == 1
     jpg_files = list(raw_dir.glob("*.jpg"))
     assert len(jpg_files) == 0
@@ -166,11 +191,11 @@ def test_ingest_ignores_thumbnails(project_root: Path) -> None:
 @pytest.mark.integration
 def test_ingest_is_idempotent(project_root: Path) -> None:
     """Test that re-running ingest doesn't create duplicate entries."""
-    acquisition_dir = project_root / "data" / "acquisition" / "youtube"
+    acquisition_dir = project_root / "data" / "datasets" / "acquisition" / "youtube"
     acquisition_dir.mkdir(parents=True, exist_ok=True)
     acquisition_manifest_path = acquisition_dir / "manifest.csv"
 
-    raw_dir = project_root / "data" / "raw" / "youtube"
+    raw_dir = project_root / "data" / "datasets" / "raw" / "audio"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_manifest_path = raw_dir / "manifest.csv"
 
@@ -196,7 +221,8 @@ def test_ingest_is_idempotent(project_root: Path) -> None:
     info_json_file = acquisition_dir / f"{base_name}.json"
     info_json_file.write_text(json.dumps(info_json_data, indent=2))
 
-    (acquisition_dir / f"{base_name}.mp3").write_bytes(b"idempotent mp3")
+    # Create valid test MP3 file
+    _create_test_mp3(acquisition_dir / f"{base_name}.mp3")
     (acquisition_dir / f"{base_name}.jpg").write_bytes(b"jpg")
 
     # Run acquire
@@ -235,19 +261,19 @@ def test_ingest_is_idempotent(project_root: Path) -> None:
     raw_manifest_rows = read_manifest(raw_manifest_path, profile="raw")
     assert len(raw_manifest_rows) == 1
 
-    # Verify only one raw file exists
-    raw_files = list(raw_dir.glob("*.mp3"))
+    # Verify only one raw file exists (WAV format)
+    raw_files = list(raw_dir.glob("*.wav"))
     assert len(raw_files) == 1
 
 
 @pytest.mark.integration
 def test_ingest_dry_run(project_root: Path) -> None:
     """Test that dry_run doesn't write files."""
-    acquisition_dir = project_root / "data" / "acquisition" / "youtube"
+    acquisition_dir = project_root / "data" / "datasets" / "acquisition" / "youtube"
     acquisition_dir.mkdir(parents=True, exist_ok=True)
     acquisition_manifest_path = acquisition_dir / "manifest.csv"
 
-    raw_dir = project_root / "data" / "raw" / "youtube"
+    raw_dir = project_root / "data" / "datasets" / "raw" / "audio"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_manifest_path = raw_dir / "manifest.csv"
 
@@ -273,7 +299,8 @@ def test_ingest_dry_run(project_root: Path) -> None:
     info_json_file = acquisition_dir / f"{base_name}.json"
     info_json_file.write_text(json.dumps(info_json_data, indent=2))
 
-    (acquisition_dir / f"{base_name}.mp3").write_bytes(b"dry run mp3")
+    # Create valid test MP3 file
+    _create_test_mp3(acquisition_dir / f"{base_name}.mp3")
     (acquisition_dir / f"{base_name}.jpg").write_bytes(b"jpg")
 
     # Run acquire
@@ -299,7 +326,7 @@ def test_ingest_dry_run(project_root: Path) -> None:
     assert "[DRY RUN]" not in result.get("message", "")  # Message format may vary
 
     # Verify no raw files were created
-    raw_files = list(raw_dir.glob("*.mp3"))
+    raw_files = list(raw_dir.glob("*.wav"))
     assert len(raw_files) == 0
 
     # Verify manifest doesn't exist or is empty
@@ -311,11 +338,11 @@ def test_ingest_dry_run(project_root: Path) -> None:
 @pytest.mark.integration
 def test_ingest_handles_missing_mp3_gracefully(project_root: Path) -> None:
     """Test that ingest handles missing MP3 files gracefully."""
-    acquisition_dir = project_root / "data" / "acquisition" / "youtube"
+    acquisition_dir = project_root / "data" / "datasets" / "acquisition" / "youtube"
     acquisition_dir.mkdir(parents=True, exist_ok=True)
     acquisition_manifest_path = acquisition_dir / "manifest.csv"
 
-    raw_dir = project_root / "data" / "raw" / "youtube"
+    raw_dir = project_root / "data" / "datasets" / "raw" / "audio"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_manifest_path = raw_dir / "manifest.csv"
 

@@ -185,9 +185,9 @@ def create_markers_session(
     if not audio_file.is_absolute():
         audio_file = RAW_AUDIO_DIR / audio_file.name
 
-    # If no extension, presume it's .mp3
+    # If no extension, presume it's .wav
     if not audio_file.suffix:
-        audio_file = audio_file.with_suffix(".mp3")
+        audio_file = audio_file.with_suffix(".wav")
 
     audio_file = audio_file.resolve()
     if not audio_file.exists():

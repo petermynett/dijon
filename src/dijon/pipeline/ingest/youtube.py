@@ -1,12 +1,14 @@
 """Ingestion verb for YouTube source.
 
-Ingestion copies acquisition MP3s into the raw layer with manifest entries.
+Ingestion normalizes acquisition audio files into canonical raw WAV format
+(mono, 48kHz, PCM) with manifest entries.
 This verb is idempotent: re-running with the same acq_sha256 will no-op.
 """
 
 from __future__ import annotations
 
 import json
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -29,10 +31,11 @@ def ingest(
     data_dir: Path = DATA_DIR,
     dry_run: bool = False,
 ) -> dict[str, str | int | bool | list[str]]:
-    """Ingest YouTube acquisition MP3s into the canonical raw layer.
+    """Ingest YouTube acquisition audio files into the canonical raw layer.
 
-    Scans info_json files in acquisition_dir and ingests all MP3s that are not
-    already ingested (based on acq_sha256 check).
+    Scans info_json files in acquisition_dir and normalizes all audio files that are not
+    already ingested (based on acq_sha256 check). Outputs are canonical WAV format
+    (mono, 48kHz, PCM).
 
     Args:
         acquisition_dir: Directory containing YouTube acquisition files.
@@ -46,7 +49,7 @@ def ingest(
         Result dictionary with:
         - success: bool
         - total: int (number of bundles scanned)
-        - ingested: int (number of MP3s ingested)
+        - ingested: int (number of audio files ingested)
         - skipped: int (number already ingested)
         - failed: int (number that failed)
         - message: str (summary message)
@@ -160,6 +163,50 @@ def ingest(
     }
 
 
+def _convert_to_canonical_wav(input_path: Path, output_path: Path) -> None:
+    """Convert audio file to canonical WAV format (mono, 48kHz, PCM).
+
+    Args:
+        input_path: Path to input audio file (any format supported by ffmpeg).
+        output_path: Path where canonical WAV will be written.
+
+    Raises:
+        subprocess.CalledProcessError: If ffmpeg conversion fails.
+    """
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel", "error",
+            "-nostdin",
+            "-i", str(input_path),
+            "-ac", "1",  # mono
+            "-ar", "48000",  # 48kHz sample rate
+            "-c:a", "pcm_s16le",  # PCM 16-bit little-endian
+            "-y",  # overwrite output file
+            str(output_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
+def _apply_gain_normalization(wav_path: Path) -> Path:
+    """Apply gain normalization to WAV file.
+
+    Currently a no-op placeholder. Future implementation will apply
+    compression and/or limiting for consistent loudness.
+
+    Args:
+        wav_path: Path to WAV file.
+
+    Returns:
+        Path to normalized WAV file (currently same as input).
+    """
+    # TODO: Implement compression/limiting for gain normalization
+    return wav_path
+
+
 def _ingest_bundle(
     info_json_file: Path,
     acquisition_dir: Path,
@@ -170,7 +217,7 @@ def _ingest_bundle(
     ingested_acq_sha256: set[str],
     dry_run: bool,
 ) -> dict[str, str]:
-    """Ingest a single YouTube bundle's MP3 into raw.
+    """Ingest a single YouTube bundle's audio file into raw as canonical WAV.
 
     Args:
         info_json_file: Path to the info_json file.
@@ -254,23 +301,28 @@ def _ingest_bundle(
     ingest_date = datetime.now(UTC)
     file_id = generate_next_file_id(get_source_code("youtube"), raw_manifest_path)
 
-    # Copy MP3 to raw layer
-    raw_file = raw_dir / f"{file_id}.mp3"
-    raw_file.write_bytes(mp3_path.read_bytes())
-
-    # Compute raw file checksum and compare to acquisition
-    raw_sha256 = compute_file_checksum(raw_file)
-    if raw_sha256 != acq_sha256:
-        # Clean up the copied file
+    # Convert to canonical WAV format
+    raw_file = raw_dir / f"{file_id}.wav"
+    try:
+        _convert_to_canonical_wav(mp3_path, raw_file)
+    except subprocess.CalledProcessError as e:
+        return {
+            "status": "failed",
+            "error": f"Failed to convert audio to WAV: {e}",
+        }
+    except Exception as e:
+        # Clean up partial file if conversion fails
         raw_file.unlink(missing_ok=True)
         return {
             "status": "failed",
-            "error": (
-                f"Checksum mismatch for {mp3_filename}: "
-                f"acquisition sha256={acq_sha256[:8]}..., "
-                f"raw sha256={raw_sha256[:8]}..."
-            ),
+            "error": f"Audio conversion error: {e}",
         }
+
+    # Apply gain normalization (currently no-op)
+    raw_file = _apply_gain_normalization(raw_file)
+
+    # Compute raw file checksum
+    raw_sha256 = compute_file_checksum(raw_file)
 
     # Build meta_json
     yt_dlp = info_data.get("yt_dlp", {})
