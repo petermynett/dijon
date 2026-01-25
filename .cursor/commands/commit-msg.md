@@ -26,8 +26,12 @@ Optional (only if needed to understand intent):
 
 ## Step 2 — Write the commit message (assistant only)
 
-Output ONE single block of plain text that represents the full commit message.
-Do NOT split output into multiple sections or UI panels.
+Output the commit message INSIDE ONE markdown fenced code block (triple backticks),
+so the UI shows a copy button.
+
+- Output EXACTLY one fenced code block containing the full commit message text
+- Do NOT put any text before or after the code block
+- Do NOT split output into multiple sections or UI panels
 
 ### CRITICAL: QUOTING & SAFETY RULES (MANDATORY)
 
@@ -96,10 +100,9 @@ If any of the above rules are violated, the output is incorrect.
 ---
 
 ### Output constraints (hard rules)
-- Output plain text only
-- No markdown
+- Output exactly ONE markdown fenced code block (triple backticks)
+- No text outside the code block
 - No explanations
 - No shell commands
-- No code fences
 - No surrounding quotes
 - No trailing commentary
