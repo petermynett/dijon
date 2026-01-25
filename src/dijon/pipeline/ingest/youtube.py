@@ -1,7 +1,7 @@
 """Ingestion verb for YouTube source.
 
 Ingestion normalizes acquisition audio files into canonical raw WAV format
-(mono, 48kHz, PCM) with manifest entries.
+(mono, 22.05kHz, PCM) with manifest entries.
 This verb is idempotent: re-running with the same acq_sha256 will no-op.
 """
 
@@ -35,7 +35,7 @@ def ingest(
 
     Scans info_json files in acquisition_dir and normalizes all audio files that are not
     already ingested (based on acq_sha256 check). Outputs are canonical WAV format
-    (mono, 48kHz, PCM).
+    (mono, 22.05kHz, PCM).
 
     Args:
         acquisition_dir: Directory containing YouTube acquisition files.
@@ -164,7 +164,7 @@ def ingest(
 
 
 def _convert_to_canonical_wav(input_path: Path, output_path: Path) -> None:
-    """Convert audio file to canonical WAV format (mono, 48kHz, PCM).
+    """Convert audio file to canonical WAV format (mono, 22.05kHz, PCM).
 
     Args:
         input_path: Path to input audio file (any format supported by ffmpeg).
@@ -181,7 +181,7 @@ def _convert_to_canonical_wav(input_path: Path, output_path: Path) -> None:
             "-nostdin",
             "-i", str(input_path),
             "-ac", "1",  # mono
-            "-ar", "48000",  # 48kHz sample rate
+            "-ar", "22050",  # 22.05kHz sample rate
             "-c:a", "pcm_s16le",  # PCM 16-bit little-endian
             "-y",  # overwrite output file
             str(output_path),
