@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""One-time migration script to normalize existing MP3 files to canonical WAV format.
+"""One-time script to resample existing WAV files in raw audio directory to 22050 Hz.
 
-Converts all MP3 files in data/datasets/raw/audio/ to mono 22.05kHz PCM WAV format
+Converts all WAV files in data/datasets/raw/audio/ to 22050 Hz sample rate
 and updates manifest.csv entries accordingly. Preserves audio duration so markers
 remain valid.
 
-This script is idempotent: re-running will skip already-converted files.
+This script is idempotent: re-running will skip already-resampled files.
 """
 
 from __future__ import annotations
 
 import argparse
 import shutil
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -20,12 +21,40 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from dijon.global_config import DATA_DIR, RAW_AUDIO_DIR
-from dijon.pipeline.ingest.youtube import _convert_to_canonical_wav
 from dijon.utils.manifest import compute_file_checksum, read_manifest, write_manifest
 
 
-def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> dict:
-    """Normalize all MP3 files in raw audio directory to canonical WAV format.
+def resample_wav_to_22050(input_path: Path, output_path: Path) -> None:
+    """Resample WAV file to 22050 Hz sample rate.
+
+    Args:
+        input_path: Path to input WAV file.
+        output_path: Path where resampled WAV will be written.
+
+    Raises:
+        subprocess.CalledProcessError: If ffmpeg conversion fails.
+    """
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel", "error",
+            "-nostdin",
+            "-i", str(input_path),
+            "-ac", "1",  # mono
+            "-ar", "22050",  # 22.05kHz sample rate
+            "-c:a", "pcm_s16le",  # PCM 16-bit little-endian
+            "-f", "wav",  # explicitly specify WAV format
+            "-y",  # overwrite output file
+            str(output_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
+def resample_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> dict:
+    """Resample all WAV files in raw audio directory to 22050 Hz.
 
     Args:
         dry_run: If True, simulate without making changes.
@@ -39,7 +68,7 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
     if not manifest_path.exists():
         return {
             "success": False,
-            "converted": 0,
+            "resampled": 0,
             "skipped": 0,
             "failed": 0,
             "errors": [f"Manifest not found: {manifest_path}"],
@@ -51,7 +80,7 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
     except Exception as e:
         return {
             "success": False,
-            "converted": 0,
+            "resampled": 0,
             "skipped": 0,
             "failed": 0,
             "errors": [f"Failed to read manifest: {e}"],
@@ -60,13 +89,13 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
     # Filter to active rows only
     active_rows = [row for row in rows if row.get("status", "").strip() == "active"]
 
-    converted_count = 0
+    resampled_count = 0
     skipped_count = 0
     failed_count = 0
     errors: list[str] = []
     updated_rows = []
 
-    # Process each active row
+    # Process each row
     for row in rows:
         rel_path = row.get("rel_path", "").strip()
         file_id = row.get("file_id", "").strip()
@@ -76,97 +105,114 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
             updated_rows.append(row)
             continue
 
-        # Skip if already WAV (idempotency)
-        if rel_path.endswith(".wav"):
-            skipped_count += 1
-            updated_rows.append(row)
-            continue
-
-        # Skip if not MP3
-        if not rel_path.endswith(".mp3"):
+        # Skip if not WAV
+        if not rel_path.endswith(".wav"):
             updated_rows.append(row)
             continue
 
         # Resolve absolute path
-        # Try multiple possible locations (handle legacy rel_path formats)
-        mp3_path = None
-        for base_dir in [RAW_AUDIO_DIR, DATA_DIR / rel_path, DATA_DIR / "datasets" / rel_path]:
-            candidate = base_dir / Path(rel_path).name if base_dir == RAW_AUDIO_DIR else base_dir
-            if candidate.exists():
-                mp3_path = candidate
-                break
-        
-        if mp3_path is None or not mp3_path.exists():
+        wav_path = DATA_DIR / rel_path
+        if not wav_path.exists():
             failed_count += 1
-            errors.append(f"{file_id}: MP3 file not found for rel_path: {rel_path}")
+            errors.append(f"{file_id}: WAV file not found at {rel_path}")
             updated_rows.append(row)  # Keep original row
             continue
 
-        # Determine WAV path (same directory as MP3)
-        wav_path = mp3_path.with_suffix(".wav")
-        # Update rel_path to match the actual location relative to DATA_DIR
-        wav_rel_path = str(wav_path.relative_to(DATA_DIR))
+        # Check current sample rate (skip if already 22050)
+        try:
+            result = subprocess.run(
+                [
+                    "ffprobe",
+                    "-v", "error",
+                    "-select_streams", "a:0",
+                    "-show_entries", "stream=sample_rate",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    str(wav_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            current_sr = int(result.stdout.strip())
+            if current_sr == 22050:
+                skipped_count += 1
+                updated_rows.append(row)
+                continue
+        except (subprocess.CalledProcessError, ValueError) as e:
+            # If we can't check sample rate, proceed with conversion
+            pass
 
         if dry_run:
-            print(f"[DRY RUN] Would convert: {mp3_path.name} → {wav_path.name}")
-            converted_count += 1
+            print(f"[DRY RUN] Would resample: {wav_path.name} to 22050 Hz")
+            resampled_count += 1
             # Create updated row for dry-run preview
             updated_row = row.copy()
-            updated_row["rel_path"] = wav_rel_path
             updated_row["sha256"] = "[would be computed]"
             updated_rows.append(updated_row)
             continue
 
-        # Convert MP3 → WAV
+        # Create temporary output file (use .tmp.wav so ffmpeg recognizes format)
+        temp_wav_path = wav_path.with_suffix(".tmp.wav")
+
+        # Resample WAV → 22050 Hz
         try:
-            _convert_to_canonical_wav(mp3_path, wav_path)
+            resample_wav_to_22050(wav_path, temp_wav_path)
         except Exception as e:
             failed_count += 1
-            errors.append(f"{file_id}: Conversion failed: {e}")
+            errors.append(f"{file_id}: Resampling failed: {e}")
+            temp_wav_path.unlink(missing_ok=True)
             updated_rows.append(row)  # Keep original row
             continue
 
-        # Compute new SHA256 for WAV file
+        # Compute new SHA256 for resampled file
         try:
-            wav_sha256 = compute_file_checksum(wav_path)
+            new_sha256 = compute_file_checksum(temp_wav_path)
         except Exception as e:
             failed_count += 1
-            errors.append(f"{file_id}: Failed to compute WAV checksum: {e}")
-            # Clean up WAV file if checksum failed
-            wav_path.unlink(missing_ok=True)
+            errors.append(f"{file_id}: Failed to compute checksum: {e}")
+            temp_wav_path.unlink(missing_ok=True)
+            updated_rows.append(row)  # Keep original row
+            continue
+
+        # Replace original with resampled file
+        try:
+            # Backup original (optional, but safe)
+            backup_path = wav_path.with_suffix(".wav.backup")
+            shutil.copy2(wav_path, backup_path)
+            # Replace original with resampled
+            temp_wav_path.replace(wav_path)
+            # Remove backup after successful replacement
+            backup_path.unlink()
+        except Exception as e:
+            failed_count += 1
+            errors.append(f"{file_id}: Failed to replace file: {e}")
+            temp_wav_path.unlink(missing_ok=True)
+            backup_path.unlink(missing_ok=True)
             updated_rows.append(row)  # Keep original row
             continue
 
         # Update row
         updated_row = row.copy()
-        updated_row["rel_path"] = wav_rel_path
-        updated_row["sha256"] = wav_sha256
+        updated_row["sha256"] = new_sha256
         # Preserve all other fields (acq_sha256, ingested_at, source_name, meta_json, etc.)
 
-        # Delete old MP3 file
-        try:
-            mp3_path.unlink()
-        except Exception as e:
-            # Log warning but don't fail - WAV conversion succeeded
-            errors.append(f"{file_id}: Warning - failed to delete MP3: {e}")
-
         updated_rows.append(updated_row)
-        converted_count += 1
-        print(f"Converted: {mp3_path.name} → {wav_path.name}")
+        resampled_count += 1
+        print(f"Resampled: {wav_path.name} to 22050 Hz")
 
     # Write updated manifest (unless dry-run)
-    if not dry_run and converted_count > 0:
+    if not dry_run and resampled_count > 0:
         # Create backup
         if not no_backup:
             timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
             backup_path = manifest_path.with_suffix(f".csv.backup-{timestamp}")
             try:
                 shutil.copy2(manifest_path, backup_path)
-                print(f"Created backup: {backup_path}")
+                print(f"Created manifest backup: {backup_path}")
             except Exception as e:
                 return {
                     "success": False,
-                    "converted": converted_count,
+                    "resampled": resampled_count,
                     "skipped": skipped_count,
                     "failed": failed_count,
                     "errors": errors + [f"Failed to create backup: {e}"],
@@ -185,7 +231,7 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
                     errors.append(f"Failed to restore backup: {restore_error}")
             return {
                 "success": False,
-                "converted": converted_count,
+                "resampled": resampled_count,
                 "skipped": skipped_count,
                 "failed": failed_count,
                 "errors": errors + [f"Failed to write manifest: {e}"],
@@ -194,7 +240,7 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
     success = failed_count == 0
     return {
         "success": success,
-        "converted": converted_count,
+        "resampled": resampled_count,
         "skipped": skipped_count,
         "failed": failed_count,
         "errors": errors,
@@ -204,7 +250,7 @@ def normalize_raw_audio(*, dry_run: bool = False, no_backup: bool = False) -> di
 def main() -> int:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(
-        description="Normalize existing MP3 files in raw audio directory to canonical WAV format."
+        description="Resample existing WAV files in raw audio directory to 22050 Hz."
     )
     parser.add_argument(
         "--dry-run",
@@ -219,14 +265,14 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    print("Normalizing raw audio files...")
+    print("Resampling raw audio files to 22050 Hz...")
     if args.dry_run:
         print("[DRY RUN MODE - No changes will be made]")
 
-    result = normalize_raw_audio(dry_run=args.dry_run, no_backup=args.no_backup)
+    result = resample_raw_audio(dry_run=args.dry_run, no_backup=args.no_backup)
 
     print(f"\nResults:")
-    print(f"  Converted: {result['converted']}")
+    print(f"  Resampled: {result['resampled']}")
     print(f"  Skipped: {result['skipped']}")
     print(f"  Failed: {result['failed']}")
 
