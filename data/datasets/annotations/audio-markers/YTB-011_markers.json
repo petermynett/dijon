@@ -1,0 +1,29 @@
+{
+  "rpp_file": "/Users/petermynett/dev/active/dijon/reaper/markers/YTB-011_markers.RPP",
+  "entries": [
+    {
+      "timestamp": "2026-01-19T17:25:09.108593",
+      "count": 18,
+      "markers": [
+      {"name":"Intro.A1p","position":0.35082446213248,"number":1,"color":0,"flags":0,"locked":1,"guid":"{57712881-998E-4647-ACD1-71A103B18A0D}"},
+      {"name":"Intro.A2p","position":10.95316713938701,"number":2,"color":0,"flags":0,"locked":1,"guid":"{0CC59290-E417-D841-AF2D-8B2D6BAC94E5}"},
+      {"name":"F1.A1p","position":21.51881324100641,"number":3,"color":0,"flags":0,"locked":1,"guid":"{042E8E6A-67FA-C64C-918B-646B465E9E23}"},
+      {"name":"F1.A2p","position":32.49794184265543,"number":4,"color":0,"flags":0,"locked":1,"guid":"{12590836-CC31-B540-932E-867E9A0831F1}"},
+      {"name":"F1.Bp","position":43.3443059045027,"number":5,"color":0,"flags":0,"locked":1,"guid":"{EFD94650-0C4E-8E4F-BC2F-DC185DE3E8A6}"},
+      {"name":"F1.A3p","position":54.29029711228548,"number":6,"color":0,"flags":0,"locked":1,"guid":"{1EC392BB-50FE-404E-99D4-75B7D146A7EF}"},
+      {"name":"F2.A1p","position":65.42918800228479,"number":7,"color":0,"flags":0,"locked":1,"guid":"{15D3D294-B75C-9548-A79C-501AE805D594}"},
+      {"name":"F2.A2p","position":76.38971062644195,"number":8,"color":0,"flags":0,"locked":1,"guid":"{DECF9065-2A50-054A-9EE9-900A81EE51C3}"},
+      {"name":"F2.Bp","position":87.19193080665748,"number":9,"color":0,"flags":0,"locked":1,"guid":"{28503545-E980-BC46-9097-103EB369AF05}"},
+      {"name":"F2.A3p","position":97.95350933372802,"number":10,"color":0,"flags":0,"locked":1,"guid":"{40DD823A-D304-654C-8270-2107BA2E90FF}"},
+      {"name":"S1.A1p","position":108.70178181769131,"number":11,"color":0,"flags":0,"locked":1,"guid":"{1ADCDAC1-5BF2-6945-98E0-D9187956F1E9}"},
+      {"name":"S1.A2p","position":119.19278814682161,"number":12,"color":0,"flags":0,"locked":1,"guid":"{2F1AD4EE-6F75-374D-9C00-8AB3E12A8BAB}"},
+      {"name":"S1.B","position":129.8984749838233,"number":13,"color":0,"flags":0,"locked":1,"guid":"{E23D3B29-6476-7144-8FD7-A8C6239A4EF2}"},
+      {"name":"S1.A3p","position":139.83596895096696,"number":14,"color":0,"flags":0,"locked":1,"guid":"{388CFA04-A650-944D-9811-80946A327C6F}"},
+      {"name":"F3.A1p","position":150.25474527985915,"number":15,"color":0,"flags":0,"locked":1,"guid":"{B0D03CE2-9884-4940-A095-A99CBF4CD001}"},
+      {"name":"F3.A2p","position":161.0322343688665,"number":16,"color":0,"flags":0,"locked":1,"guid":"{989BB243-FAA3-6546-9E48-A5EFADD187A4}"},
+      {"name":"F3.Bp","position":171.90283031488772,"number":17,"color":0,"flags":0,"locked":1,"guid":"{00B463D8-B447-9E4E-A660-688347322C04}"},
+      {"name":"F3.A3p","position":182.59847916672146,"number":18,"color":0,"flags":0,"locked":1,"guid":"{6502350F-3851-284A-9500-402B0C55EBA2}"}
+      ]
+    }
+  ]
+}

@@ -2,28 +2,13 @@ name: dijon
 channels:
   - conda-forge
 dependencies:
-  - ffmpeg
-  - ipykernel
-  - ipywidgets
-  - jupyterlab
-  - librosa
-  - matplotlib
-  - mir_eval
-  - music21
-  - notebook
-  - numba
-  - numpy
   - orjson
-  - pandas
   - pip
   - pydantic
-  - pysoundfile
   - pytest
   - python=3.12
   - pyyaml
   - ruff
-  - scikit-learn
-  - scipy
   - setuptools
   - typer
   - wheel
