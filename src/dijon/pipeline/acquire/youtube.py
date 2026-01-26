@@ -61,14 +61,6 @@ def acquire(
             "message": f"No JSON files found in {acquisition_dir}",
         }
 
-    if dry_run:
-        return {
-            "success": True,
-            "files_processed": len(info_json_files),
-            "rows_added": 0,
-            "message": f"[DRY RUN] Would process {len(info_json_files)} bundles",
-        }
-
     # Read existing manifest for idempotency checks
     existing_rows = read_manifest(manifest_path, profile="upstream") if manifest_path.exists() else []
     existing_by_rel_path: dict[str, str] = {
@@ -78,6 +70,7 @@ def acquire(
     rows_added = 0
     bundles_processed = 0
     errors: list[str] = []
+    would_add: list[dict[str, str]] = []
 
     for info_json_file in info_json_files:
         try:
@@ -87,16 +80,26 @@ def acquire(
                 manifest_path=manifest_path,
                 data_dir=data_dir,
                 existing_by_rel_path=existing_by_rel_path,
+                dry_run=dry_run,
             )
             rows_added += bundle_result["rows_added"]
             bundles_processed += 1
             if bundle_result.get("errors"):
                 errors.extend(bundle_result["errors"])
+            if bundle_result.get("would_add"):
+                would_add.extend(bundle_result["would_add"])
         except Exception as e:
             errors.append(f"Error processing {info_json_file.name}: {e}")
 
     success = len(errors) == 0
-    message = f"Processed {bundles_processed} bundles, added {rows_added} manifest rows"
+    if dry_run:
+        message = f"[DRY RUN] Would process {bundles_processed} bundles, add {rows_added} manifest rows"
+        if would_add:
+            message += "\n  Files that would be added:"
+            for item in would_add:
+                message += f"\n    • {item['rel_path']} ({item['asset_role']})"
+    else:
+        message = f"Processed {bundles_processed} bundles, added {rows_added} manifest rows"
     if errors:
         message += f" ({len(errors)} errors)"
 
@@ -106,6 +109,7 @@ def acquire(
         "rows_added": rows_added,
         "message": message,
         "errors": errors if errors else None,
+        "would_add": would_add if dry_run and would_add else None,
     }
 
 
@@ -115,7 +119,8 @@ def _process_bundle(
     manifest_path: Path,
     data_dir: Path,
     existing_by_rel_path: dict[str, str],
-) -> dict[str, int | list[str]]:
+    dry_run: bool = False,
+) -> dict[str, int | list[str] | list[dict[str, str]]]:
     """Process a single YouTube bundle (info_json + assets).
 
     Args:
@@ -148,6 +153,7 @@ def _process_bundle(
 
     rows_added = 0
     errors: list[str] = []
+    would_add: list[dict[str, str]] = []
 
     # Process each asset
     for asset_role, asset_file in assets.items():
@@ -184,26 +190,41 @@ def _process_bundle(
         }
         meta_json = json.dumps(meta_json_obj, sort_keys=True, separators=(",", ":"))
 
-        # Append manifest row
-        try:
-            append_manifest_row(
-                manifest_path=manifest_path,
-                rel_path=rel_path,
-                status="active",
-                sha256=sha256,
-                source_name=asset_file.name,
-                schema_version="1",
-                profile="upstream",
-                validate="row",
-                meta_json=meta_json,
-            )
+        if dry_run:
+            # In dry-run mode, collect what would be added
+            would_add.append({
+                "rel_path": rel_path,
+                "asset_role": asset_role,
+                "sha256": sha256[:8] + "...",
+            })
             rows_added += 1
-            # Update existing_by_rel_path for subsequent checks in this run
-            existing_by_rel_path[rel_path] = sha256
-        except Exception as e:
-            errors.append(f"Failed to append manifest row for {asset_file.name}: {e}")
+        else:
+            # Append manifest row
+            try:
+                append_manifest_row(
+                    manifest_path=manifest_path,
+                    rel_path=rel_path,
+                    status="active",
+                    sha256=sha256,
+                    source_name=asset_file.name,
+                    schema_version="1",
+                    profile="upstream",
+                    validate="row",
+                    meta_json=meta_json,
+                )
+                rows_added += 1
+                # Update existing_by_rel_path for subsequent checks in this run
+                existing_by_rel_path[rel_path] = sha256
+            except Exception as e:
+                errors.append(f"Failed to append manifest row for {asset_file.name}: {e}")
 
-    return {"rows_added": rows_added, "errors": errors if errors else []}
+    result: dict[str, int | list[str] | list[dict[str, str]]] = {
+        "rows_added": rows_added,
+        "errors": errors if errors else [],
+    }
+    if dry_run and would_add:
+        result["would_add"] = would_add
+    return result
 
 
 def _extract_youtube_id(info_data: dict, info_json_file: Path) -> str | None:

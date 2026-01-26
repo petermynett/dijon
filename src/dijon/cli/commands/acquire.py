@@ -21,7 +21,7 @@ app = typer.Typer(
 def acquire_youtube(
     dry_run: Annotated[
         bool,
-        typer.Option("--dry-run", help="Simulate the operation without writing files"),
+        typer.Option("--dry-run", help="Simulate the operation without writing files, showing what would be processed"),
     ] = False,
 ) -> None:
     """Acquire manifest entries for YouTube bundles.
@@ -46,5 +46,5 @@ def acquire_youtube(
     cli.handle_cli_operation(
         operation="acquire",
         op_callable=_acquire,
-        pre_message="Acquiring manifest entries for YouTube bundles..." if not dry_run else None,
+        pre_message="[DRY RUN] Would acquire manifest entries for YouTube bundles..." if dry_run else "Acquiring manifest entries for YouTube bundles...",
     )
