@@ -136,8 +136,8 @@ def clean_reaper() -> dict[str, Any]:
     Removes:
     - All *reapeaks files recursively in reaper/
     - Folders named "peaks" that contain reapeaks files
-    - Backups/ and Media/ directories in reaper/examples/ and reaper/markers/
-    - *.rpp files in reaper/ (root) and reaper/markers/ but NOT in reaper/examples/
+    - Backups/ and Media/ directories in reaper/examples/, reaper/markers/, and reaper/heads/
+    - *.rpp files in reaper/ (root), reaper/markers/, and reaper/heads/ but NOT in reaper/examples/
 
     Returns:
         Result dictionary with:
@@ -171,6 +171,7 @@ def clean_reaper() -> dict[str, Any]:
 
     examples_dir = reaper_dir / "examples"
     markers_dir = reaper_dir / "markers"
+    heads_dir = reaper_dir / "heads"
 
     # Find all *reapeaks files
     for reapeaks_file in reaper_dir.rglob("*reapeaks"):
@@ -189,8 +190,8 @@ def clean_reaper() -> dict[str, Any]:
             if has_reapeaks:
                 peaks_dirs.append(peaks_dir)
 
-    # Find Backups/ and Media/ directories in examples/ and markers/
-    for subdir_name in ["examples", "markers"]:
+    # Find Backups/ and Media/ directories in examples/, markers/, and heads/
+    for subdir_name in ["examples", "markers", "heads"]:
         subdir = reaper_dir / subdir_name
         if subdir.exists():
             for target_dir_name in ["Backups", "Media"]:
@@ -213,6 +214,15 @@ def clean_reaper() -> dict[str, Any]:
             if rpp_file.is_file():
                 rpp_files.append(rpp_file)
         for rpp_file in markers_dir.rglob("*.RPP"):
+            if rpp_file.is_file():
+                rpp_files.append(rpp_file)
+
+    # Find .rpp files in heads/ (but not examples/)
+    if heads_dir.exists():
+        for rpp_file in heads_dir.rglob("*.rpp"):
+            if rpp_file.is_file():
+                rpp_files.append(rpp_file)
+        for rpp_file in heads_dir.rglob("*.RPP"):
             if rpp_file.is_file():
                 rpp_files.append(rpp_file)
 
