@@ -268,5 +268,11 @@ def _format_result_dict(result: dict[str, Any], op_label: str) -> str:
             else:
                 lines.append(f"    • {item}")
 
+    # Show items that would be deleted in dry-run mode
+    if result.get("dry_run") and result.get("items_to_delete"):
+        lines.append("  Items that would be deleted:")
+        for item in result["items_to_delete"]:
+            lines.append(f"    {item}")
+
     return "\n".join(lines)
 
