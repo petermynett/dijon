@@ -11,6 +11,9 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
+.vscode/
+.vscode/**
+
 # --- OS / editor junk ---
 .DS_Store
 Thumbs.db
