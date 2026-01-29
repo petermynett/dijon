@@ -45,14 +45,14 @@ data/**/*.tif
 data/**/*.tiff
 data/**/*.webp
 
+*.pdf
+
 # --- Reaper files ---
 reaper/**/*.rpp-bak
 reaper/**/Media/**/*
 
 # --- JSON files (tracked) ---
 !data/**/*.json
-
-*.pdf
 
 # --- Database state / binaries (ignored) ---
 *.sqlite
@@ -82,3 +82,4 @@ DATA.md
 ARCHITECTURE.md
 AGENTS.md
 AGENTS_CURSOR.md
+.template_origin.yml
