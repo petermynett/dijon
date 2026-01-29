@@ -53,7 +53,6 @@ reaper/**/Media/**/*
 !data/**/*.json
 
 *.pdf
-!docs/**/*.pdf
 
 # --- Database state / binaries (ignored) ---
 *.sqlite
@@ -75,3 +74,11 @@ dist/
 # --- Personal --- #
 TODO.txt
 TODO.md
+
+# --- Documentation ---
+docs/**/*.pdf
+README.md
+DATA.md
+ARCHITECTURE.md
+AGENTS.md
+AGENTS_CURSOR.md
