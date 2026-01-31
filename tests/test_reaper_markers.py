@@ -7,8 +7,16 @@ from pathlib import Path
 
 import pytest
 
+from dijon.reaper.marker_names import (
+    HEAD_IN_END,
+    HEAD_IN_START,
+    HEAD_OUT_END,
+    HEAD_OUT_START,
+)
 from dijon.reaper.markers_session import (
+    _order_markers_in_entry,
     create_markers_session,
+    order_markers_in_file,
     read_markers,
 )
 
@@ -332,3 +340,224 @@ def test_create_markers_session_template_not_found(
             dry_run=False,
             open_session=False,
         )
+
+
+def test_is_head_marker() -> None:
+    """Test that is_head_marker correctly identifies head markers."""
+    from dijon.reaper.marker_names import is_head_marker
+    
+    # Test canonical head marker names
+    assert is_head_marker(HEAD_IN_START) is True
+    assert is_head_marker(HEAD_IN_END) is True
+    assert is_head_marker(HEAD_OUT_START) is True
+    assert is_head_marker(HEAD_OUT_END) is True
+    
+    # Test non-head markers
+    assert is_head_marker("1A") is False
+    assert is_head_marker("F1.A1") is False
+    assert is_head_marker("") is False
+
+
+def test_read_markers_with_head_markers(
+    project_root: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that read_markers handles head marker names from RPP files."""
+    from dijon.global_config import AUDIO_MARKERS_DIR
+    
+    # Patch AUDIO_MARKERS_DIR to use tmp_path
+    markers_output_dir = tmp_path / "audio-markers"
+    markers_output_dir.mkdir(parents=True)
+    monkeypatch.setattr(
+        "dijon.reaper.markers_session.AUDIO_MARKERS_DIR", markers_output_dir
+    )
+    
+    rpp_content = """<REAPER_PROJECT 0.1 "7.59/macOS-arm64" 1768498733 0
+  <NOTES 0 2
+  >
+  MARKER 1 0.17 HEAD_IN_START 8 0 1 B {4B33297A-385B-D84C-8CD4-EB377E55CE19} 0
+  MARKER 2 5.5 HEAD_IN_END 8 0 1 B {8CB6F37A-4D25-CF46-8F8A-8750ED0D3D7A} 0
+  MARKER 3 10.0 HEAD_OUT_START 8 0 1 B {7971FA09-9ED7-FB49-8148-15909D311ACA} 0
+  MARKER 4 15.0 HEAD_OUT_END 8 0 1 B {A1B2C3D4-E5F6-7890-ABCD-EF1234567890} 0
+  MARKER 5 20.0 1A 8 0 1 B {B2C3D4E5-F6A7-8901-BCDE-F23456789012} 0
+  <PROJBAY
+  >
+>
+"""
+    rpp_file = project_root / "test-head-markers.RPP"
+    rpp_file.write_text(rpp_content)
+
+    result = read_markers(rpp_file=rpp_file)
+
+    assert result["success"] is True
+    assert result["count"] == 5
+    assert len(result["markers"]) == 5
+
+    # Check that head markers are present
+    marker_names = [m["name"] for m in result["markers"]]
+    assert HEAD_IN_START in marker_names
+    assert HEAD_IN_END in marker_names
+    assert HEAD_OUT_START in marker_names
+    assert HEAD_OUT_END in marker_names
+    assert "1A" in marker_names
+    
+    # Verify output JSON contains head marker names
+    output_file = Path(result["output_file"])
+    assert output_file.exists()
+    json_data = json.loads(output_file.read_text())
+    json_marker_names = [m["name"] for m in json_data["entries"][0]["markers"]]
+    assert HEAD_IN_START in json_marker_names
+    assert HEAD_IN_END in json_marker_names
+    assert HEAD_OUT_START in json_marker_names
+    assert HEAD_OUT_END in json_marker_names
+
+
+def test_unified_output_location(
+    project_root: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that all markers (form + head) are written to audio-markers/ JSON."""
+    from dijon.global_config import AUDIO_MARKERS_DIR
+    
+    # Patch AUDIO_MARKERS_DIR to use tmp_path
+    markers_output_dir = tmp_path / "audio-markers"
+    markers_output_dir.mkdir(parents=True)
+    monkeypatch.setattr(
+        "dijon.reaper.markers_session.AUDIO_MARKERS_DIR", markers_output_dir
+    )
+    
+    rpp_content = """<REAPER_PROJECT 0.1 "7.59/macOS-arm64" 1768498733 0
+  <NOTES 0 2
+  >
+  MARKER 1 0.17 HEAD_IN_START 8 0 1 B {4B33297A-385B-D84C-8CD4-EB377E55CE19} 0
+  MARKER 2 5.5 1A 8 0 1 B {8CB6F37A-4D25-CF46-8F8A-8750ED0D3D7A} 0
+  MARKER 3 10.0 F1.A1 8 0 1 B {7971FA09-9ED7-FB49-8148-15909D311ACA} 0
+  <PROJBAY
+  >
+>
+"""
+    rpp_file = project_root / "test-unified-output.RPP"
+    rpp_file.write_text(rpp_content)
+
+    result = read_markers(rpp_file=rpp_file)
+
+    assert result["success"] is True
+    
+    # Verify output is in audio-markers directory
+    output_file = Path(result["output_file"])
+    assert output_file.exists()
+    assert "audio-markers" in str(output_file)
+    assert output_file.parent == markers_output_dir
+    
+    # Verify all markers are in the same JSON file
+    json_data = json.loads(output_file.read_text())
+    markers = json_data["entries"][0]["markers"]
+    marker_names = [m["name"] for m in markers]
+    assert HEAD_IN_START in marker_names
+    assert "1A" in marker_names
+    assert "F1.A1" in marker_names
+
+
+def test_order_markers_head_markers_last(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that head markers are ordered after regular markers."""
+    from dijon.global_config import AUDIO_MARKERS_DIR
+    
+    # Patch AUDIO_MARKERS_DIR to use tmp_path
+    markers_output_dir = tmp_path / "audio-markers"
+    markers_output_dir.mkdir(parents=True)
+    monkeypatch.setattr(
+        "dijon.reaper.markers_session.AUDIO_MARKERS_DIR", markers_output_dir
+    )
+    
+    # Create a test marker file with mixed regular and head markers
+    test_file = markers_output_dir / "test_order_markers.json"
+    test_data = {
+        "rpp_file": "/test/test.RPP",
+        "entries": [
+            {
+                "timestamp": "2026-01-30T00:00:00",
+                "count": 6,
+                "markers": [
+                    {"name": "A", "position": 5.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{A}"},
+                    {"name": HEAD_IN_START, "position": 2.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{B}"},
+                    {"name": "B", "position": 10.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{C}"},
+                    {"name": HEAD_IN_END, "position": 8.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{D}"},
+                    {"name": HEAD_OUT_START, "position": 1.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{E}"},
+                    {"name": HEAD_OUT_END, "position": 15.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{F}"},
+                ],
+            }
+        ],
+    }
+    test_file.write_text(json.dumps(test_data, indent=2))
+    
+    # Order the markers
+    result = order_markers_in_file(test_file)
+    
+    assert result["success"] is True
+    assert result["entries_processed"] == 1
+    
+    # Read back the ordered file
+    ordered_data = json.loads(test_file.read_text())
+    ordered_markers = ordered_data["entries"][0]["markers"]
+    
+    # Verify order: regular markers first (by position), then head markers (in specific order)
+    marker_names = [m["name"] for m in ordered_markers]
+    marker_numbers = [m["number"] for m in ordered_markers]
+    
+    # Regular markers should come first, sorted by position
+    assert marker_names[0] == "A"  # position 5.0
+    assert marker_numbers[0] == 1
+    assert marker_names[1] == "B"  # position 10.0
+    assert marker_numbers[1] == 2
+    
+    # Head markers should come after, in specific order
+    assert marker_names[2] == HEAD_IN_START
+    assert marker_numbers[2] == 3
+    assert marker_names[3] == HEAD_IN_END
+    assert marker_numbers[3] == 4
+    assert marker_names[4] == HEAD_OUT_START
+    assert marker_numbers[4] == 5
+    assert marker_names[5] == HEAD_OUT_END
+    assert marker_numbers[5] == 6
+    
+    # Verify all markers are numbered sequentially
+    assert marker_numbers == [1, 2, 3, 4, 5, 6]
+
+
+def test_order_markers_entry_direct() -> None:
+    """Test _order_markers_in_entry directly with head markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 4,
+        "markers": [
+            {"name": "Regular1", "position": 10.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{1}"},
+            {"name": HEAD_IN_START, "position": 2.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{2}"},
+            {"name": "Regular2", "position": 5.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{3}"},
+            {"name": HEAD_IN_END, "position": 8.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{4}"},
+        ],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    marker_numbers = [m["number"] for m in ordered_entry["markers"]]
+    
+    # Regular markers should be first, sorted by position
+    assert marker_names[0] == "Regular2"  # position 5.0
+    assert marker_numbers[0] == 1
+    assert marker_names[1] == "Regular1"  # position 10.0
+    assert marker_numbers[1] == 2
+    
+    # Head markers should follow in specific order
+    assert marker_names[2] == HEAD_IN_START
+    assert marker_numbers[2] == 3
+    assert marker_names[3] == HEAD_IN_END
+    assert marker_numbers[3] == 4
+    
+    # Verify count is updated
+    assert ordered_entry["count"] == 4

@@ -47,7 +47,10 @@ It attempts to potentially answer some of the following questions:
 ### External Apps
 - Reaper: used to label formal markers
 - Musescore: used to label chord progressions and other song features (time signature, key signature)
-- 
+
+### FMP
+- the FMP notebooks will be used as a reference to copy and adapt examples from
+
 
 ### Non-trivial packages
 - ffmpeg
@@ -77,6 +80,7 @@ It attempts to potentially answer some of the following questions:
 - How to use the database effectively? Is the db necessary or is there a place for it?
 - How to ensure that the raw layer is strong
 - Are notebook artifacts canonical or ephemeral? 
+- Does the markers system make sense? (or is it even worth worrying about)
 
 ### Jupyter Notebooks
 - Google Colab for notebooks is not yet implemented

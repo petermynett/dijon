@@ -7,12 +7,6 @@ from typing import Annotated
 
 import typer
 
-from ...reaper.heads_session import (
-    create_heads_session,
-    order_all_head_files,
-    read_all_heads,
-    read_heads,
-)
 from ...reaper.markers_session import (
     create_markers_session,
     order_all_marker_files,
@@ -104,8 +98,10 @@ def order_markers_command() -> None:
     """Order markers in all JSON files by position and renumber sequentially.
     
     Processes all *_markers.json files in data/annotations/audio-markers,
-    sorts markers by position (time) within each entry, and renumbers them
-    sequentially (1, 2, 3...) so numbers match chronological order.
+    sorts regular markers by position (time) within each entry, then appends
+    head markers (HEAD_IN_START, HEAD_IN_END, HEAD_OUT_START, HEAD_OUT_END)
+    in that order after all regular markers. Renumbers all markers sequentially
+    (1, 2, 3...) so numbers match the final order.
     """
     cli = BaseCLI("reaper")
 
@@ -120,94 +116,3 @@ def order_markers_command() -> None:
     )
 
 
-@app.command("create-heads")
-def create_heads_command(
-    audio_file: Annotated[
-        Path,
-        typer.Argument(help="Path to source RAW audio file"),
-    ],
-    dry_run: Annotated[
-        bool,
-        typer.Option("--dry-run", help="Simulate the operation without writing files"),
-    ] = False,
-    open_session: Annotated[
-        bool,
-        typer.Option("--open/--no-open", help="Open the session in REAPER after creation"),
-    ] = True,
-) -> None:
-    """Create a new Reaper heads session from a RAW audio file.
-
-    Generates a new Reaper project file at heads/<audio-stem>_heads.RPP
-    that references the original audio file via absolute path (no copying).
-    """
-    cli = BaseCLI("reaper")
-
-    def _create() -> dict:
-        result = create_heads_session(
-            audio_file=audio_file,
-            dry_run=dry_run,
-            open_session=open_session and not dry_run,
-        )
-        return result
-
-    cli.handle_cli_operation(
-        operation="create-heads",
-        op_callable=_create,
-        pre_message=f"Creating heads session for {audio_file.name}..." if not dry_run else None,
-    )
-
-
-@app.command("write-heads")
-def write_heads_command(
-    rpp_file: Annotated[
-        Path | None,
-        typer.Argument(help="Path to Reaper project (.RPP) file. If not provided, processes all RPP files in reaper/heads"),
-    ] = None,
-) -> None:
-    """Write heads data from Reaper project file(s) to JSON annotations.
-
-    If rpp_file is provided, parses heads from that file.
-    If not provided, searches reaper/heads for all *.RPP files and processes each.
-    Writes JSON output to data/annotations/audio-heads (prepends new entries
-    if files already exist, preserving historical data).
-    """
-    cli = BaseCLI("reaper")
-
-    def _write() -> dict:
-        if rpp_file is None:
-            result = read_all_heads()
-        else:
-            result = read_heads(rpp_file=rpp_file)
-        return result
-
-    if rpp_file is None:
-        pre_message = "Writing heads from all RPP files in heads directory..."
-    else:
-        pre_message = f"Writing heads from {rpp_file.name}..."
-
-    cli.handle_cli_operation(
-        operation="write-heads",
-        op_callable=_write,
-        pre_message=pre_message,
-    )
-
-
-@app.command("order-heads")
-def order_heads_command() -> None:
-    """Order heads in all JSON files by position and renumber sequentially.
-    
-    Processes all *_heads.json files in data/annotations/audio-heads,
-    sorts markers by position (time) within each entry, and renumbers them
-    sequentially (1, 2, 3...) so numbers match chronological order.
-    """
-    cli = BaseCLI("reaper")
-
-    def _order() -> dict:
-        result = order_all_head_files()
-        return result
-
-    cli.handle_cli_operation(
-        operation="order-heads",
-        op_callable=_order,
-        pre_message="Ordering heads in all heads files...",
-    )
