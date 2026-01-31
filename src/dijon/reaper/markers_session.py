@@ -10,6 +10,13 @@ from datetime import datetime
 from pathlib import Path
 
 from dijon.global_config import AUDIO_MARKERS_DIR, PROJECT_ROOT, RAW_AUDIO_DIR
+from dijon.reaper.marker_names import (
+    HEAD_IN_END,
+    HEAD_IN_START,
+    HEAD_OUT_END,
+    HEAD_OUT_START,
+    is_head_marker,
+)
 
 # Template path
 REAPER_DIR = PROJECT_ROOT / "reaper"
@@ -343,8 +350,10 @@ def create_markers_session(
 def _order_markers_in_entry(entry: dict) -> dict:
     """Order markers by position and renumber them sequentially.
     
-    Takes an entry dict with a markers list, sorts markers by position
-    (ascending), and renumbers them sequentially starting from 1.
+    Takes an entry dict with a markers list, sorts regular markers by position
+    (ascending), then appends head markers (HEAD_IN_START, HEAD_IN_END,
+    HEAD_OUT_START, HEAD_OUT_END) in that specific order after all regular
+    markers. Renumbers all markers sequentially starting from 1.
     Updates the count field to match the number of markers.
     
     Args:
@@ -355,8 +364,33 @@ def _order_markers_in_entry(entry: dict) -> dict:
     """
     markers = entry.get("markers", [])
     
-    # Sort markers by position (ascending)
-    sorted_markers = sorted(markers, key=lambda m: m.get("position", 0.0))
+    # Separate regular markers and head markers
+    regular_markers = []
+    head_markers = []
+    
+    for marker in markers:
+        if is_head_marker(marker.get("name", "")):
+            head_markers.append(marker)
+        else:
+            regular_markers.append(marker)
+    
+    # Sort regular markers by position (ascending)
+    sorted_regular = sorted(regular_markers, key=lambda m: m.get("position", 0.0))
+    
+    # Define the order for head markers
+    head_marker_order = (HEAD_IN_START, HEAD_IN_END, HEAD_OUT_START, HEAD_OUT_END)
+    
+    # Create a mapping from marker name to order index
+    order_map = {name: idx for idx, name in enumerate(head_marker_order)}
+    
+    # Sort head markers by their position in the defined order
+    sorted_head = sorted(
+        head_markers,
+        key=lambda m: order_map.get(m.get("name", ""), len(head_marker_order)),
+    )
+    
+    # Combine: regular markers first, then head markers
+    sorted_markers = sorted_regular + sorted_head
     
     # Renumber markers sequentially starting from 1
     for i, marker in enumerate(sorted_markers, start=1):
@@ -428,16 +462,31 @@ def read_markers(rpp_file: Path) -> dict:
     # Format: MARKER <number> <position> <name> <color> <flags> <locked>
     #         <guid_char> <guid> <unknown>
     # Example: MARKER 1 0.17 1A 8 0 1 B {4B33297A-385B-D84C-8CD4-EB377E55CE19} 0
-    pattern = (
+    # Example with spaces (quoted): MARKER 1 0.17 "head in start" 8 0 1 B {4B33297A-385B-D84C-8CD4-EB377E55CE19} 0
+    # Marker names with spaces may be quoted in RPP files
+    # Match quoted names first, then unquoted names
+    pattern_quoted = (
+        r'MARKER\s+(\d+)\s+([\d.]+)\s+"([^"]+)"\s+(\d+)\s+(\d+)\s+(\d+)\s+'
+        r'([A-Z])\s+(\{[A-F0-9-]+\})\s+(\d+)'
+    )
+    pattern_unquoted = (
         r'MARKER\s+(\d+)\s+([\d.]+)\s+([^\s]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+'
         r'([A-Z])\s+(\{[A-F0-9-]+\})\s+(\d+)'
     )
-    marker_pattern = re.compile(pattern)
+    marker_pattern_quoted = re.compile(pattern_quoted)
+    marker_pattern_unquoted = re.compile(pattern_unquoted)
 
     markers = []
-    for match in marker_pattern.finditer(content):
+    # Track positions we've already matched to avoid duplicates
+    matched_positions = set()
+    
+    # First, try to match quoted marker names
+    for match in marker_pattern_quoted.finditer(content):
+        pos = match.start()
+        matched_positions.add(pos)
+        raw_name = match.group(3)
         markers.append({
-            "name": match.group(3),
+            "name": raw_name,
             "position": float(match.group(2)),
             "number": int(match.group(1)),
             "color": int(match.group(4)),
@@ -445,6 +494,21 @@ def read_markers(rpp_file: Path) -> dict:
             "locked": int(match.group(6)),
             "guid": match.group(8),  # GUID is group 8 (after guid_char)
         })
+    
+    # Then, match unquoted marker names (excluding already matched)
+    for match in marker_pattern_unquoted.finditer(content):
+        pos = match.start()
+        if pos not in matched_positions:
+            raw_name = match.group(3)
+            markers.append({
+                "name": raw_name,
+                "position": float(match.group(2)),
+                "number": int(match.group(1)),
+                "color": int(match.group(4)),
+                "flags": int(match.group(5)),
+                "locked": int(match.group(6)),
+                "guid": match.group(8),  # GUID is group 8 (after guid_char)
+            })
 
     # Sort markers by number (for initial parsing)
     markers_sorted = sorted(markers, key=lambda m: m["number"])

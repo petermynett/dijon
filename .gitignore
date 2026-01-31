@@ -80,7 +80,6 @@ TODO.md
 
 # --- Documentation ---
 docs/**/*.pdf
-README.md
 DATA.md
 ARCHITECTURE.md
 AGENTS.md
