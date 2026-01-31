@@ -86,4 +86,5 @@ AGENTS.md
 AGENTS_CURSOR.md
 .template_origin.yml
 
-scripts/
+scripts/**
+notebooks/scratch/**
