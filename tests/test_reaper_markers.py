@@ -12,6 +12,8 @@ from dijon.reaper.marker_names import (
     HEAD_IN_START,
     HEAD_OUT_END,
     HEAD_OUT_START,
+    is_lick_marker,
+    parse_lick_marker,
 )
 from dijon.reaper.markers_session import (
     _order_markers_in_entry,
@@ -561,3 +563,240 @@ def test_order_markers_entry_direct() -> None:
     
     # Verify count is updated
     assert ordered_entry["count"] == 4
+
+
+def test_is_lick_marker() -> None:
+    """Test that is_lick_marker correctly identifies lick markers."""
+    # Test valid lick marker patterns
+    assert is_lick_marker("LICK01-START") is True
+    assert is_lick_marker("LICK01-END") is True
+    assert is_lick_marker("LICK02-START") is True
+    assert is_lick_marker("LICK02-END") is True
+    assert is_lick_marker("LICK10-START") is True
+    assert is_lick_marker("LICK99-END") is True
+    
+    # Test invalid patterns
+    assert is_lick_marker("LICK01") is False
+    assert is_lick_marker("LICK-START") is False
+    assert is_lick_marker("LICK1-START") is False  # needs two digits
+    assert is_lick_marker("lick01-START") is False  # case sensitive
+    assert is_lick_marker("HEAD_IN_START") is False
+    assert is_lick_marker("1A") is False
+    assert is_lick_marker("") is False
+
+
+def test_parse_lick_marker() -> None:
+    """Test that parse_lick_marker correctly extracts lick number and phase."""
+    # Test valid markers
+    assert parse_lick_marker("LICK01-START") == (1, "START")
+    assert parse_lick_marker("LICK01-END") == (1, "END")
+    assert parse_lick_marker("LICK02-START") == (2, "START")
+    assert parse_lick_marker("LICK10-END") == (10, "END")
+    assert parse_lick_marker("LICK99-START") == (99, "START")
+    
+    # Test invalid markers
+    assert parse_lick_marker("LICK01") is None
+    assert parse_lick_marker("HEAD_IN_START") is None
+    assert parse_lick_marker("1A") is None
+    assert parse_lick_marker("") is None
+
+
+def test_order_markers_with_lick_markers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that lick markers are ordered after head markers."""
+    from dijon.global_config import AUDIO_MARKERS_DIR
+    
+    # Patch AUDIO_MARKERS_DIR to use tmp_path
+    markers_output_dir = tmp_path / "audio-markers"
+    markers_output_dir.mkdir(parents=True)
+    monkeypatch.setattr(
+        "dijon.reaper.markers_session.AUDIO_MARKERS_DIR", markers_output_dir
+    )
+    
+    # Create a test marker file with regular, head, and lick markers
+    test_file = markers_output_dir / "test_lick_markers.json"
+    test_data = {
+        "rpp_file": "/test/test.RPP",
+        "entries": [
+            {
+                "timestamp": "2026-01-30T00:00:00",
+                "count": 8,
+                "markers": [
+                    {"name": "A", "position": 5.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{A}"},
+                    {"name": "LICK02-END", "position": 20.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{B}"},
+                    {"name": HEAD_IN_START, "position": 2.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{C}"},
+                    {"name": "LICK01-START", "position": 15.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{D}"},
+                    {"name": "B", "position": 10.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{E}"},
+                    {"name": HEAD_IN_END, "position": 8.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{F}"},
+                    {"name": "LICK01-END", "position": 18.0, "number": 7, "color": 0, "flags": 0, "locked": 1, "guid": "{G}"},
+                    {"name": "LICK02-START", "position": 19.0, "number": 8, "color": 0, "flags": 0, "locked": 1, "guid": "{H}"},
+                ],
+            }
+        ],
+    }
+    test_file.write_text(json.dumps(test_data, indent=2))
+    
+    # Order the markers
+    result = order_markers_in_file(test_file)
+    
+    assert result["success"] is True
+    assert result["entries_processed"] == 1
+    
+    # Read back the ordered file
+    ordered_data = json.loads(test_file.read_text())
+    ordered_markers = ordered_data["entries"][0]["markers"]
+    
+    marker_names = [m["name"] for m in ordered_markers]
+    marker_numbers = [m["number"] for m in ordered_markers]
+    
+    # Regular markers should come first, sorted by position
+    assert marker_names[0] == "A"  # position 5.0
+    assert marker_numbers[0] == 1
+    assert marker_names[1] == "B"  # position 10.0
+    assert marker_numbers[1] == 2
+    
+    # Head markers should come after regular markers
+    assert marker_names[2] == HEAD_IN_START
+    assert marker_numbers[2] == 3
+    assert marker_names[3] == HEAD_IN_END
+    assert marker_numbers[3] == 4
+    
+    # Lick markers should come last, grouped by lick number (01 before 02), START before END
+    assert marker_names[4] == "LICK01-START"
+    assert marker_numbers[4] == 5
+    assert marker_names[5] == "LICK01-END"
+    assert marker_numbers[5] == 6
+    assert marker_names[6] == "LICK02-START"
+    assert marker_numbers[6] == 7
+    assert marker_names[7] == "LICK02-END"
+    assert marker_numbers[7] == 8
+    
+    # Verify all markers are numbered sequentially
+    assert marker_numbers == [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+def test_order_markers_entry_with_all_types() -> None:
+    """Test _order_markers_in_entry with regular, head, and lick markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 7,
+        "markers": [
+            {"name": "Regular1", "position": 10.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{1}"},
+            {"name": "LICK02-END", "position": 25.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{2}"},
+            {"name": HEAD_IN_START, "position": 2.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{3}"},
+            {"name": "Regular2", "position": 5.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{4}"},
+            {"name": "LICK01-START", "position": 15.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{5}"},
+            {"name": HEAD_IN_END, "position": 8.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{6}"},
+            {"name": "LICK01-END", "position": 18.0, "number": 7, "color": 0, "flags": 0, "locked": 1, "guid": "{7}"},
+        ],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    marker_numbers = [m["number"] for m in ordered_entry["markers"]]
+    
+    # Regular markers should be first, sorted by position
+    assert marker_names[0] == "Regular2"  # position 5.0
+    assert marker_numbers[0] == 1
+    assert marker_names[1] == "Regular1"  # position 10.0
+    assert marker_numbers[1] == 2
+    
+    # Head markers should follow
+    assert marker_names[2] == HEAD_IN_START
+    assert marker_numbers[2] == 3
+    assert marker_names[3] == HEAD_IN_END
+    assert marker_numbers[3] == 4
+    
+    # Lick markers should come last, grouped by lick number
+    assert marker_names[4] == "LICK01-START"
+    assert marker_numbers[4] == 5
+    assert marker_names[5] == "LICK01-END"
+    assert marker_numbers[5] == 6
+    assert marker_names[6] == "LICK02-END"
+    assert marker_numbers[6] == 7
+    
+    # Verify count is updated
+    assert ordered_entry["count"] == 7
+
+
+def test_order_markers_only_regular() -> None:
+    """Test ordering with only regular markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 3,
+        "markers": [
+            {"name": "C", "position": 10.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{1}"},
+            {"name": "A", "position": 5.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{2}"},
+            {"name": "B", "position": 8.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{3}"},
+        ],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    marker_numbers = [m["number"] for m in ordered_entry["markers"]]
+    
+    assert marker_names == ["A", "B", "C"]
+    assert marker_numbers == [1, 2, 3]
+    assert ordered_entry["count"] == 3
+
+
+def test_order_markers_only_head() -> None:
+    """Test ordering with only head markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 4,
+        "markers": [
+            {"name": HEAD_OUT_END, "position": 15.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{1}"},
+            {"name": HEAD_IN_START, "position": 2.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{2}"},
+            {"name": HEAD_IN_END, "position": 8.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{3}"},
+            {"name": HEAD_OUT_START, "position": 1.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{4}"},
+        ],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    marker_numbers = [m["number"] for m in ordered_entry["markers"]]
+    
+    assert marker_names == [HEAD_IN_START, HEAD_IN_END, HEAD_OUT_START, HEAD_OUT_END]
+    assert marker_numbers == [1, 2, 3, 4]
+    assert ordered_entry["count"] == 4
+
+
+def test_order_markers_only_lick() -> None:
+    """Test ordering with only lick markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 4,
+        "markers": [
+            {"name": "LICK02-END", "position": 20.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{1}"},
+            {"name": "LICK01-START", "position": 15.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{2}"},
+            {"name": "LICK02-START", "position": 19.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{3}"},
+            {"name": "LICK01-END", "position": 18.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{4}"},
+        ],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    marker_numbers = [m["number"] for m in ordered_entry["markers"]]
+    
+    assert marker_names == ["LICK01-START", "LICK01-END", "LICK02-START", "LICK02-END"]
+    assert marker_numbers == [1, 2, 3, 4]
+    assert ordered_entry["count"] == 4
+
+
+def test_order_markers_empty() -> None:
+    """Test ordering with no markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 0,
+        "markers": [],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    
+    assert marker_names == []
+    assert ordered_entry["count"] == 0

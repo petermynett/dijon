@@ -16,6 +16,8 @@ from dijon.reaper.marker_names import (
     HEAD_OUT_END,
     HEAD_OUT_START,
     is_head_marker,
+    is_lick_marker,
+    parse_lick_marker,
 )
 
 # Template path
@@ -352,9 +354,12 @@ def _order_markers_in_entry(entry: dict) -> dict:
     
     Takes an entry dict with a markers list, sorts regular markers by position
     (ascending), then appends head markers (HEAD_IN_START, HEAD_IN_END,
-    HEAD_OUT_START, HEAD_OUT_END) in that specific order after all regular
-    markers. Renumbers all markers sequentially starting from 1.
-    Updates the count field to match the number of markers.
+    HEAD_OUT_START, HEAD_OUT_END) in that specific order, then appends lick
+    markers (LICK##-START, LICK##-END) grouped by lick number ascending with
+    START before END for each lick number. Renumbers all markers sequentially
+    starting from 1. Updates the count field to match the number of markers.
+    
+    Handles any subset of marker types safely (form/head/lick/none).
     
     Args:
         entry: Dictionary with 'markers' list and optionally 'count' field.
@@ -364,13 +369,17 @@ def _order_markers_in_entry(entry: dict) -> dict:
     """
     markers = entry.get("markers", [])
     
-    # Separate regular markers and head markers
+    # Separate regular markers, head markers, and lick markers
     regular_markers = []
     head_markers = []
+    lick_markers = []
     
     for marker in markers:
-        if is_head_marker(marker.get("name", "")):
+        marker_name = marker.get("name", "")
+        if is_head_marker(marker_name):
             head_markers.append(marker)
+        elif is_lick_marker(marker_name):
+            lick_markers.append(marker)
         else:
             regular_markers.append(marker)
     
@@ -389,8 +398,24 @@ def _order_markers_in_entry(entry: dict) -> dict:
         key=lambda m: order_map.get(m.get("name", ""), len(head_marker_order)),
     )
     
-    # Combine: regular markers first, then head markers
-    sorted_markers = sorted_regular + sorted_head
+    # Sort lick markers: by lick number ascending, then START before END
+    def lick_sort_key(marker: dict) -> tuple[int, int]:
+        """Sort key for lick markers: (lick_number, phase_order).
+        
+        phase_order: 0 for START, 1 for END
+        """
+        parsed = parse_lick_marker(marker.get("name", ""))
+        if parsed:
+            lick_number, phase = parsed
+            phase_order = 0 if phase == "START" else 1
+            return (lick_number, phase_order)
+        # Fallback: should not happen if is_lick_marker was used correctly
+        return (999999, 1)
+    
+    sorted_lick = sorted(lick_markers, key=lick_sort_key)
+    
+    # Combine: regular markers first, then head markers, then lick markers
+    sorted_markers = sorted_regular + sorted_head + sorted_lick
     
     # Renumber markers sequentially starting from 1
     for i, marker in enumerate(sorted_markers, start=1):
