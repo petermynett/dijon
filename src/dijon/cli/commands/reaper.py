@@ -100,8 +100,9 @@ def order_markers_command() -> None:
     Processes all *_markers.json files in data/annotations/audio-markers,
     sorts regular markers by position (time) within each entry, then appends
     head markers (HEAD_IN_START, HEAD_IN_END, HEAD_OUT_START, HEAD_OUT_END)
-    in that order after all regular markers. Renumbers all markers sequentially
-    (1, 2, 3...) so numbers match the final order.
+    in that order, then appends lick markers (LICK##-START, LICK##-END) grouped
+    by lick number ascending with START before END for each lick number.
+    Renumbers all markers sequentially (1, 2, 3...) so numbers match the final order.
     """
     cli = BaseCLI("reaper")
 
