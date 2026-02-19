@@ -664,13 +664,14 @@ def test_order_markers_with_lick_markers(
     assert marker_numbers[3] == 4
     
     # Lick markers should come last, grouped by lick number (01 before 02), START before END
-    assert marker_names[4] == "LICK01-START"
+    # Note: dashes are normalized to underscores
+    assert marker_names[4] == "LICK01_START"
     assert marker_numbers[4] == 5
-    assert marker_names[5] == "LICK01-END"
+    assert marker_names[5] == "LICK01_END"
     assert marker_numbers[5] == 6
-    assert marker_names[6] == "LICK02-START"
+    assert marker_names[6] == "LICK02_START"
     assert marker_numbers[6] == 7
-    assert marker_names[7] == "LICK02-END"
+    assert marker_names[7] == "LICK02_END"
     assert marker_numbers[7] == 8
     
     # Verify all markers are numbered sequentially
@@ -711,11 +712,12 @@ def test_order_markers_entry_with_all_types() -> None:
     assert marker_numbers[3] == 4
     
     # Lick markers should come last, grouped by lick number
-    assert marker_names[4] == "LICK01-START"
+    # Note: dashes are normalized to underscores
+    assert marker_names[4] == "LICK01_START"
     assert marker_numbers[4] == 5
-    assert marker_names[5] == "LICK01-END"
+    assert marker_names[5] == "LICK01_END"
     assert marker_numbers[5] == 6
-    assert marker_names[6] == "LICK02-END"
+    assert marker_names[6] == "LICK02_END"
     assert marker_numbers[6] == 7
     
     # Verify count is updated
@@ -782,7 +784,8 @@ def test_order_markers_only_lick() -> None:
     marker_names = [m["name"] for m in ordered_entry["markers"]]
     marker_numbers = [m["number"] for m in ordered_entry["markers"]]
     
-    assert marker_names == ["LICK01-START", "LICK01-END", "LICK02-START", "LICK02-END"]
+    # Note: dashes are normalized to underscores
+    assert marker_names == ["LICK01_START", "LICK01_END", "LICK02_START", "LICK02_END"]
     assert marker_numbers == [1, 2, 3, 4]
     assert ordered_entry["count"] == 4
 
@@ -800,3 +803,38 @@ def test_order_markers_empty() -> None:
     
     assert marker_names == []
     assert ordered_entry["count"] == 0
+
+
+def test_order_markers_normalizes_dashes_to_underscores() -> None:
+    """Test that ordering normalizes dashes to underscores in head and lick markers."""
+    entry = {
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 6,
+        "markers": [
+            {"name": "Regular", "position": 1.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{1}"},
+            # Head markers with dashes should be normalized
+            {"name": "HEAD-IN-START", "position": 2.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{2}"},
+            {"name": "HEAD-OUT-END", "position": 3.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{3}"},
+            # Lick markers with dashes should be normalized
+            {"name": "LICK01-START", "position": 4.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{4}"},
+            {"name": "LICK01-END", "position": 5.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{5}"},
+            # Already underscore format should remain unchanged
+            {"name": "HEAD_IN_END", "position": 6.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{6}"},
+        ],
+    }
+    
+    ordered_entry = _order_markers_in_entry(entry)
+    marker_names = [m["name"] for m in ordered_entry["markers"]]
+    
+    # All head and lick markers should now use underscores
+    assert "Regular" in marker_names
+    assert "HEAD_IN_START" in marker_names  # Normalized from HEAD-IN-START
+    assert "HEAD_IN_END" in marker_names    # Was already correct
+    assert "HEAD_OUT_END" in marker_names   # Normalized from HEAD-OUT-END
+    assert "LICK01_START" in marker_names   # Normalized from LICK01-START
+    assert "LICK01_END" in marker_names     # Normalized from LICK01-END
+    
+    # No dashes should remain in head/lick markers
+    for name in marker_names:
+        if name.startswith("HEAD") or name.startswith("LICK"):
+            assert "-" not in name, f"Marker '{name}' should not contain dashes"

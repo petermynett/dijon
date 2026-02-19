@@ -16,8 +16,8 @@
       {"name":"/S1","position":227.5741465710246,"number":9,"color":0,"flags":0,"locked":1,"guid":"{B40251D0-FE55-D14D-9F0E-2422E329E7E3}"},
       {"name":"HEAD_IN_START","position":108.77899130669846,"number":10,"color":0,"flags":0,"locked":1,"guid":"{0063C3F0-A243-A44E-B7C8-82AAE65440A3}"},
       {"name":"HEAD_IN_END","position":167.47991117811566,"number":11,"color":8,"flags":0,"locked":1,"guid":"{C520A954-3DF7-B74A-A40D-EBC252F4D870}"},
-      {"name":"LICK01-START","position":167.47905869240802,"number":12,"color":0,"flags":0,"locked":1,"guid":"{0EF468DE-C903-D043-8064-DC82B7365133}"},
-      {"name":"LICK01-END","position":181.22839076759192,"number":13,"color":0,"flags":0,"locked":1,"guid":"{995EC659-2B4C-5C49-9878-A921E1C9D82D}"}
+      {"name":"LICK01_START","position":167.47905869240802,"number":12,"color":0,"flags":0,"locked":1,"guid":"{0EF468DE-C903-D043-8064-DC82B7365133}"},
+      {"name":"LICK01_END","position":181.22839076759192,"number":13,"color":0,"flags":0,"locked":1,"guid":"{995EC659-2B4C-5C49-9878-A921E1C9D82D}"}
       ]
     },
     {
