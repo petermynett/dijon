@@ -24,14 +24,13 @@ PROJECT_NAME = "dijon"
 DATA_DIR: Path = PROJECT_ROOT / "data"
 DATASET_DIR: Path = DATA_DIR / "datasets"
 SETS_DIR: Path = DATA_DIR / "sets"
+DERIVED_DIR: Path = DATA_DIR / "derived"
 ACQUISITION_DIR: Path = DATASET_DIR / "acquisition"
 RAW_DIR: Path = DATASET_DIR / "raw"
 ANNOTATIONS_DIR: Path = DATASET_DIR / "annotations"
 AUDIO_MARKERS_DIR: Path = ANNOTATIONS_DIR / "audio-markers"
 AUDIO_HEADS_DIR: Path = ANNOTATIONS_DIR / "audio-heads"
 RAW_AUDIO_DIR: Path = DATASET_DIR / "raw" / "audio"
-# Legacy: kept for backward compatibility, but deprecated
-OVERRIDES_DIR: Path = DATA_DIR / "overrides"
 
 # Logs directories
 LOGS_DIR: Path = PROJECT_ROOT / "logs"

@@ -17,6 +17,7 @@ from dijon.reaper.marker_names import (
     HEAD_OUT_START,
     is_head_marker,
     is_lick_marker,
+    normalize_marker_name,
     parse_lick_marker,
 )
 
@@ -355,9 +356,12 @@ def _order_markers_in_entry(entry: dict) -> dict:
     Takes an entry dict with a markers list, sorts regular markers by position
     (ascending), then appends head markers (HEAD_IN_START, HEAD_IN_END,
     HEAD_OUT_START, HEAD_OUT_END) in that specific order, then appends lick
-    markers (LICK##-START, LICK##-END) grouped by lick number ascending with
+    markers (LICK##_START, LICK##_END) grouped by lick number ascending with
     START before END for each lick number. Renumbers all markers sequentially
     starting from 1. Updates the count field to match the number of markers.
+    
+    Also normalizes head and lick marker names to use underscores instead of
+    dashes (e.g., HEAD-IN-START -> HEAD_IN_START, LICK01-START -> LICK01_START).
     
     Handles any subset of marker types safely (form/head/lick/none).
     
@@ -368,6 +372,10 @@ def _order_markers_in_entry(entry: dict) -> dict:
         Modified entry dict with ordered and renumbered markers.
     """
     markers = entry.get("markers", [])
+    
+    # Normalize marker names (replace dashes with underscores for head/lick markers)
+    for marker in markers:
+        marker["name"] = normalize_marker_name(marker.get("name", ""))
     
     # Separate regular markers, head markers, and lick markers
     regular_markers = []
