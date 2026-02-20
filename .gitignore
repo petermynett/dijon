@@ -53,6 +53,7 @@ data/**/*.webp
 # --- Reaper files ---
 reaper/**/*.rpp-bak
 reaper/**/Media/**/*
+**/peaks/**/*
 
 # --- JSON files (tracked) ---
 !data/**/*.json
@@ -87,4 +88,4 @@ AGENTS_CURSOR.md
 .template_origin.yml
 
 scripts/**
-notebooks/fmp/**
+notebooks/fmp/**/*

@@ -1,0 +1,125 @@
+% main.tex
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[margin=0.75in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage{hyperref}
+
+\title{DIJON Project Status Report\\
+Leveraging Structured Repertoire for Scalable Harmonic and Formal Analysis}
+\author{Peter Mynett}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This project investigates how harmony and musical form can be analyzed, compared, and visualized across performances using a structured Music Information Retrieval (MIR) pipeline. By leveraging genres with standard repertoire and readily available lead sheets, the project aims to enable scalable harmonic and formal comparison across performances. The system aims to integrate canonical data layers, external annotation tools, and computational feature extraction to support exploratory and comparative computational musicology.
+\end{abstract}
+
+\section{Project Overview and Central Thesis}
+
+Leveraging genres with shared standard repertoire and accessible symbolic representations enables scalable harmonic and formal comparison across performances. Jazz and bluegrass provide an advantageous research setting: they combine repeated repertoire, interpretive variation, and lead sheets. This allows harmonic and formal information to be inferred even when audio recordings are weakly labeled or unlabeled.
+
+The long-term objective is to design a reproducible framework that supports comparative analysis, clustering, and visualization of harmony and form across multiple performances.
+
+\section{Data Model and Multi-Tier Truth Structure}
+
+A core design principle is a three-tier data model:
+
+\begin{itemize}
+    \item \textbf{Gold}: A curated set (10--15 songs) with dense manual annotation including formal markers, precise chord progressions, tempo information, and structural segmentation. This tier supports controlled experimentation and algorithm refinement.
+    \item \textbf{Silver}: A larger set (50--100 songs) where recordings are associated with known lead sheets. Although temporally unaligned, these provide harmonic and formal priors at scale, enabling broader comparative analysis.
+    \item \textbf{Bronze}: Unlabeled recordings collected efficiently using a custom yt-dlp wrapper. These enable large-scale exploratory visualization once representations have been refined using Gold and Silver tiers.
+    \item \textbf{Leading}: A temporary small curated set of songs to lead the proof-of-concept.
+\end{itemize}
+
+The gold data supports pipeline development and experimentation. Silver data leverages shared repertoire and symbolic priors to scale harmonic inference. Bronze data allows higher volume visualization and exploratory clustering.
+
+\section{System Architecture}
+
+The system is CLI-driven with notebook-based exploratory layers. Canonical data is separated from exploratory artifacts:
+
+\begin{itemize}
+    \item \textbf{Acquisition and Raw Layer}: External audio and symbolic representations are ingested into a canonical raw layer.
+    \item \textbf{Annotation Layer}: Manual annotations (e.g., formal markers from Reaper, lead sheets from MuseScore).
+    \item \textbf{Derived Layer}: Computed features such as novelty functions, beat maps, chromagrams, and other harmonic are formal representations.
+    \item \textbf{Notebook Layer}: Jupyter notebooks to support exploratory analysis and demonstration.
+\end{itemize}
+
+External tools are integrated strategically. Reaper enables rapid formal annotation. MuseScore supports creation and inspection of MusicXML lead sheets. A custom wrapper around yt-dlp allows efficient repertoire-linked recording acquisition.
+
+\section{Work Completed}
+
+Current progress includes:
+
+\begin{itemize}
+    \item Partial implementation of a CLI system for acquisition and ingestion pipeline.
+    \item Initial novelty and temporal representations.
+    \item Annotation ingestion workflows for external tools (Reaper and MuseScore).
+    \item Scaffolding for reproducible filesystem structure distinguishing raw, annotated, and derived data.
+    \item Initial development of Gold and Leading dataset subsets.
+\end{itemize}
+
+The project currently provides a basic pipeline for acquiring and ingesting data, and an initial demonstration of derived data.
+
+\section{Planned Development}
+
+\subsection{Representation Refinement}
+
+\begin{itemize}
+    \item Experimenting with and strengthening temporal feature extraction processes.
+    \item Developing harmonic and formal representations.
+    \item Linking derived data to lead sheets.
+\end{itemize}
+
+\subsection{Comparative Analysis}
+
+\begin{itemize}
+    \item Designing similarity measures for harmonic progression and form.
+    \item Exploring dimensionality reduction techniques for structural comparison.
+    \item Investigating clustering across performances of same or similar repertoire.
+\end{itemize}
+
+\subsection{Visualization Layer}
+
+A primary research goal is to explore new visualization approaches for harmonic and formal relationships.
+
+\begin{itemize}
+    \item Harmonic progression heatmaps across performances.
+    \item Form-aligned structural comparison.
+    \item Low-dimensional embeddings of chord progression or form vectors.
+\end{itemize}
+
+The final visualization design remains unknown and will be explored as representations are developed.
+
+\section{Evaluation Strategy}
+
+Evaluation remains an open research question. Potential evaluations include:
+
+\begin{itemize}
+    \item Coherence between audio-derived structure and symbolic priors.
+    \item Clustering across shared repertoire.
+    \item Usefulness of generated visualizations.
+    \item Insights that are not readily apparent through traditional inspection.
+\end{itemize}
+
+The goal is to move from infrastructure development toward computational musicology: using structured data to reveal relationships between performances and songs that may not be immediately obvious.
+
+\section{Expected Contributions}
+
+The project aims to contribute:
+
+\begin{itemize}
+    \item A reproducible MIR framework tailored to repertoire-driven analysis.
+    \item A multi-tier annotated dataset leveraging shared standard repertoire.
+    \item Novel visualization approaches for harmonic and formal comparison.
+\end{itemize}
+
+%\bibliographystyle{plainnat}
+%\bibliography{references}
+
+\end{document}
