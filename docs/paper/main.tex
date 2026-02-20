@@ -32,8 +32,8 @@ A core design principle is a three-tier data model:
 
 \begin{itemize}
     \item \textbf{Gold}: A curated set (10--15 songs) with dense manual annotation including formal markers, precise chord progressions, tempo information, and structural segmentation. This tier supports controlled experimentation and algorithm refinement.
-    \item \textbf{Silver}: A larger set (50--100 songs) where recordings are associated with known lead sheets. Although temporally unaligned, these provide harmonic and formal priors at scale, enabling broader comparative analysis.
-    \item \textbf{Bronze}: Unlabeled recordings collected efficiently using a custom yt-dlp wrapper. These enable large-scale exploratory visualization once representations have been refined using Gold and Silver tiers.
+    \item \textbf{Silver}: A larger set (50--100 songs) where recordings are associated with known lead sheets, and have a high volume of material available on youtube. Although temporally unaligned, these provide harmonic and formal priors at scale, enabling broader comparative analysis.
+    \item \textbf{Bronze}: Unlabeled recordings collected using the custom yt-dlp wrapper. These enable large-scale exploratory visualization once representations have been refined using Gold and Silver tiers.
     \item \textbf{Leading}: A temporary small curated set of songs to lead the proof-of-concept.
 \end{itemize}
 
