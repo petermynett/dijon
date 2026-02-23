@@ -47,6 +47,7 @@ data/**/*.jpeg
 data/**/*.tif
 data/**/*.tiff
 data/**/*.webp
+data/**/*.npy
 
 *.pdf
 
