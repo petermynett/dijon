@@ -2,11 +2,26 @@
 
 import librosa
 import numpy as np
+from scipy.interpolate import interp1d
 
 from .normalize import compute_local_average
 
+FS_TARGET_DEFAULT = 100.0
 
-def compute_novelty_energy(x, Fs=1, N=2048, H=128, gamma=10.0, norm=True):
+
+def _resample_novelty_to_target(novelty: np.ndarray, Fs_in: float, Fs_target: float) -> np.ndarray:
+    """Resample novelty from Fs_in to Fs_target (samples per second). Returns float64 1D."""
+    if Fs_in <= 0 or Fs_target <= 0:
+        return novelty.astype(np.float64)
+    duration_s = len(novelty) / Fs_in
+    n_out = max(1, int(round(duration_s * Fs_target)))
+    t_in = np.arange(len(novelty), dtype=float) / Fs_in
+    t_out = np.linspace(0, duration_s, n_out, endpoint=False)
+    interp = interp1d(t_in, novelty, kind="linear", fill_value="extrapolate")
+    return interp(t_out).astype(np.float64)
+
+
+def compute_novelty_energy(x, Fs=1, N=2048, H=128, gamma=10.0, norm=True, Fs_target=FS_TARGET_DEFAULT):
     """Energy-based novelty function.
 
     Local energy with Hann window, discrete derivative, half-wave rectification.
@@ -25,6 +40,9 @@ def compute_novelty_energy(x, Fs=1, N=2048, H=128, gamma=10.0, norm=True):
         Log compression factor; None disables (default 10.0).
     norm : bool
         If True, normalize output to [0, 1] (default True).
+    Fs_target : float or None
+        Target feature rate (Hz). If None, return at native rate Fs/H. If set (default 100),
+        resample output to this rate so downstream (tempogram, beats) use a consistent rate.
     """
     w = np.hanning(N) # window size in samples
     Fs_feature = Fs / H # decimation factor
@@ -40,10 +58,13 @@ def compute_novelty_energy(x, Fs=1, N=2048, H=128, gamma=10.0, norm=True):
         max_value = np.max(novelty_energy)
         if max_value > 0:
             novelty_energy = novelty_energy / max_value
+    if Fs_target is not None and abs(Fs_feature - Fs_target) > 1e-6:
+        novelty_energy = _resample_novelty_to_target(novelty_energy, Fs_feature, Fs_target)
+        Fs_feature = Fs_target
     return novelty_energy, Fs_feature
 
 
-def compute_novelty_spectrum(x, Fs=1, N=1024, H=256, gamma=100.0, M=10, norm=True):
+def compute_novelty_spectrum(x, Fs=1, N=1024, H=256, gamma=100.0, M=10, norm=True, Fs_target=FS_TARGET_DEFAULT):
     """Spectral-based novelty / spectral flux.
 
     STFT -> log compression -> diff -> half-wave rectify -> sum over freq -> optional local norm.
@@ -64,6 +85,8 @@ def compute_novelty_spectrum(x, Fs=1, N=1024, H=256, gamma=100.0, M=10, norm=Tru
         Local average context in frames; 0 disables (default 10).
     norm : bool
         If True, normalize output to [0, 1] (default True).
+    Fs_target : float or None
+        Target feature rate (Hz). None = native rate; default 100.
     """
     X = librosa.stft(x, n_fft=N, hop_length=H, win_length=N, window="hann") # stft
     Fs_feature = Fs / H # decimation factor
@@ -80,6 +103,9 @@ def compute_novelty_spectrum(x, Fs=1, N=1024, H=256, gamma=100.0, M=10, norm=Tru
         max_value = np.max(novelty_spectrum)
         if max_value > 0:
             novelty_spectrum = novelty_spectrum / max_value
+    if Fs_target is not None and abs(Fs_feature - Fs_target) > 1e-6:
+        novelty_spectrum = _resample_novelty_to_target(novelty_spectrum, Fs_feature, Fs_target)
+        Fs_feature = Fs_target
     return novelty_spectrum, Fs_feature
 
 
@@ -94,7 +120,7 @@ def _principal_argument(v):
     return np.mod(v + 0.5, 1) - 0.5
 
 
-def compute_novelty_phase(x, Fs=1, N=1024, H=64, M=40, norm=True):
+def compute_novelty_phase(x, Fs=1, N=1024, H=64, M=40, norm=True, Fs_target=FS_TARGET_DEFAULT):
     """Phase-based novelty.
 
     Second-order phase difference with principal argument, sum over frequency.
@@ -113,6 +139,8 @@ def compute_novelty_phase(x, Fs=1, N=1024, H=64, M=40, norm=True):
         Local average context in frames; 0 disables (default 40).
     norm : bool
         If True, normalize output to [0, 1] (default True).
+    Fs_target : float or None
+        Target feature rate (Hz). None = native rate; default 100.
     """
     X = librosa.stft(x, n_fft=N, hop_length=H, win_length=N, window="hann")
     Fs_feature = Fs / H
@@ -129,10 +157,13 @@ def compute_novelty_phase(x, Fs=1, N=1024, H=64, M=40, norm=True):
         max_value = np.max(novelty_phase)
         if max_value > 0:
             novelty_phase = novelty_phase / max_value
+    if Fs_target is not None and abs(Fs_feature - Fs_target) > 1e-6:
+        novelty_phase = _resample_novelty_to_target(novelty_phase, Fs_feature, Fs_target)
+        Fs_feature = Fs_target
     return novelty_phase, Fs_feature
 
 
-def compute_novelty_complex(x, Fs=1, N=1024, H=64, gamma=10.0, M=40, norm=True):
+def compute_novelty_complex(x, Fs=1, N=1024, H=64, gamma=10.0, M=40, norm=True, Fs_target=FS_TARGET_DEFAULT):
     """Complex-domain novelty (phase-predicted complex residual, onset-only).
 
     STFT -> (optional) log-magnitude compression -> phase-based prediction of next frame
@@ -155,10 +186,9 @@ def compute_novelty_complex(x, Fs=1, N=1024, H=64, gamma=10.0, M=40, norm=True):
         Local average context in frames; 0 disables (default 40).
     norm : bool
         If True, normalize output to [0, 1] (default True).
+    Fs_target : float or None
+        Target feature rate (Hz). None = native rate; default 100.
     """
-    import numpy as np
-    import librosa
-
     def _principal_angle_rad(a):
         # Map to (-pi, pi]
         return (a + np.pi) % (2 * np.pi) - np.pi
@@ -203,4 +233,7 @@ def compute_novelty_complex(x, Fs=1, N=1024, H=64, gamma=10.0, M=40, norm=True):
         if max_value > 0:
             novelty_complex = novelty_complex / max_value
 
+    if Fs_target is not None and abs(Fs_feature - Fs_target) > 1e-6:
+        novelty_complex = _resample_novelty_to_target(novelty_complex, Fs_feature, Fs_target)
+        Fs_feature = Fs_target
     return novelty_complex, Fs_feature

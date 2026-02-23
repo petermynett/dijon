@@ -6,8 +6,10 @@ from .base import configure_logging
 from .commands.acquire import app as acquire_app
 from .commands.clean import app as clean_app
 from .commands.ingest import app as ingest_app
+from .commands.novelty import app as novelty_app
 from .commands.reaper import app as reaper_app
 from .commands.sets import app as sets_app
+from .commands.tempogram import app as tempogram_app
 
 configure_logging()
 app = typer.Typer(
@@ -18,8 +20,10 @@ app = typer.Typer(
 app.add_typer(acquire_app, name="acquire")
 app.add_typer(clean_app, name="clean")
 app.add_typer(ingest_app, name="ingest")
+app.add_typer(novelty_app, name="novelty")
 app.add_typer(reaper_app, name="reaper")
 app.add_typer(sets_app, name="sets")
+app.add_typer(tempogram_app, name="tempogram")
 
 
 def main() -> None:

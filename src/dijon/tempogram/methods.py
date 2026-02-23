@@ -106,7 +106,7 @@ def compute_tempogram_fourier(x, Fs, N, H, Theta):
     X = np.zeros((K, M), dtype=np.complex128)
 
     for k in range(K):
-        omega = (Theta[k] / 60) / Fs
+        omega = (Theta[k] / 60) / Fs 
         exponential = np.exp(-2 * np.pi * 1j * omega * t_pad)
         x_exp = x_pad * exponential
         for n in range(M):
