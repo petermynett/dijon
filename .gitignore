@@ -10,9 +10,16 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+*.egg-info/
+src/*.egg-info/
 
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- VSCode / Cursor ---
 .vscode/
-.vscode/**
+.cursor/
+.cursorignore
 
 # --- OS / editor junk ---
 .DS_Store
@@ -25,22 +32,21 @@ Thumbs.db
 .env.*
 !.env.example
 
-
-# --- CURSOR files ---
-.cursorignore
+# --- Cursor project docs (your rules) ---
 docs/cli_tasks/**
 docs/cli_implementation.md
 docs/cli_tasks/**/*.md
 docs/_plans/**
 
-# --- DATA VISIBILITY ---
-data/raw/**
-
+# --- DATA (ignore large/binary; keep metadata) ---
+# Raw audio/media anywhere under data/
 data/**/*.wav
 data/**/*.mp3
 data/**/*.flac
 data/**/*.aiff
 data/**/*.m4a
+
+# Images / binary arrays under data/
 data/**/*.png
 data/**/*.jpg
 data/**/*.jpeg
@@ -49,25 +55,28 @@ data/**/*.tiff
 data/**/*.webp
 data/**/*.npy
 
-*.pdf
+# Keep json metadata tracked
+!data/**/*.json
+
+# Optional: keep CSV/YAML manifests tracked (remove these lines if you want them ignored)
+!data/**/*.csv
+!data/**/*.yaml
+!data/**/*.yml
 
 # --- Reaper files ---
 reaper/**/*.rpp-bak
 reaper/**/Media/**/*
 **/peaks/**/*
+*.reapeaks
 
-# --- JSON files (tracked) ---
-!data/**/*.json
-
-# --- Database state / binaries (ignored) ---
+# --- Database state / binaries ---
 *.sqlite
 *.sqlite3
 *.db
 db/snapshots/
 
-# --- Node tooling (optional, but consistent with package-lock) ---
+# --- Node tooling ---
 node_modules/
-
 
 # --- Build / generated outputs ---
 .cache/
@@ -76,18 +85,24 @@ temp/
 build/
 dist/
 
-# --- Personal --- #
+# --- Logs ---
+*.log
+
+# --- Personal ---
 TODO.txt
 TODO.md
 
-# --- Documentation ---
-docs/**/*.pdf
+# --- PDFs ---
+*.pdf
 !docs/paper/main.pdf
+
+# --- Documentation files you don't want tracked ---
 DATA.md
 ARCHITECTURE.md
 AGENTS.md
 AGENTS_CURSOR.md
 .template_origin.yml
 
+# --- Project-specific excludes ---
 scripts/**
 notebooks/fmp/**/*
