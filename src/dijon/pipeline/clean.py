@@ -181,11 +181,13 @@ def clean_pyc(directories: list[Path] | None = None, dry_run: bool = False) -> d
 def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
     """Remove Reaper-generated artifacts and temporary files.
 
-    Removes:
-    - All *reapeaks files recursively in reaper/
-    - Folders named "peaks" that contain reapeaks files
-    - Backups/ and Media/ directories in reaper/examples/, reaper/markers/, and reaper/heads/
-    - *.rpp files in reaper/ (root), reaper/markers/, and reaper/heads/ but NOT in reaper/examples/
+    Removes (project-wide):
+    - All *.reapeaks files recursively under the project root
+    - Any directory named "peaks" under the project root
+
+    Removes (under reaper/ only):
+    - Backups/ and Media/ in reaper/examples/, reaper/markers/, reaper/heads/
+    - *.rpp files in reaper/ root, reaper/markers/, reaper/heads/ (not reaper/examples/)
 
     Args:
         dry_run: If True, only report what would be deleted without actually deleting.
@@ -202,16 +204,6 @@ def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
         - items_to_delete: list[str] (list of items that would be deleted, only in dry_run mode)
     """
     reaper_dir = PROJECT_ROOT / "reaper"
-
-    if not reaper_dir.exists():
-        return {
-            "success": True,
-            "total": 0,
-            "directories_deleted": 0,
-            "files_deleted": 0,
-            "message": "Reaper directory does not exist",
-        }
-
     directories_deleted = 0
     files_deleted = 0
     failures: list[dict[str, str]] = []
@@ -227,58 +219,48 @@ def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
     markers_dir = reaper_dir / "markers"
     heads_dir = reaper_dir / "heads"
 
-    # Find all *reapeaks files
-    for reapeaks_file in reaper_dir.rglob("*reapeaks"):
-        if reapeaks_file.is_file():
-            reapeaks_files.append(reapeaks_file)
+    # Find all *.reapeaks files project-wide (case-insensitive extension match)
+    for path in PROJECT_ROOT.rglob("*"):
+        if path.is_file() and path.name.lower().endswith(".reapeaks"):
+            reapeaks_files.append(path)
 
-    # Find peaks folders that contain reapeaks files
-    # We need to check if a peaks folder contains any reapeaks files
-    for peaks_dir in reaper_dir.rglob("peaks"):
-        if peaks_dir.is_dir():
-            # Check if this peaks directory contains any reapeaks files
-            has_reapeaks = any(
-                reapeaks_file.is_relative_to(peaks_dir)
-                for reapeaks_file in reapeaks_files
-            )
-            if has_reapeaks:
-                peaks_dirs.append(peaks_dir)
+    # Find any directory named "peaks" project-wide (case-insensitive name match)
+    for path in PROJECT_ROOT.rglob("*"):
+        if path.is_dir() and path.name.lower() == "peaks":
+            peaks_dirs.append(path)
 
     # Find Backups/ and Media/ directories in examples/, markers/, and heads/
-    for subdir_name in ["examples", "markers", "heads"]:
-        subdir = reaper_dir / subdir_name
-        if subdir.exists():
-            for target_dir_name in ["Backups", "Media"]:
-                target_dir = subdir / target_dir_name
-                if target_dir.exists() and target_dir.is_dir():
-                    backups_media_dirs.append(target_dir)
+    if reaper_dir.exists():
+        for subdir_name in ["examples", "markers", "heads"]:
+            subdir = reaper_dir / subdir_name
+            if subdir.exists():
+                for target_dir_name in ["Backups", "Media"]:
+                    target_dir = subdir / target_dir_name
+                    if target_dir.exists() and target_dir.is_dir():
+                        backups_media_dirs.append(target_dir)
 
-    # Find *.rpp files in reaper/ root and reaper/markers/ but NOT in reaper/examples/
-    # Find .rpp files in root (reaper/)
-    for rpp_file in reaper_dir.glob("*.rpp"):
-        if rpp_file.is_file():
-            rpp_files.append(rpp_file)
-    for rpp_file in reaper_dir.glob("*.RPP"):
-        if rpp_file.is_file():
-            rpp_files.append(rpp_file)
-
-    # Find .rpp files in markers/ (but not examples/)
-    if markers_dir.exists():
-        for rpp_file in markers_dir.rglob("*.rpp"):
+    # Find *.rpp files in reaper/ root, markers/, heads/ (not examples/)
+    if reaper_dir.exists():
+        for rpp_file in reaper_dir.glob("*.rpp"):
             if rpp_file.is_file():
                 rpp_files.append(rpp_file)
-        for rpp_file in markers_dir.rglob("*.RPP"):
+        for rpp_file in reaper_dir.glob("*.RPP"):
             if rpp_file.is_file():
                 rpp_files.append(rpp_file)
-
-    # Find .rpp files in heads/ (but not examples/)
-    if heads_dir.exists():
-        for rpp_file in heads_dir.rglob("*.rpp"):
-            if rpp_file.is_file():
-                rpp_files.append(rpp_file)
-        for rpp_file in heads_dir.rglob("*.RPP"):
-            if rpp_file.is_file():
-                rpp_files.append(rpp_file)
+        if markers_dir.exists():
+            for rpp_file in markers_dir.rglob("*.rpp"):
+                if rpp_file.is_file():
+                    rpp_files.append(rpp_file)
+            for rpp_file in markers_dir.rglob("*.RPP"):
+                if rpp_file.is_file():
+                    rpp_files.append(rpp_file)
+        if heads_dir.exists():
+            for rpp_file in heads_dir.rglob("*.rpp"):
+                if rpp_file.is_file():
+                    rpp_files.append(rpp_file)
+            for rpp_file in heads_dir.rglob("*.RPP"):
+                if rpp_file.is_file():
+                    rpp_files.append(rpp_file)
 
     # Filter out .rpp files in examples/ directory
     rpp_files = [
@@ -287,13 +269,13 @@ def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
         if not (examples_dir.exists() and rpp_file.is_relative_to(examples_dir))
     ]
 
-    # Collect items for dry-run output
+    # Collect items for dry-run output (reapeaks/peaks relative to project root)
     if dry_run:
         for reapeaks_file in reapeaks_files:
-            rel_path = reapeaks_file.relative_to(reaper_dir)
+            rel_path = reapeaks_file.relative_to(PROJECT_ROOT)
             items_to_delete.append(f"FILE: {rel_path}")
         for peaks_dir in peaks_dirs:
-            rel_path = peaks_dir.relative_to(reaper_dir)
+            rel_path = peaks_dir.relative_to(PROJECT_ROOT)
             items_to_delete.append(f"DIR:  {rel_path}/")
         for target_dir in backups_media_dirs:
             rel_path = target_dir.relative_to(reaper_dir)
@@ -310,7 +292,7 @@ def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
                     reapeaks_file.unlink()
                     files_deleted += 1
             except Exception as exc:  # noqa: BLE001
-                rel_path = reapeaks_file.relative_to(reaper_dir)
+                rel_path = reapeaks_file.relative_to(PROJECT_ROOT)
                 failures.append(
                     {
                         "item": str(rel_path),
@@ -328,7 +310,7 @@ def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
                     shutil.rmtree(peaks_dir)
                     directories_deleted += 1
             except Exception as exc:  # noqa: BLE001
-                rel_path = peaks_dir.relative_to(reaper_dir)
+                rel_path = peaks_dir.relative_to(PROJECT_ROOT)
                 failures.append(
                     {
                         "item": str(rel_path),
