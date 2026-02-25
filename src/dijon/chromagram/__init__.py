@@ -1,5 +1,7 @@
 """Chromagram computation package."""
 
-from .methods import compute_chromagram
+from .methods import metric_chromagram_mvp
 
-__all__ = ["compute_chromagram"]
+__all__ = [
+    "metric_chromagram_mvp",
+]
