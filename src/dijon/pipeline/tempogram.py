@@ -18,9 +18,9 @@ NOVELTY_DIR = DERIVED_DIR / "novelty"
 TEMPOGRAM_OUTPUT_DIR = DERIVED_DIR / "tempogram"
 
 TEMPOGRAM_DEFAULTS: dict[str, tuple[int, int]] = {
-    "fourier": (500, 1),
-    "autocorr": (500, 1),
-    "cyclic": (500, 1),
+    "fourier": (512, 1),
+    "autocorr": (512, 1),
+    "cyclic": (512, 1),
 }
 TEMPOGRAM_TYPES = frozenset(TEMPOGRAM_DEFAULTS)
 THETA_DEFAULT = (40, 320)
@@ -135,7 +135,32 @@ def run_tempogram(
             if not dry_run:
                 np.save(out_path, out_arr, allow_pickle=False)
             succeeded += 1
-            items.append({"file": nov_path.name, "output": out_name, "status": "success"})
+            tempo_bin_count = len(Theta)
+            tempo_resolution_bpm = (
+                (theta_max - theta_min) / (tempo_bin_count - 1)
+                if tempo_bin_count > 1
+                else 0.0
+            )
+            items.append({
+                "file": nov_path.name,
+                "input_file": nov_path.name,
+                "output": out_name,
+                "status": "success",
+                "num_features": int(len(nov)),
+                "feature_sample_rate_hz": FS_NOVELTY,
+                "N": N,
+                "H": H,
+                "shape": tuple(out_arr.shape),
+                "dtype": str(out_arr.dtype),
+                "min": float(np.min(out_arr)),
+                "max": float(np.max(out_arr)),
+                "mean": float(np.mean(out_arr)),
+                "std": float(np.std(out_arr)),
+                "tempo_min_bpm": int(theta_min),
+                "tempo_max_bpm": int(theta_max),
+                "tempo_resolution_bpm": tempo_resolution_bpm,
+                "tempo_bin_count": tempo_bin_count,
+            })
         except Exception as e:
             failed += 1
             failures.append({"item": str(nov_path), "reason": str(e)})

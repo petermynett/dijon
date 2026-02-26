@@ -264,7 +264,37 @@ def _format_result_dict(result: dict[str, Any], op_label: str) -> str:
                 )
                 detail = item.get("detail") or item.get("error") or ""
                 extra = f" ({detail})" if detail else ""
-                lines.append(f"    • {name}: {status}{extra}")
+                # For tempogram-style items, include output on the main line.
+                # For beats-style items, show both inputs and output.
+                output_name = item.get("output")
+                is_meter = item.get("kind") == "meter"
+                is_tempogram = "tempo_bin_count" in item and "feature_sample_rate_hz" in item
+                is_beats = "num_beats" in item and "input_novelty" in item
+                if is_meter and output_name:
+                    lines.append(f"    • {name}: {status} -> output: {output_name}{extra}")
+                elif is_beats and output_name:
+                    inp_tempo = item.get("input_tempogram") or name
+                    inp_nov = item.get("input_novelty", "")
+                    lines.append(f"    • {inp_tempo}, {inp_nov}: {status} -> {output_name}{extra}")
+                elif is_tempogram and output_name:
+                    lines.append(f"    • {name}: {status} -> {output_name}{extra}")
+                else:
+                    lines.append(f"    • {name}: {status}{extra}")
+                novelty_details = _format_novelty_item_details(item)
+                if novelty_details:
+                    lines.append(f"      {novelty_details}")
+                tempogram_details = _format_tempogram_item_details(item)
+                if tempogram_details:
+                    for line in tempogram_details:
+                        lines.append(f"      {line}")
+                beats_details = _format_beats_item_details(item)
+                if beats_details:
+                    for line in beats_details:
+                        lines.append(f"      {line}")
+                meter_details = _format_meter_item_details(item)
+                if meter_details:
+                    for line in meter_details:
+                        lines.append(f"      {line}")
             else:
                 lines.append(f"    • {item}")
 
@@ -275,4 +305,140 @@ def _format_result_dict(result: dict[str, Any], op_label: str) -> str:
             lines.append(f"    {item}")
 
     return "\n".join(lines)
+
+
+def _format_novelty_item_details(item: dict[str, Any]) -> str | None:
+    """Format optional novelty item details for CLI display."""
+    marker_start = item.get("start_marker")
+    marker_end = item.get("end_marker")
+    start_sec = item.get("start_sec")
+    end_sec = item.get("end_sec")
+    num_features = item.get("num_features")
+    novelty_fs_hz = item.get("novelty_sample_rate_hz")
+    output = item.get("output")
+
+    if (
+        marker_start is None
+        or marker_end is None
+        or start_sec is None
+        or end_sec is None
+        or num_features is None
+        or novelty_fs_hz is None
+        or output is None
+    ):
+        return None
+
+    return (
+        f"markers: {marker_start} -> {marker_end} | "
+        f"region: {start_sec:.3f}s -> {end_sec:.3f}s | "
+        f"features: {num_features} @ {novelty_fs_hz:.3f} Hz | "
+        f"output: {output}"
+    )
+
+
+def _format_tempogram_item_details(item: dict[str, Any]) -> list[str] | None:
+    """Format optional tempogram item details as one compact line for CLI display."""
+    num_features = item.get("num_features")
+    feature_fs = item.get("feature_sample_rate_hz")
+    N = item.get("N")
+    H = item.get("H")
+    shape = item.get("shape")
+    dtype = item.get("dtype")
+    tempo_res = item.get("tempo_resolution_bpm")
+    tempo_bins = item.get("tempo_bin_count")
+
+    if (
+        num_features is None
+        or feature_fs is None
+        or N is None
+        or H is None
+        or shape is None
+        or dtype is None
+        or tempo_res is None
+        or tempo_bins is None
+    ):
+        return None
+
+    line = (
+        f"feat: n={num_features} fs={feature_fs}Hz | "
+        f"win: N={N} H={H} | "
+        f"arr: shape={shape} dtype={dtype} | "
+        f"tempo: d={tempo_res:.2f} bins={tempo_bins}"
+    )
+    return [line]
+
+
+def _format_beats_item_details(item: dict[str, Any]) -> list[str] | None:
+    """Format optional beats item details as one compact line for CLI display."""
+    num_beats = item.get("num_beats")
+    bpm = item.get("implied_bpm")
+    shape = item.get("shape")
+    dtype = item.get("dtype")
+    ibi_min = item.get("ibi_min")
+    ibi_max = item.get("ibi_max")
+    ibi_mean = item.get("ibi_mean")
+    ibi_std = item.get("ibi_std")
+    t_first = item.get("t_first")
+    t_last = item.get("t_last")
+    duration = item.get("duration")
+    coverage = item.get("coverage_ratio")
+
+    if (
+        num_beats is None
+        or bpm is None
+        or shape is None
+        or dtype is None
+        or ibi_min is None
+        or ibi_max is None
+        or ibi_mean is None
+        or ibi_std is None
+        or t_first is None
+        or t_last is None
+        or duration is None
+        or coverage is None
+    ):
+        return None
+
+    line = (
+        f"beats: n={num_beats} | bpm={bpm:.1f} | "
+        f"arr: shape={shape} dtype={dtype} "
+        f"min/max/mean/std={ibi_min:.3g}/{ibi_max:.3g}/{ibi_mean:.3g}/{ibi_std:.3g} | "
+        f"t0={t_first:.3g} tLast={t_last:.3g} dur={duration:.3g} | coverage={coverage:.3g}"
+    )
+    return [line]
+
+
+def _format_meter_item_details(item: dict[str, Any]) -> list[str] | None:
+    """Format optional meter item details as two compact lines for CLI display."""
+    head_in = item.get("head_in")
+    num_beats = item.get("num_beats")
+    t_first = item.get("t_first_beat")
+    t_last = item.get("t_last_beat")
+    bpb = item.get("beats_per_bar")
+    label_shape = item.get("label_shape")
+    bar_count = item.get("bar_count")
+    beat_counts = item.get("beat_counts")
+    nearest = item.get("head_in_nearest_beat")
+    offset = item.get("head_in_offset")
+
+    if (
+        head_in is None
+        or num_beats is None
+        or t_first is None
+        or t_last is None
+        or bpb is None
+        or label_shape is None
+        or bar_count is None
+        or beat_counts is None
+        or nearest is None
+        or offset is None
+    ):
+        return None
+
+    return [
+        f"head_in={head_in:.3f}s | beats: {num_beats} ({t_first:.3f}s→{t_last:.3f}s) | "
+        f"beats_per_bar={bpb} | label_shape={label_shape}",
+        f"bar_count={bar_count} | beat_counts={beat_counts} | "
+        f"head_in_nearest_beat={nearest:.3f}s (offset={offset:+.3f}s)",
+    ]
 

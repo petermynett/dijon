@@ -130,14 +130,48 @@ def run_meter(
             )
             labels = label_bars_and_beats(beat_times, head_in, beats_per_bar)
 
+            if not labels.ndim == 2 or labels.shape[1] < 3:
+                raise ValueError(
+                    f"Expected labels with shape (N, 3), got shape {labels.shape}"
+                )
+
+            beat_nums = labels[:, 2].astype(int)
+            if np.any(beat_nums < 1) or np.any(beat_nums > beats_per_bar):
+                raise ValueError(
+                    f"Beat numbers out of range [1, {beats_per_bar}]: "
+                    f"min={int(np.min(beat_nums))} max={int(np.max(beat_nums))}"
+                )
+
+            num_beats = len(beat_times)
+            t_first = float(beat_times[0])
+            t_last = float(beat_times[-1])
+            bar_count = len(set(labels[:, 1].astype(int)))
+            beat_counts = {int(b): int(np.sum(beat_nums == b)) for b in np.unique(beat_nums)}
+
+            i_nearest = int(np.argmin(np.abs(beat_times - head_in)))
+            head_in_nearest_beat = float(beat_times[i_nearest])
+            head_in_offset = head_in_nearest_beat - head_in
+
             if not dry_run:
                 np.save(out_path, labels, allow_pickle=False)
 
             succeeded += 1
             items.append({
+                "kind": "meter",
                 "file": beats_path.name,
+                "input_file": beats_path.name,
                 "output": out_name,
                 "status": "success",
+                "head_in": head_in,
+                "num_beats": num_beats,
+                "t_first_beat": t_first,
+                "t_last_beat": t_last,
+                "beats_per_bar": int(beats_per_bar),
+                "label_shape": tuple(labels.shape),
+                "bar_count": bar_count,
+                "beat_counts": beat_counts,
+                "head_in_nearest_beat": head_in_nearest_beat,
+                "head_in_offset": head_in_offset,
             })
         except Exception as e:
             failed += 1

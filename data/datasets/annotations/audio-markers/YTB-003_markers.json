@@ -1,34 +1,30 @@
 {
   "rpp_file": "/Users/petermynett/dev/active/dijon/reaper/markers/YTB-003_markers.RPP",
-  "entries": [
-    {
-      "timestamp": "2026-02-25T11:23:23.941793",
-      "count": 23,
-      "markers": [
-      {"name":"I.A1p","position":0.28,"number":1,"color":0,"flags":0,"locked":1,"guid":"{C222CD3B-BBE1-6149-AB77-73A87EB00977}"},
-      {"name":"I.A2p","position":10.22,"number":2,"color":0,"flags":0,"locked":1,"guid":"{711449A3-9C47-5A45-A7D8-6A13D4E4ECD6}"},
-      {"name":"F1.A1p","position":22.61915981373018,"number":3,"color":0,"flags":0,"locked":1,"guid":"{E93BA501-BE69-B84F-86DA-2E22088F876C}"},
-      {"name":"F1.A2p","position":32.91161876023232,"number":4,"color":0,"flags":0,"locked":1,"guid":"{B5900EC7-16E5-9B4A-B61E-08B5678EE7FB}"},
-      {"name":"F1.Bp","position":43.10156249999849,"number":5,"color":0,"flags":0,"locked":1,"guid":"{81AB6B7C-4D38-9146-A2CA-ED215815D8A7}"},
-      {"name":"F1.A3p","position":53.14956249999739,"number":6,"color":0,"flags":0,"locked":1,"guid":"{2FAC718D-6D6A-8B42-889A-90300BB7DE0B}"},
-      {"name":"S1.A1p","position":63.34586645809699,"number":7,"color":0,"flags":0,"locked":1,"guid":"{FBA03324-3279-804B-85B4-07BCD4C4EA75}"},
-      {"name":"F2.A1p","position":73.42395574641111,"number":8,"color":0,"flags":0,"locked":1,"guid":"{96E572FF-24E8-CD47-A37B-4A5518F3016C}"},
-      {"name":"F2.A2p","position":83.64556249999403,"number":9,"color":0,"flags":0,"locked":1,"guid":"{096C1F66-A15E-344B-88E2-EA7E02E5E148}"},
-      {"name":"F2.Bp","position":93.9064305621251,"number":10,"color":0,"flags":0,"locked":1,"guid":"{43520755-C350-6B4F-86A4-8EF5BBAD109C}"},
-      {"name":"F2.A3p","position":104.18956249999177,"number":11,"color":0,"flags":0,"locked":1,"guid":"{E687DB42-B57D-244B-8071-0F17E8AB381F}"},
-      {"name":"S2.A1p","position":114.00522524730897,"number":12,"color":0,"flags":0,"locked":1,"guid":"{C822B840-10EE-FB4D-918E-04CCB413FD5D}"},
-      {"name":"S2.A2p","position":124.17192806123202,"number":13,"color":0,"flags":0,"locked":1,"guid":"{D4B1478E-C431-9045-B75F-C73A7EB378F0}"},
-      {"name":"S2.B","position":135.22976149814338,"number":14,"color":0,"flags":0,"locked":1,"guid":"{B4EA0135-C614-E34F-A319-F06656F0F9B7}"},
-      {"name":"S2.A3","position":145.3308958333437,"number":15,"color":0,"flags":0,"locked":1,"guid":"{3E98BA79-0A1C-D746-B3A2-EE5DF31B744E}"},
-      {"name":"F3.A1","position":155.1074990756875,"number":16,"color":0,"flags":0,"locked":1,"guid":"{AB21A8C4-0159-F749-A12A-B516860FD04C}"},
-      {"name":"F3.A2","position":165.45035416668142,"number":17,"color":0,"flags":0,"locked":1,"guid":"{CBC4A73D-1E8B-3449-AE61-0374B43CE9F1}"},
-      {"name":"F3.B","position":175.8183541666941,"number":18,"color":0,"flags":0,"locked":1,"guid":"{CA1FBCAE-D30A-E445-9905-7FE9206919A2}"},
-      {"name":"F3.A3","position":185.97453081275654,"number":19,"color":0,"flags":0,"locked":1,"guid":"{F87D5B73-F51B-2345-B969-DF234BD02D07}"},
-      {"name":"O.A","position":196.89918750000322,"number":20,"color":0,"flags":0,"locked":1,"guid":"{D9329485-A4E5-D443-A815-22D388DF1392}"},
-      {"name":"END","position":208.8193367210457,"number":21,"color":0,"flags":0,"locked":1,"guid":"{E1C793C8-6829-7342-BCBA-717E0FB4AC72}"},
-      {"name":"HEAD_IN_START","position":23.17,"number":22,"color":0,"flags":0,"locked":1,"guid":"{032D0073-B0B2-304E-8901-BBC203BD7F58}"},
-      {"name":"HEAD_IN_END","position":63.82500370353461,"number":23,"color":8,"flags":0,"locked":1,"guid":"{3EA2D9FA-A676-504C-91EB-3FDBEA59E557}"}
-      ]
-    }
+  "timestamp": "2026-02-25T11:23:23.941793",
+  "count": 23,
+  "markers": [
+    {"name":"I.A1p","position":0.28,"number":1,"color":0,"flags":0,"locked":1,"guid":"{C222CD3B-BBE1-6149-AB77-73A87EB00977}"},
+    {"name":"I.A2p","position":10.22,"number":2,"color":0,"flags":0,"locked":1,"guid":"{711449A3-9C47-5A45-A7D8-6A13D4E4ECD6}"},
+    {"name":"F1.A1p","position":22.61915981373018,"number":3,"color":0,"flags":0,"locked":1,"guid":"{E93BA501-BE69-B84F-86DA-2E22088F876C}"},
+    {"name":"F1.A2p","position":32.91161876023232,"number":4,"color":0,"flags":0,"locked":1,"guid":"{B5900EC7-16E5-9B4A-B61E-08B5678EE7FB}"},
+    {"name":"F1.Bp","position":43.10156249999849,"number":5,"color":0,"flags":0,"locked":1,"guid":"{81AB6B7C-4D38-9146-A2CA-ED215815D8A7}"},
+    {"name":"F1.A3p","position":53.14956249999739,"number":6,"color":0,"flags":0,"locked":1,"guid":"{2FAC718D-6D6A-8B42-889A-90300BB7DE0B}"},
+    {"name":"S1.A1p","position":63.34586645809699,"number":7,"color":0,"flags":0,"locked":1,"guid":"{FBA03324-3279-804B-85B4-07BCD4C4EA75}"},
+    {"name":"F2.A1p","position":73.42395574641111,"number":8,"color":0,"flags":0,"locked":1,"guid":"{96E572FF-24E8-CD47-A37B-4A5518F3016C}"},
+    {"name":"F2.A2p","position":83.64556249999403,"number":9,"color":0,"flags":0,"locked":1,"guid":"{096C1F66-A15E-344B-88E2-EA7E02E5E148}"},
+    {"name":"F2.Bp","position":93.9064305621251,"number":10,"color":0,"flags":0,"locked":1,"guid":"{43520755-C350-6B4F-86A4-8EF5BBAD109C}"},
+    {"name":"F2.A3p","position":104.18956249999177,"number":11,"color":0,"flags":0,"locked":1,"guid":"{E687DB42-B57D-244B-8071-0F17E8AB381F}"},
+    {"name":"S2.A1p","position":114.00522524730897,"number":12,"color":0,"flags":0,"locked":1,"guid":"{C822B840-10EE-FB4D-918E-04CCB413FD5D}"},
+    {"name":"S2.A2p","position":124.17192806123202,"number":13,"color":0,"flags":0,"locked":1,"guid":"{D4B1478E-C431-9045-B75F-C73A7EB378F0}"},
+    {"name":"S2.B","position":135.22976149814338,"number":14,"color":0,"flags":0,"locked":1,"guid":"{B4EA0135-C614-E34F-A319-F06656F0F9B7}"},
+    {"name":"S2.A3","position":145.3308958333437,"number":15,"color":0,"flags":0,"locked":1,"guid":"{3E98BA79-0A1C-D746-B3A2-EE5DF31B744E}"},
+    {"name":"F3.A1","position":155.1074990756875,"number":16,"color":0,"flags":0,"locked":1,"guid":"{AB21A8C4-0159-F749-A12A-B516860FD04C}"},
+    {"name":"F3.A2","position":165.45035416668142,"number":17,"color":0,"flags":0,"locked":1,"guid":"{CBC4A73D-1E8B-3449-AE61-0374B43CE9F1}"},
+    {"name":"F3.B","position":175.8183541666941,"number":18,"color":0,"flags":0,"locked":1,"guid":"{CA1FBCAE-D30A-E445-9905-7FE9206919A2}"},
+    {"name":"F3.A3","position":185.97453081275654,"number":19,"color":0,"flags":0,"locked":1,"guid":"{F87D5B73-F51B-2345-B969-DF234BD02D07}"},
+    {"name":"O.A","position":196.89918750000322,"number":20,"color":0,"flags":0,"locked":1,"guid":"{D9329485-A4E5-D443-A815-22D388DF1392}"},
+    {"name":"END","position":208.8193367210457,"number":21,"color":0,"flags":0,"locked":1,"guid":"{E1C793C8-6829-7342-BCBA-717E0FB4AC72}"},
+    {"name":"HEAD_IN_START","position":23.17,"number":22,"color":0,"flags":0,"locked":1,"guid":"{032D0073-B0B2-304E-8901-BBC203BD7F58}"},
+    {"name":"HEAD_IN_END","position":63.82500370353461,"number":23,"color":8,"flags":0,"locked":1,"guid":"{3EA2D9FA-A676-504C-91EB-3FDBEA59E557}"}
   ]
 }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import wave
 from pathlib import Path
 
@@ -28,6 +29,20 @@ def _write_minimal_wav(path: Path, sr: int = 22050, duration_sec: float = 0.5) -
         w.setsampwidth(2)
         w.setframerate(sr)
         w.writeframes(buf.tobytes())
+
+
+def _write_markers(markers_dir: Path, track_name: str, duration_sec: float = 0.5) -> None:
+    """Write minimal marker JSON: start at 0, END at duration_sec."""
+    path = markers_dir / f"{track_name}_markers.json"
+    markers_dir.mkdir(parents=True, exist_ok=True)
+    data = {
+        "markers": [
+            {"name": "START", "position": 0.0},
+            {"name": "END", "position": duration_sec},
+        ]
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
 
 
 class TestNoveltyHelpers:
@@ -70,11 +85,14 @@ class TestNoveltyHelpers:
 class TestRunNovelty:
     """Integration-style tests for run_novelty (use tmp paths)."""
 
-    def test_run_novelty_writes_npy(self, tmp_path: Path) -> None:
+    def test_run_novelty_writes_npy(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         wav_dir = tmp_path / "audio"
+        markers_dir = tmp_path / "markers"
         wav_dir.mkdir()
         out_dir = tmp_path / "novelty"
         _write_minimal_wav(wav_dir / "TRACK01.wav")
+        _write_markers(markers_dir, "TRACK01")
+        monkeypatch.setattr("dijon.utils.audio_region.AUDIO_MARKERS_DIR", markers_dir)
 
         result = run_novelty(
             audio_files=[wav_dir / "TRACK01.wav"],
@@ -88,17 +106,29 @@ class TestRunNovelty:
         assert result["total"] == 1
         assert result["succeeded"] == 1
         assert result["failed"] == 0
+        item = result["items"][0]
+        assert item["file"] == "TRACK01.wav"
+        assert item["start_marker"] == "START"
+        assert item["end_marker"] == "END"
+        assert item["start_sec"] == pytest.approx(0.0)
+        assert item["end_sec"] == pytest.approx(0.5)
+        assert item["num_features"] > 0
+        assert item["novelty_sample_rate_hz"] == pytest.approx(100.0)
+        assert item["output"] == "TRACK01_novelty_spectrum_1024-256-100.0-10.npy"
         out_file = out_dir / "TRACK01_novelty_spectrum_1024-256-100.0-10.npy"
         assert out_file.exists()
         arr = np.load(out_file)
         assert arr.ndim == 1
         assert arr.dtype == np.float64
 
-    def test_run_novelty_dry_run_writes_nothing(self, tmp_path: Path) -> None:
+    def test_run_novelty_dry_run_writes_nothing(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         wav_dir = tmp_path / "audio"
+        markers_dir = tmp_path / "markers"
         wav_dir.mkdir()
         out_dir = tmp_path / "novelty"
         _write_minimal_wav(wav_dir / "TRACK02.wav")
+        _write_markers(markers_dir, "TRACK02")
+        monkeypatch.setattr("dijon.utils.audio_region.AUDIO_MARKERS_DIR", markers_dir)
 
         result = run_novelty(
             audio_files=[wav_dir / "TRACK02.wav"],
@@ -112,11 +142,14 @@ class TestRunNovelty:
         assert result["succeeded"] == 1
         assert not out_dir.exists() or not list(out_dir.glob("*.npy"))
 
-    def test_run_novelty_same_params_overwrites(self, tmp_path: Path) -> None:
+    def test_run_novelty_same_params_overwrites(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         wav_dir = tmp_path / "audio"
+        markers_dir = tmp_path / "markers"
         wav_dir.mkdir()
         out_dir = tmp_path / "novelty"
         _write_minimal_wav(wav_dir / "TRACK03.wav")
+        _write_markers(markers_dir, "TRACK03")
+        monkeypatch.setattr("dijon.utils.audio_region.AUDIO_MARKERS_DIR", markers_dir)
 
         run_novelty(
             audio_files=[wav_dir / "TRACK03.wav"],
@@ -138,11 +171,14 @@ class TestRunNovelty:
         second_content = np.load(out_file).tobytes()
         assert first_content == second_content
 
-    def test_run_novelty_different_params_different_files(self, tmp_path: Path) -> None:
+    def test_run_novelty_different_params_different_files(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         wav_dir = tmp_path / "audio"
+        markers_dir = tmp_path / "markers"
         wav_dir.mkdir()
         out_dir = tmp_path / "novelty"
         _write_minimal_wav(wav_dir / "TRACK04.wav")
+        _write_markers(markers_dir, "TRACK04")
+        monkeypatch.setattr("dijon.utils.audio_region.AUDIO_MARKERS_DIR", markers_dir)
 
         run_novelty(
             audio_files=[wav_dir / "TRACK04.wav"],

@@ -72,6 +72,20 @@ class TestRunTempogram:
 
         assert result["success"] is True
         assert result["succeeded"] == 1
+        item = result["items"][0]
+        assert item["input_file"] == "TRACK01_novelty_spectrum_1024-256-100.0-10.npy"
+        assert item["output"] == "TRACK01_tempogram_fourier_100-10-60-120.npy"
+        assert item["num_features"] == 1000
+        assert item["feature_sample_rate_hz"] == pytest.approx(100.0)
+        assert item["N"] == 100
+        assert item["H"] == 10
+        assert item["shape"] == tuple(np.load(out_dir / item["output"]).shape)
+        assert item["dtype"] == "float64"
+        assert "min" in item and "max" in item and "mean" in item and "std" in item
+        assert item["tempo_min_bpm"] == 60
+        assert item["tempo_max_bpm"] == 120
+        assert item["tempo_bin_count"] == 61
+        assert item["tempo_resolution_bpm"] == pytest.approx(1.0)
         out_file = out_dir / "TRACK01_tempogram_fourier_100-10-60-120.npy"
         assert out_file.exists()
         arr = np.load(out_file)

@@ -8,6 +8,7 @@ import librosa
 import numpy as np
 
 from ..global_config import DATA_DIR, DERIVED_DIR, RAW_AUDIO_DIR
+from ..utils.audio_region import resolve_audio_region_with_names
 from ..novelty import (
     compute_novelty_complex,
     compute_novelty_energy,
@@ -55,20 +56,28 @@ def _compute_novelty(
     H: int,
     gamma: float,
     M: int,
-) -> np.ndarray:
-    """Dispatch to the correct novelty function; returns 1D novelty array."""
+) -> tuple[np.ndarray, float]:
+    """Dispatch to novelty method and return novelty with its feature sample rate."""
     Fs = float(sr)
     if ntype == "spectrum":
-        out, _ = compute_novelty_spectrum(x, Fs=Fs, N=N, H=H, gamma=gamma, M=M, norm=True, Fs_target=100.0)
+        novelty, novelty_fs_hz = compute_novelty_spectrum(
+            x, Fs=Fs, N=N, H=H, gamma=gamma, M=M, norm=True, Fs_target=100.0
+        )
     elif ntype == "energy":
-        out, _ = compute_novelty_energy(x, Fs=Fs, N=N, H=H, gamma=gamma, norm=True, Fs_target=100.0)
+        novelty, novelty_fs_hz = compute_novelty_energy(
+            x, Fs=Fs, N=N, H=H, gamma=gamma, norm=True, Fs_target=100.0
+        )
     elif ntype == "phase":
-        out, _ = compute_novelty_phase(x, Fs=Fs, N=N, H=H, M=M, norm=True, Fs_target=100.0)
+        novelty, novelty_fs_hz = compute_novelty_phase(
+            x, Fs=Fs, N=N, H=H, M=M, norm=True, Fs_target=100.0
+        )
     elif ntype == "complex":
-        out, _ = compute_novelty_complex(x, Fs=Fs, N=N, H=H, gamma=gamma, M=M, norm=True, Fs_target=100.0)
+        novelty, novelty_fs_hz = compute_novelty_complex(
+            x, Fs=Fs, N=N, H=H, gamma=gamma, M=M, norm=True, Fs_target=100.0
+        )
     else:
         raise ValueError(f"Unknown novelty type: {ntype}")
-    return out
+    return novelty, float(novelty_fs_hz)
 
 
 def run_novelty(
@@ -82,6 +91,8 @@ def run_novelty(
     gamma: float | None = None,
     M: int | None = None,
     dry_run: bool = False,
+    start_marker: str | None = None,
+    end_marker: str | None = None,
 ) -> dict:
     """Compute novelty for audio file(s) and write .npy to output_dir.
 
@@ -146,8 +157,14 @@ def run_novelty(
             continue
 
         try:
+            start_sec, end_sec, start_name, end_name = resolve_audio_region_with_names(
+                audio_path,
+                start_marker=start_marker,
+                end_marker=end_marker,
+            )
             y, sr = librosa.load(audio_path, sr=None, mono=True)
-            novelty = _compute_novelty(y, sr, ntype, N, H, gamma, M)
+            y = y[int(start_sec * sr) : int(end_sec * sr)]
+            novelty, novelty_fs_hz = _compute_novelty(y, sr, ntype, N, H, gamma, M)
             if not dry_run:
                 np.save(out_path, novelty, allow_pickle=False)
             succeeded += 1
@@ -155,6 +172,12 @@ def run_novelty(
                 "file": audio_path.name,
                 "output": out_name,
                 "status": "success",
+                "start_marker": start_name,
+                "end_marker": end_name,
+                "start_sec": start_sec,
+                "end_sec": end_sec,
+                "num_features": int(len(novelty)),
+                "novelty_sample_rate_hz": novelty_fs_hz,
             })
         except Exception as e:
             failed += 1

@@ -49,8 +49,19 @@ def novelty(
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
     ] = False,
+    start_marker: Annotated[
+        str | None,
+        typer.Option("--start-marker", "-s", help="Start marker name. Default: earliest marker."),
+    ] = None,
+    end_marker: Annotated[
+        str | None,
+        typer.Option("--end-marker", "-e", help="End marker name. Default: END."),
+    ] = None,
 ) -> None:
-    """Compute novelty functions for full audio files and write to data/derived/novelty.
+    """Compute novelty functions from raw audio and write to data/derived/novelty.
+
+    By default, trims to the musical region (earliest marker → END) using Reaper
+    marker JSONs. Use --start-marker and --end-marker to override.
 
     Output filenames: <track-name>_novelty_<type>_<N>-<H>-<gamma>-<M>.npy
     Same parameters overwrite; different parameters produce different files.
@@ -71,6 +82,8 @@ def novelty(
             gamma=gamma,
             M=m,
             dry_run=dry_run,
+            start_marker=start_marker,
+            end_marker=end_marker,
         )
 
     pre_message = (

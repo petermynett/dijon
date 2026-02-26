@@ -1,32 +1,28 @@
 {
   "rpp_file": "/Users/petermynett/dev/active/dijon/reaper/markers/YTB-012_markers.RPP",
-  "entries": [
-    {
-      "timestamp": "2026-02-25T11:23:23.946725",
-      "count": 21,
-      "markers": [
-      {"name":"Intro.A1p","position":19.96052832434361,"number":1,"color":0,"flags":0,"locked":1,"guid":"{C446E8B9-DB65-144A-9E94-04727AEFA89C}"},
-      {"name":"Intro.A2p","position":32.43783246606474,"number":2,"color":0,"flags":0,"locked":1,"guid":"{4F63CE17-0987-0E4B-BF6D-A9FFFAF9A3BE}"},
-      {"name":"F1.A1p","position":44.76426713934858,"number":3,"color":0,"flags":0,"locked":1,"guid":"{5DA733DA-4C98-7B4A-A73F-D34624663C47}"},
-      {"name":"F1.A2p","position":57.23654226073091,"number":4,"color":0,"flags":0,"locked":1,"guid":"{48717A2E-C460-9E4A-ADA4-0928ADD1E0AB}"},
-      {"name":"F1.Bp","position":69.85497916666117,"number":5,"color":0,"flags":0,"locked":1,"guid":"{508A9616-0287-A141-A104-8DEBCEDC8B48}"},
-      {"name":"F1.A3p","position":82.30068167093631,"number":6,"color":0,"flags":0,"locked":1,"guid":"{AA9FF294-A5BC-7545-9732-AF69F29A4920}"},
-      {"name":"F2.A1p","position":94.87212829702561,"number":7,"color":8,"flags":0,"locked":1,"guid":"{B04FFD4C-BA8F-094C-B777-3285E995C5FA}"},
-      {"name":"F2.A2p","position":107.61274984290915,"number":8,"color":0,"flags":0,"locked":1,"guid":"{EA14AA2A-0889-9540-A5B6-7BDDFD9DCD83}"},
-      {"name":"F2.Bp","position":120.29503520955329,"number":9,"color":0,"flags":0,"locked":1,"guid":"{9FA1FEA4-F513-3645-91E8-C95123EE8B5C}"},
-      {"name":"F2.A3p","position":133.0385735643988,"number":10,"color":0,"flags":0,"locked":1,"guid":"{F4FF747C-4755-4D47-BA0B-83487D6976BD}"},
-      {"name":"S1.A1p","position":145.6588662870807,"number":11,"color":0,"flags":0,"locked":1,"guid":"{5CEDA424-5A3A-514E-9C78-4102DDA1CE70}"},
-      {"name":"S1.A2p","position":158.21780438002773,"number":12,"color":0,"flags":0,"locked":1,"guid":"{90730D62-6D79-F941-8B0C-FC75C1C052B6}"},
-      {"name":"S1.Bp","position":170.84618838175234,"number":13,"color":0,"flags":0,"locked":1,"guid":"{F295FD18-9FEA-5A42-81FC-B107B900B032}"},
-      {"name":"S1.A3p","position":183.4409482927581,"number":14,"color":0,"flags":0,"locked":1,"guid":"{FC1C4780-1394-2341-B8F8-8A49B8382ED4}"},
-      {"name":"F3.A1p","position":196.13396489069166,"number":15,"color":0,"flags":0,"locked":1,"guid":"{5269379B-62D3-BA4B-95FE-9FDCE5D40B4B}"},
-      {"name":"F3.A2p","position":208.82097415021826,"number":16,"color":0,"flags":0,"locked":1,"guid":"{6FFE1C92-C395-BE4A-A959-D213D2F601FE}"},
-      {"name":"F3.Bp","position":221.56106228052164,"number":17,"color":0,"flags":0,"locked":1,"guid":"{75027C44-7DB0-F445-876A-140B50DB0943}"},
-      {"name":"F3.A3p","position":234.35631250011812,"number":18,"color":0,"flags":0,"locked":1,"guid":"{70EB0A26-F6A4-924D-956B-CDEFB315749D}"},
-      {"name":"END","position":249.64688038463072,"number":19,"color":0,"flags":0,"locked":1,"guid":"{97015B86-632E-7147-8BDC-2FEF6B1C22C8}"},
-      {"name":"HEAD_IN_START","position":45.29,"number":20,"color":0,"flags":0,"locked":1,"guid":"{27F18F35-C718-2B40-BFA8-ACD0C9F4B080}"},
-      {"name":"HEAD_IN_END","position":95.43,"number":21,"color":0,"flags":0,"locked":1,"guid":"{1D575585-D81E-1941-9361-8DAD1D0BC753}"}
-      ]
-    }
+  "timestamp": "2026-02-25T11:23:23.946725",
+  "count": 21,
+  "markers": [
+    {"name":"Intro.A1p","position":19.96052832434361,"number":1,"color":0,"flags":0,"locked":1,"guid":"{C446E8B9-DB65-144A-9E94-04727AEFA89C}"},
+    {"name":"Intro.A2p","position":32.43783246606474,"number":2,"color":0,"flags":0,"locked":1,"guid":"{4F63CE17-0987-0E4B-BF6D-A9FFFAF9A3BE}"},
+    {"name":"F1.A1p","position":44.76426713934858,"number":3,"color":0,"flags":0,"locked":1,"guid":"{5DA733DA-4C98-7B4A-A73F-D34624663C47}"},
+    {"name":"F1.A2p","position":57.23654226073091,"number":4,"color":0,"flags":0,"locked":1,"guid":"{48717A2E-C460-9E4A-ADA4-0928ADD1E0AB}"},
+    {"name":"F1.Bp","position":69.85497916666117,"number":5,"color":0,"flags":0,"locked":1,"guid":"{508A9616-0287-A141-A104-8DEBCEDC8B48}"},
+    {"name":"F1.A3p","position":82.30068167093631,"number":6,"color":0,"flags":0,"locked":1,"guid":"{AA9FF294-A5BC-7545-9732-AF69F29A4920}"},
+    {"name":"F2.A1p","position":94.87212829702561,"number":7,"color":8,"flags":0,"locked":1,"guid":"{B04FFD4C-BA8F-094C-B777-3285E995C5FA}"},
+    {"name":"F2.A2p","position":107.61274984290915,"number":8,"color":0,"flags":0,"locked":1,"guid":"{EA14AA2A-0889-9540-A5B6-7BDDFD9DCD83}"},
+    {"name":"F2.Bp","position":120.29503520955329,"number":9,"color":0,"flags":0,"locked":1,"guid":"{9FA1FEA4-F513-3645-91E8-C95123EE8B5C}"},
+    {"name":"F2.A3p","position":133.0385735643988,"number":10,"color":0,"flags":0,"locked":1,"guid":"{F4FF747C-4755-4D47-BA0B-83487D6976BD}"},
+    {"name":"S1.A1p","position":145.6588662870807,"number":11,"color":0,"flags":0,"locked":1,"guid":"{5CEDA424-5A3A-514E-9C78-4102DDA1CE70}"},
+    {"name":"S1.A2p","position":158.21780438002773,"number":12,"color":0,"flags":0,"locked":1,"guid":"{90730D62-6D79-F941-8B0C-FC75C1C052B6}"},
+    {"name":"S1.Bp","position":170.84618838175234,"number":13,"color":0,"flags":0,"locked":1,"guid":"{F295FD18-9FEA-5A42-81FC-B107B900B032}"},
+    {"name":"S1.A3p","position":183.4409482927581,"number":14,"color":0,"flags":0,"locked":1,"guid":"{FC1C4780-1394-2341-B8F8-8A49B8382ED4}"},
+    {"name":"F3.A1p","position":196.13396489069166,"number":15,"color":0,"flags":0,"locked":1,"guid":"{5269379B-62D3-BA4B-95FE-9FDCE5D40B4B}"},
+    {"name":"F3.A2p","position":208.82097415021826,"number":16,"color":0,"flags":0,"locked":1,"guid":"{6FFE1C92-C395-BE4A-A959-D213D2F601FE}"},
+    {"name":"F3.Bp","position":221.56106228052164,"number":17,"color":0,"flags":0,"locked":1,"guid":"{75027C44-7DB0-F445-876A-140B50DB0943}"},
+    {"name":"F3.A3p","position":234.35631250011812,"number":18,"color":0,"flags":0,"locked":1,"guid":"{70EB0A26-F6A4-924D-956B-CDEFB315749D}"},
+    {"name":"END","position":249.64688038463072,"number":19,"color":0,"flags":0,"locked":1,"guid":"{97015B86-632E-7147-8BDC-2FEF6B1C22C8}"},
+    {"name":"HEAD_IN_START","position":45.29,"number":20,"color":0,"flags":0,"locked":1,"guid":"{27F18F35-C718-2B40-BFA8-ACD0C9F4B080}"},
+    {"name":"HEAD_IN_END","position":95.43,"number":21,"color":0,"flags":0,"locked":1,"guid":"{1D575585-D81E-1941-9361-8DAD1D0BC753}"}
   ]
 }

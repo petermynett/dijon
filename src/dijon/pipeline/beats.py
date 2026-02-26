@@ -134,11 +134,38 @@ def run_beats(
             if not dry_run:
                 np.save(out_path, beat_times, allow_pickle=False)
 
+            # Metadata for CLI display
+            num_beats = len(beat_times)
+            duration = len(novelty) / FS_NOV
+            t_first = float(beat_times[0]) if num_beats >= 1 else 0.0
+            t_last = float(beat_times[-1]) if num_beats >= 1 else 0.0
+            coverage = (t_last - t_first) / duration if duration > 0 else 0.0
+
+            ibi = np.diff(beat_times) if num_beats >= 2 else np.array([])
+            ibi_min = float(np.min(ibi)) if len(ibi) > 0 else 0.0
+            ibi_max = float(np.max(ibi)) if len(ibi) > 0 else 0.0
+            ibi_mean = float(np.mean(ibi)) if len(ibi) > 0 else 0.0
+            ibi_std = float(np.std(ibi)) if len(ibi) > 0 else 0.0
+
             succeeded += 1
             items.append({
                 "file": tempo_path.name,
+                "input_tempogram": tempo_path.name,
+                "input_novelty": nov_path.name,
                 "output": out_name,
                 "status": "success",
+                "num_beats": num_beats,
+                "implied_bpm": tempo_bpm,
+                "shape": tuple(beat_times.shape),
+                "dtype": str(beat_times.dtype),
+                "ibi_min": ibi_min,
+                "ibi_max": ibi_max,
+                "ibi_mean": ibi_mean,
+                "ibi_std": ibi_std,
+                "t_first": t_first,
+                "t_last": t_last,
+                "duration": duration,
+                "coverage_ratio": coverage,
             })
         except Exception as e:
             failed += 1
