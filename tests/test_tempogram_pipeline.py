@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from dijon.tempogram import compute_tempogram_fourier
 from dijon.pipeline.tempogram import (
     FS_NOVELTY,
     TEMPOGRAM_DEFAULTS,
@@ -138,6 +139,48 @@ class TestRunTempogram:
 
     def test_defaults_match_spec(self) -> None:
         assert FS_NOVELTY == 100.0
-        assert TEMPOGRAM_DEFAULTS["fourier"] == (500, 1)
-        assert TEMPOGRAM_DEFAULTS["autocorr"] == (500, 1)
-        assert TEMPOGRAM_DEFAULTS["cyclic"] == (500, 1)
+        assert TEMPOGRAM_DEFAULTS["fourier"] == (512, 1)
+        assert TEMPOGRAM_DEFAULTS["autocorr"] == (512, 1)
+        assert TEMPOGRAM_DEFAULTS["cyclic"] == (512, 1)
+
+
+def _fourier_tempogram_reference(x: np.ndarray, Fs: float, N: int, H: int, Theta: np.ndarray) -> np.ndarray:
+    """Reference implementation (full-length exponential) for numerical equivalence testing."""
+    win = np.hanning(N)
+    N_left = N // 2
+    L_left = N_left
+    L_right = N_left
+    L_pad = x.shape[0] + L_left + L_right
+    x_pad = np.concatenate((np.zeros(L_left), x, np.zeros(L_right)))
+    t_pad = np.arange(L_pad)
+    M = int(np.floor(L_pad - N) / H) + 1
+    K = len(Theta)
+    X = np.zeros((K, M), dtype=np.complex128)
+    for k in range(K):
+        omega = (Theta[k] / 60) / Fs
+        exponential = np.exp(-2 * np.pi * 1j * omega * t_pad)
+        x_exp = x_pad * exponential
+        for n in range(M):
+            t_0 = n * H
+            t_1 = t_0 + N
+            X[k, n] = np.sum(win * x_exp[t_0:t_1])
+    return X
+
+
+class TestComputeTempogramFourier:
+    """Unit tests for compute_tempogram_fourier numerical correctness."""
+
+    def test_fourier_matches_reference(self) -> None:
+        """Optimized implementation matches reference within tolerance."""
+        np.random.seed(42)
+        x = np.clip(np.random.randn(200).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        Fs = 100.0
+        N = 64
+        H = 8
+        Theta = np.arange(60, 121, dtype=float)
+
+        X_opt, T_coef, F_coef = compute_tempogram_fourier(x, Fs, N, H, Theta)
+        X_ref = _fourier_tempogram_reference(x, Fs, N, H, Theta)
+
+        np.testing.assert_allclose(X_opt.real, X_ref.real, rtol=1e-10, atol=1e-10)
+        np.testing.assert_allclose(X_opt.imag, X_ref.imag, rtol=1e-10, atol=1e-10)

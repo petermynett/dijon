@@ -100,19 +100,25 @@ def compute_tempogram_fourier(x, Fs, N, H, Theta):
     L_right = N_left
     L_pad = L + L_left + L_right
     x_pad = np.concatenate((np.zeros(L_left), x, np.zeros(L_right)))
-    t_pad = np.arange(L_pad)
     M = int(np.floor(L_pad - N) / H) + 1
     K = len(Theta)
     X = np.zeros((K, M), dtype=np.complex128)
 
     for k in range(K):
-        omega = (Theta[k] / 60) / Fs 
-        exponential = np.exp(-2 * np.pi * 1j * omega * t_pad)
-        x_exp = x_pad * exponential
+        omega = (Theta[k] / 60) / Fs
+        phase_step_sample = np.exp(-2 * np.pi * 1j * omega)
+        phase_step_hop = np.exp(-2 * np.pi * 1j * omega * H)
+
+        exp_slice = np.zeros(N, dtype=np.complex128)
+        exp_slice[0] = 1.0
+        for j in range(1, N):
+            exp_slice[j] = exp_slice[j - 1] * phase_step_sample
+
         for n in range(M):
             t_0 = n * H
-            t_1 = t_0 + N
-            X[k, n] = np.sum(win * x_exp[t_0:t_1])
+            X[k, n] = np.sum(win * x_pad[t_0 : t_0 + N] * exp_slice)
+            if n < M - 1:
+                exp_slice *= phase_step_hop
     T_coef = np.arange(M) * H / Fs
     F_coef_BPM = Theta
     return X, T_coef, F_coef_BPM
