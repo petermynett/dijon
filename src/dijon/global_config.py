@@ -33,7 +33,8 @@ AUDIO_HEADS_DIR: Path = ANNOTATIONS_DIR / "audio-heads"
 RAW_AUDIO_DIR: Path = DATASET_DIR / "raw" / "audio"
 
 # Logs directories
-LOGS_DIR: Path = PROJECT_ROOT / "logs"
+LOGS_DIR: Path = DATA_DIR / "logs"
+DERIVED_LOGS_DIR: Path = LOGS_DIR / "derived"
 
 # Database directories
 DB_DIR: Path = PROJECT_ROOT / "db"

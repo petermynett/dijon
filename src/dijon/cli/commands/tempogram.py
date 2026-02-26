@@ -48,6 +48,10 @@ def tempogram(
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
     ] = False,
+    no_log: Annotated[
+        bool,
+        typer.Option("--no-log", help="Do not write a log file to data/logs/derived."),
+    ] = False,
 ) -> None:
     """Compute tempograms for novelty files (assumed 100 Hz) and write to data/derived/tempogram.
 
@@ -77,8 +81,20 @@ def tempogram(
         else f"Computing {type} tempogram for "
         + (f"{len(novelty_list)} file(s)..." if novelty_list else "all novelty files in folder...")
     )
+    inputs_desc = (
+        str([str(p) for p in novelty_list]) if novelty_list
+        else f"all .npy in {NOVELTY_DIR}"
+    )
     cli.handle_cli_operation(
         operation="tempogram",
         op_callable=_run,
         pre_message=pre_message,
+        log_module="tempogram",
+        log_method=type.lower(),
+        log_dry_run=dry_run,
+        enable_log=not no_log,
+        log_context={
+            "inputs": inputs_desc,
+            "output_dir": str(TEMPOGRAM_OUTPUT_DIR),
+        },
     )

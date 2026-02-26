@@ -45,6 +45,10 @@ def beats(
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
     ] = False,
+    no_log: Annotated[
+        bool,
+        typer.Option("--no-log", help="Do not write a log file to data/logs/derived."),
+    ] = False,
 ) -> None:
     """Compute beat times from tempogram and novelty files and write to data/derived/beats.
 
@@ -72,8 +76,19 @@ def beats(
         else f"Computing beats for "
         + (f"{len(tempogram_list)} file(s)..." if tempogram_list else "all tempogram files in folder...")
     )
+    inputs_desc = (
+        str([str(p) for p in tempogram_list]) if tempogram_list
+        else f"all .npy in {TEMPOGRAM_DIR}"
+    )
     cli.handle_cli_operation(
         operation="beats",
         op_callable=_run,
         pre_message=pre_message,
+        log_module="beats",
+        log_dry_run=dry_run,
+        enable_log=not no_log,
+        log_context={
+            "inputs": inputs_desc,
+            "output_dir": str(BEATS_OUTPUT_DIR),
+        },
     )

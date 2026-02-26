@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from ..global_config import PROJECT_ROOT
+from ..global_config import DERIVED_DIR, DERIVED_LOGS_DIR, PROJECT_ROOT
 
 
 def clean_pyc(directories: list[Path] | None = None, dry_run: bool = False) -> dict[str, Any]:
@@ -384,5 +384,111 @@ def clean_reaper(dry_run: bool = False) -> dict[str, Any]:
             )
     else:
         result["message"] = "No Reaper artifacts found"
+
+    return result
+
+
+def clean_derived(dry_run: bool = False) -> dict[str, Any]:
+    """Remove all derived data and derived logs.
+
+    Empties all subdirectories under data/derived (novelty, tempogram, beats,
+    meter, chromagram, etc.) and deletes all files in data/logs/derived.
+
+    Args:
+        dry_run: If True, only report what would be deleted without actually deleting.
+
+    Returns:
+        Result dictionary with:
+        - success: bool (True if operation completed without errors)
+        - total: int (total number of items deleted or would be deleted)
+        - files_deleted: int (number of files removed or would be removed)
+        - failures: list[dict] (list of failures with item and reason, if any)
+        - message: str (summary message)
+        - dry_run: bool (indicates if this was a dry run)
+        - items_to_delete: list[str] (list of items that would be deleted, only in dry_run mode)
+    """
+    files_deleted = 0
+    failures: list[dict[str, str]] = []
+    items_to_delete: list[str] = []
+    files_to_delete: list[Path] = []
+    dirs_to_empty: list[Path] = []
+
+    # Collect files in data/derived subdirectories (empty each subdir)
+    if DERIVED_DIR.exists():
+        for subdir in DERIVED_DIR.iterdir():
+            if subdir.is_dir():
+                for path in subdir.rglob("*"):
+                    if path.is_file():
+                        files_to_delete.append(path)
+                        if dry_run:
+                            rel = path.relative_to(DERIVED_DIR)
+                            items_to_delete.append(f"FILE: derived/{rel}")
+                    elif path.is_dir():
+                        dirs_to_empty.append(path)
+
+    # Collect files in data/logs/derived
+    if DERIVED_LOGS_DIR.exists():
+        for path in DERIVED_LOGS_DIR.rglob("*"):
+            if path.is_file():
+                files_to_delete.append(path)
+                if dry_run:
+                    rel = path.relative_to(DERIVED_LOGS_DIR)
+                    items_to_delete.append(f"FILE: logs/derived/{rel}")
+
+    # Delete: deepest dirs first (removes nested dirs and their contents), then files
+    dirs_sorted = sorted(dirs_to_empty, key=lambda p: len(p.parts), reverse=True)
+    if not dry_run:
+        for d in dirs_sorted:
+            try:
+                if d.exists():
+                    shutil.rmtree(d)
+            except Exception as exc:  # noqa: BLE001
+                rel = d.relative_to(DERIVED_DIR) if d.is_relative_to(DERIVED_DIR) else d.name
+                failures.append({"item": str(rel), "reason": f"Failed to remove directory: {exc}"})
+        for f in files_to_delete:
+            try:
+                if f.exists():
+                    f.unlink()
+                    files_deleted += 1
+            except FileNotFoundError:
+                pass  # already removed by rmtree of parent dir
+            except Exception as exc:  # noqa: BLE001
+                if f.is_relative_to(DERIVED_DIR):
+                    rel = f.relative_to(DERIVED_DIR)
+                    failures.append({"item": f"derived/{rel}", "reason": f"Failed to delete: {exc}"})
+                elif f.is_relative_to(DERIVED_LOGS_DIR):
+                    rel = f.relative_to(DERIVED_LOGS_DIR)
+                    failures.append({"item": f"logs/derived/{rel}", "reason": f"Failed to delete: {exc}"})
+                else:
+                    failures.append({"item": str(f), "reason": f"Failed to delete: {exc}"})
+    else:
+        files_deleted = len(files_to_delete)
+        for d in dirs_sorted:
+            rel = d.relative_to(DERIVED_DIR) if d.is_relative_to(DERIVED_DIR) else d.name
+            items_to_delete.append(f"DIR:  derived/{rel}/")
+
+    total = files_deleted + len(dirs_sorted)
+    success = len(failures) == 0
+
+    result: dict[str, Any] = {
+        "success": success,
+        "total": total,
+        "files_deleted": files_deleted,
+        "dry_run": dry_run,
+    }
+
+    if failures:
+        result["failures"] = failures
+
+    if dry_run and items_to_delete:
+        result["items_to_delete"] = items_to_delete
+
+    if total > 0:
+        if dry_run:
+            result["message"] = f"Would delete {files_deleted} files and {len(dirs_sorted)} nested directories"
+        else:
+            result["message"] = f"Cleaned {files_deleted} files and {len(dirs_sorted)} nested directories"
+    else:
+        result["message"] = "No derived data or logs found"
 
     return result

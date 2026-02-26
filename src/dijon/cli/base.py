@@ -1,13 +1,27 @@
 from __future__ import annotations
 
 import logging
+import os
+import sys
+import traceback
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any
+from datetime import datetime, timezone
+from importlib.metadata import version
+from typing import Any, TextIO
 
 import typer
 
+from ..global_config import DERIVED_LOGS_DIR
+
 _LOGGING_CONFIGURED = False
+
+
+def _get_dijon_version() -> str:
+    try:
+        return version("dijon")
+    except Exception:  # noqa: BLE001
+        return "unknown"
 
 
 def configure_logging(level: int = logging.INFO) -> None:
@@ -54,6 +68,7 @@ def handle_errors(
     operation: str,
     *,
     logger: logging.Logger | None = None,
+    log_file: TextIO | None = None,
 ) -> Generator[None, None, None]:
     """Provide consistent exception handling for CLI operations.
 
@@ -64,6 +79,7 @@ def handle_errors(
     Args:
         operation: Human-readable operation name for error messages.
         logger: Logger instance. Defaults to module logger if None.
+        log_file: Optional file handle to write error message and traceback.
 
     Yields:
         None (used as context manager).
@@ -86,6 +102,13 @@ def handle_errors(
     except Exception as exc:  # noqa: BLE001
         logger.exception("Error during %s", operation)
         typer.secho(f"✗ {operation} failed: {exc}", fg=typer.colors.RED)
+        if log_file:
+            log_file.write(f"\n✗ {operation} failed: {exc}\n")
+            log_file.write(f"exception_type: {type(exc).__name__}\n")
+            log_file.write(f"exception_message: {exc}\n")
+            log_file.write("traceback:\n")
+            log_file.write(traceback.format_exc())
+            log_file.flush()
         raise typer.Exit(1) from exc
 
 
@@ -142,6 +165,11 @@ class BaseCLI:
         op_callable: Callable[[], Any],
         pre_message: str | None = None,
         success_message: str | None = None,
+        log_module: str | None = None,
+        log_method: str | None = None,
+        log_dry_run: bool = False,
+        enable_log: bool = True,
+        log_context: dict[str, Any] | None = None,
     ) -> Any:
         """Run an operation with consistent logging, formatting, and errors.
 
@@ -156,6 +184,11 @@ class BaseCLI:
             pre_message: Optional message to display before operation starts.
             success_message: Optional message to display if operation succeeds
                 (only shown if result is a dict with success=True).
+            log_module: Module name for log filename (e.g. novelty, tempogram).
+            log_method: Method name for log filename (e.g. spectrum, fourier).
+            log_dry_run: Whether this run is a dry run (for filename).
+            enable_log: Whether to write to a log file (default True).
+            log_context: Extra key-value pairs for metadata header.
 
         Returns:
             Result from op_callable.
@@ -170,17 +203,56 @@ class BaseCLI:
         Logs:
             - Delegates to handle_errors for exception logging.
         """
-        if pre_message:
-            typer.echo(pre_message)
+        log_file: TextIO | None = None
+        use_log = enable_log and log_module is not None
 
-        with handle_errors(operation, logger=self.logger):
-            result = op_callable()
+        def _out(msg: str) -> None:
+            typer.echo(msg)
+            if log_file:
+                log_file.write(msg + "\n")
+                log_file.flush()
 
-        if success_message and isinstance(result, dict) and result.get("success"):
-            typer.echo(success_message)
+        if use_log:
+            DERIVED_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(timezone.utc).strftime("%I-%M-%S")
+            parts = [ts, log_module]
+            if log_method:
+                parts.append(log_method)
+            if log_dry_run:
+                parts.append("dryrun")
+            log_path = DERIVED_LOGS_DIR / f"{'_'.join(parts)}.log"
+            log_file = open(log_path, "w", encoding="utf-8")  # noqa: SIM115
+            header_lines = [
+                "--- metadata ---",
+                f"timestamp: {datetime.now(timezone.utc).isoformat()}",
+                f"command: {log_module}",
+                f"argv: {sys.argv}",
+                f"cwd: {os.getcwd()}",
+                f"dijon_version: {_get_dijon_version()}",
+                f"python_version: {sys.version}",
+            ]
+            ctx = log_context or {}
+            for k, v in ctx.items():
+                header_lines.append(f"{k}: {v}")
+            header_lines.append("---")
+            log_file.write("\n".join(header_lines) + "\n")
+            log_file.flush()
 
-        typer.echo(format_result(result, operation=operation))
-        return result
+        try:
+            if pre_message:
+                _out(pre_message)
+
+            with handle_errors(operation, logger=self.logger, log_file=log_file):
+                result = op_callable()
+
+            if success_message and isinstance(result, dict) and result.get("success"):
+                _out(success_message)
+
+            _out(format_result(result, operation=operation))
+            return result
+        finally:
+            if log_file:
+                log_file.close()
 
 
 def run_cli_task(task: Callable[[], int | None]) -> int:

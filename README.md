@@ -131,6 +131,18 @@ dijon chromagram --dry-run
 Input meter files are expected in `data/derived/meter` as `<track_name>_meter.npy` with columns `[time_sec, bar_number, beat_number]`.  
 Output files are metric chromagrams `(12, M)` saved as `.npy`, with parameterized filenames.
 
+## CLI – clean
+
+Remove derived data and logs:
+
+```bash
+# Empty data/derived subdirs (novelty, tempogram, beats, meter, chromagram) and delete data/logs/derived
+dijon clean derived
+
+# Preview without deleting
+dijon clean derived --dry-run
+```
+
 ## Google Drive (currently set to false)
 ```python
 from google.colab import drive

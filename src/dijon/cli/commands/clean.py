@@ -5,7 +5,7 @@ from __future__ import annotations
 import typer
 
 from ...global_config import PROJECT_ROOT
-from ...pipeline.clean import clean_pyc, clean_reaper
+from ...pipeline.clean import clean_derived, clean_pyc, clean_reaper
 from ..base import BaseCLI
 
 app = typer.Typer(
@@ -78,4 +78,34 @@ def clean_reaper_command(
         operation="clean reaper",
         op_callable=_clean,
         pre_message=pre_message,
+    )
+
+
+@app.command("derived")
+def clean_derived_command(
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show what would be deleted without actually deleting files",
+    ),
+) -> None:
+    """Remove all derived data and derived logs.
+
+    Empties data/derived subdirectories (novelty, tempogram, beats, meter,
+    chromagram) and deletes all files in data/logs/derived.
+    """
+    cli = BaseCLI("clean")
+
+    def _clean() -> dict:
+        return clean_derived(dry_run=dry_run)
+
+    pre_message = (
+        "Checking what would be cleaned (dry-run)..." if dry_run
+        else "Cleaning derived data and logs..."
+    )
+    cli.handle_cli_operation(
+        operation="clean derived",
+        op_callable=_clean,
+        pre_message=pre_message,
+        enable_log=False,
     )

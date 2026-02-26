@@ -32,6 +32,10 @@ def meter(
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
     ] = False,
+    no_log: Annotated[
+        bool,
+        typer.Option("--no-log", help="Do not write a log file to data/logs/derived."),
+    ] = False,
 ) -> None:
     """Compute meter labels for beat files and write to data/derived/meter.
 
@@ -55,8 +59,19 @@ def meter(
         else f"Computing meter for "
         + (f"{len(beats_list)} file(s)..." if beats_list else "all beats files in folder...")
     )
+    inputs_desc = (
+        str([str(p) for p in beats_list]) if beats_list
+        else f"all .npy in {BEATS_DIR}"
+    )
     cli.handle_cli_operation(
         operation="meter",
         op_callable=_run,
         pre_message=pre_message,
+        log_module="meter",
+        log_dry_run=dry_run,
+        enable_log=not no_log,
+        log_context={
+            "inputs": inputs_desc,
+            "output_dir": str(METER_OUTPUT_DIR),
+        },
     )
