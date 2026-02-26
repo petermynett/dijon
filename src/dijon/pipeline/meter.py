@@ -39,11 +39,8 @@ def _get_head_in_time_sec(track_name: str, markers_dir: Path) -> float | None:
     try:
         with open(marker_path, encoding="utf-8") as f:
             payload = json.load(f)
-        if "entries" in payload and payload["entries"]:
-            markers = payload["entries"][0].get("markers", [])
-        elif "markers" in payload:
-            markers = payload["markers"]
-        else:
+        markers = payload.get("markers", [])
+        if not markers:
             return None
         for m in markers:
             if isinstance(m, dict) and m.get("name") == "HEAD_IN_START" and "position" in m:

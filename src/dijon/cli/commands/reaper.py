@@ -69,8 +69,8 @@ def write_markers_command(
 
     If rpp_file is provided, parses markers from that file.
     If not provided, searches reaper/markers for all *.RPP files and processes each.
-    Writes JSON output to data/annotations/audio-markers (prepends new entries
-    if files already exist, preserving historical data).
+    Writes JSON output to data/annotations/audio-markers (overwrites existing
+    files with current markers).
     """
     cli = BaseCLI("reaper")
 

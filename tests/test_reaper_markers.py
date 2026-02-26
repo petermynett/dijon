@@ -257,7 +257,7 @@ def test_read_markers_parses_correctly(
     # Check output file was created
     output_file = Path(result["output_file"])
     assert output_file.exists()
-    assert output_file.name == "test-markers.json"
+    assert output_file.name == "test_markers.json"
 
     # Check JSON content
     json_data = json.loads(output_file.read_text())
@@ -408,7 +408,7 @@ def test_read_markers_with_head_markers(
     output_file = Path(result["output_file"])
     assert output_file.exists()
     json_data = json.loads(output_file.read_text())
-    json_marker_names = [m["name"] for m in json_data["entries"][0]["markers"]]
+    json_marker_names = [m["name"] for m in json_data["markers"]]
     assert HEAD_IN_START in json_marker_names
     assert HEAD_IN_END in json_marker_names
     assert HEAD_OUT_START in json_marker_names
@@ -455,7 +455,7 @@ def test_unified_output_location(
     
     # Verify all markers are in the same JSON file
     json_data = json.loads(output_file.read_text())
-    markers = json_data["entries"][0]["markers"]
+    markers = json_data["markers"]
     marker_names = [m["name"] for m in markers]
     assert HEAD_IN_START in marker_names
     assert "1A" in marker_names
@@ -476,36 +476,32 @@ def test_order_markers_head_markers_last(
         "dijon.reaper.markers_session.AUDIO_MARKERS_DIR", markers_output_dir
     )
     
-    # Create a test marker file with mixed regular and head markers
+    # Create a test marker file with mixed regular and head markers (flat format)
     test_file = markers_output_dir / "test_order_markers.json"
     test_data = {
         "rpp_file": "/test/test.RPP",
-        "entries": [
-            {
-                "timestamp": "2026-01-30T00:00:00",
-                "count": 6,
-                "markers": [
-                    {"name": "A", "position": 5.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{A}"},
-                    {"name": HEAD_IN_START, "position": 2.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{B}"},
-                    {"name": "B", "position": 10.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{C}"},
-                    {"name": HEAD_IN_END, "position": 8.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{D}"},
-                    {"name": HEAD_OUT_START, "position": 1.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{E}"},
-                    {"name": HEAD_OUT_END, "position": 15.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{F}"},
-                ],
-            }
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 6,
+        "markers": [
+            {"name": "A", "position": 5.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{A}"},
+            {"name": HEAD_IN_START, "position": 2.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{B}"},
+            {"name": "B", "position": 10.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{C}"},
+            {"name": HEAD_IN_END, "position": 8.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{D}"},
+            {"name": HEAD_OUT_START, "position": 1.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{E}"},
+            {"name": HEAD_OUT_END, "position": 15.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{F}"},
         ],
     }
     test_file.write_text(json.dumps(test_data, indent=2))
-    
+
     # Order the markers
     result = order_markers_in_file(test_file)
-    
+
     assert result["success"] is True
     assert result["entries_processed"] == 1
-    
-    # Read back the ordered file
+
+    # Read back the ordered file (flat format)
     ordered_data = json.loads(test_file.read_text())
-    ordered_markers = ordered_data["entries"][0]["markers"]
+    ordered_markers = ordered_data["markers"]
     
     # Verify order: regular markers first (by position), then head markers (in specific order)
     marker_names = [m["name"] for m in ordered_markers]
@@ -615,38 +611,34 @@ def test_order_markers_with_lick_markers(
         "dijon.reaper.markers_session.AUDIO_MARKERS_DIR", markers_output_dir
     )
     
-    # Create a test marker file with regular, head, and lick markers
+    # Create a test marker file with regular, head, and lick markers (flat format)
     test_file = markers_output_dir / "test_lick_markers.json"
     test_data = {
         "rpp_file": "/test/test.RPP",
-        "entries": [
-            {
-                "timestamp": "2026-01-30T00:00:00",
-                "count": 8,
-                "markers": [
-                    {"name": "A", "position": 5.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{A}"},
-                    {"name": "LICK02-END", "position": 20.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{B}"},
-                    {"name": HEAD_IN_START, "position": 2.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{C}"},
-                    {"name": "LICK01-START", "position": 15.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{D}"},
-                    {"name": "B", "position": 10.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{E}"},
-                    {"name": HEAD_IN_END, "position": 8.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{F}"},
-                    {"name": "LICK01-END", "position": 18.0, "number": 7, "color": 0, "flags": 0, "locked": 1, "guid": "{G}"},
-                    {"name": "LICK02-START", "position": 19.0, "number": 8, "color": 0, "flags": 0, "locked": 1, "guid": "{H}"},
-                ],
-            }
+        "timestamp": "2026-01-30T00:00:00",
+        "count": 8,
+        "markers": [
+            {"name": "A", "position": 5.0, "number": 1, "color": 0, "flags": 0, "locked": 1, "guid": "{A}"},
+            {"name": "LICK02-END", "position": 20.0, "number": 2, "color": 0, "flags": 0, "locked": 1, "guid": "{B}"},
+            {"name": HEAD_IN_START, "position": 2.0, "number": 3, "color": 0, "flags": 0, "locked": 1, "guid": "{C}"},
+            {"name": "LICK01-START", "position": 15.0, "number": 4, "color": 0, "flags": 0, "locked": 1, "guid": "{D}"},
+            {"name": "B", "position": 10.0, "number": 5, "color": 0, "flags": 0, "locked": 1, "guid": "{E}"},
+            {"name": HEAD_IN_END, "position": 8.0, "number": 6, "color": 0, "flags": 0, "locked": 1, "guid": "{F}"},
+            {"name": "LICK01-END", "position": 18.0, "number": 7, "color": 0, "flags": 0, "locked": 1, "guid": "{G}"},
+            {"name": "LICK02-START", "position": 19.0, "number": 8, "color": 0, "flags": 0, "locked": 1, "guid": "{H}"},
         ],
     }
     test_file.write_text(json.dumps(test_data, indent=2))
-    
+
     # Order the markers
     result = order_markers_in_file(test_file)
-    
+
     assert result["success"] is True
     assert result["entries_processed"] == 1
-    
-    # Read back the ordered file
+
+    # Read back the ordered file (flat format)
     ordered_data = json.loads(test_file.read_text())
-    ordered_markers = ordered_data["entries"][0]["markers"]
+    ordered_markers = ordered_data["markers"]
     
     marker_names = [m["name"] for m in ordered_markers]
     marker_numbers = [m["number"] for m in ordered_markers]

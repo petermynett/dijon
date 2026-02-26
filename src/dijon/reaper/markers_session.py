@@ -437,42 +437,6 @@ def _order_markers_in_entry(entry: dict) -> dict:
     return ordered_entry
 
 
-def _markers_are_equal(markers1: list[dict], markers2: list[dict]) -> bool:
-    """Compare two marker lists for equality.
-    
-    Compares markers by their essential properties: name, position, number,
-    color, flags, and locked status. GUIDs are not compared as they may
-    change even if the marker content is the same.
-    
-    Args:
-        markers1: First list of marker dictionaries.
-        markers2: Second list of marker dictionaries.
-    
-    Returns:
-        True if markers are equal, False otherwise.
-    """
-    if len(markers1) != len(markers2):
-        return False
-    
-    # Sort both lists by number for comparison
-    sorted1 = sorted(markers1, key=lambda m: m.get("number", 0))
-    sorted2 = sorted(markers2, key=lambda m: m.get("number", 0))
-    
-    for m1, m2 in zip(sorted1, sorted2):
-        # Compare essential marker properties
-        if (
-            m1.get("name") != m2.get("name")
-            or abs(m1.get("position", 0.0) - m2.get("position", 0.0)) > 1e-9  # Float comparison with tolerance
-            or m1.get("number") != m2.get("number")
-            or m1.get("color") != m2.get("color")
-            or m1.get("flags") != m2.get("flags")
-            or m1.get("locked") != m2.get("locked")
-        ):
-            return False
-    
-    return True
-
-
 def read_markers(rpp_file: Path) -> dict:
     """Read marker data from a Reaper project file.
 
@@ -560,151 +524,60 @@ def read_markers(rpp_file: Path) -> dict:
     
     output_file = AUDIO_MARKERS_DIR / f"{stem}.json"
     
-    # Generate timestamp for this entry
+    # Generate timestamp
     timestamp = datetime.now().isoformat()
     rpp_file_path = str(rpp_file.resolve())
-    
-    # Prepare new entry (will be ordered below)
-    new_entry = {
+
+    # Order markers by position and renumber sequentially
+    ordered_entry = _order_markers_in_entry({
         "timestamp": timestamp,
         "count": len(markers),
         "markers": markers_sorted,
-    }
-    
-    # Order markers by position and renumber sequentially
-    new_entry = _order_markers_in_entry(new_entry)
-    
-    # Track whether we add a new entry
-    entry_added = False
-    
-    # Check if output file already exists
-    if output_file.exists():
-        # Read existing JSON
-        try:
-            existing_data = json.loads(output_file.read_text())
-            
-            # Handle backward compatibility: convert old format to new format
-            if "entries" not in existing_data:
-                # Old format: convert to new format
-                old_rpp_file = existing_data.get("rpp_file", rpp_file_path)
-                old_count = existing_data.get("count", 0)
-                old_markers = existing_data.get("markers", [])
-                
-                # Create entries array with old data
-                existing_data = {
-                    "rpp_file": old_rpp_file,
-                    "entries": [
-                        {
-                            "timestamp": timestamp,  # Use current timestamp for old data
-                            "count": old_count,
-                            "markers": old_markers,
-                        }
-                    ],
-                }
-            
-            # Validate that rpp_file matches
-            existing_rpp_file = existing_data.get("rpp_file")
-            if existing_rpp_file != rpp_file_path:
-                raise ValueError(
-                    f"RPP file mismatch: existing file references {existing_rpp_file}, "
-                    f"but new file is {rpp_file_path}"
-                )
-            
-            # Check if markers have changed by comparing with most recent entry
-            entries = existing_data.get("entries", [])
-            if entries:
-                most_recent_markers = entries[0].get("markers", [])
-                # Compare ordered markers (new_entry has been ordered)
-                if _markers_are_equal(new_entry["markers"], most_recent_markers):
-                    # Markers are identical, don't add new entry
-                    output_data = existing_data
-                else:
-                    # Markers have changed, prepend new entry
-                    entries.insert(0, new_entry)
-                    existing_data["entries"] = entries
-                    output_data = existing_data
-                    entry_added = True
-            else:
-                # No existing entries, add the new one
-                existing_data["entries"] = [new_entry]
-                output_data = existing_data
-                entry_added = True
-            
-            # Write combined structure
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            # If we can't parse existing file, start fresh
-            output_data = {
-                "rpp_file": rpp_file_path,
-                "entries": [new_entry],
-            }
-            entry_added = True
-    else:
-        # New file: create structure with single entry
-        output_data = {
-            "rpp_file": rpp_file_path,
-            "entries": [new_entry],
-        }
-        entry_added = True
-    
-    # Only write file if we added a new entry or if it's a new file
-    if entry_added:
-        # Format JSON output
-        # Format markers as single-line objects within each entry
-        formatted_entries = []
-        for entry in output_data["entries"]:
-            marker_lines = []
-            for marker in entry["markers"]:
-                marker_json = json.dumps(marker, separators=(",", ":"))
-                marker_lines.append(f"      {marker_json}")
-            
-            entry_json = "    {\n"
-            entry_json += f'      "timestamp": {json.dumps(entry["timestamp"])},\n'
-            entry_json += f'      "count": {entry["count"]},\n'
-            entry_json += '      "markers": [\n'
-            entry_json += ",\n".join(marker_lines)
-            entry_json += "\n      ]\n"
-            entry_json += "    }"
-            formatted_entries.append(entry_json)
-        
-        json_output = "{\n"
-        json_output += f'  "rpp_file": {json.dumps(output_data["rpp_file"])},\n'
-        json_output += '  "entries": [\n'
-        json_output += ",\n".join(formatted_entries)
-        json_output += "\n  ]\n"
-        json_output += "}"
-        
-        output_file.write_text(json_output)
-        
-        # Delete the source RPP file after successful write
-        try:
-            rpp_file.unlink()
-        except OSError:
-            # Log but don't fail the operation if deletion fails
-            # (e.g., file already deleted, permissions issue)
-            pass
+    })
+
+    # Build flat output and always overwrite
+    marker_lines = []
+    for marker in ordered_entry["markers"]:
+        marker_json = json.dumps(marker, separators=(",", ":"))
+        marker_lines.append(f"    {marker_json}")
+
+    json_output = "{\n"
+    json_output += f'  "rpp_file": {json.dumps(rpp_file_path)},\n'
+    json_output += f'  "timestamp": {json.dumps(timestamp)},\n'
+    json_output += f'  "count": {ordered_entry["count"]},\n'
+    json_output += '  "markers": [\n'
+    json_output += ",\n".join(marker_lines)
+    json_output += "\n  ]\n"
+    json_output += "}"
+
+    output_file.write_text(json_output)
+
+    # Delete the source RPP file after successful write
+    try:
+        rpp_file.unlink()
+    except OSError:
+        pass
 
     return {
         "success": True,
-        "markers": new_entry["markers"],  # Return ordered markers
+        "markers": ordered_entry["markers"],
         "output_file": str(output_file),
-        "count": new_entry["count"],  # Return updated count
-        "entry_added": entry_added,
+        "count": ordered_entry["count"],
     }
 
 
 def order_markers_in_file(file_path: Path) -> dict:
     """Order markers in a single JSON file by position and renumber sequentially.
-    
-    Reads a marker JSON file, processes each entry to order markers by position
-    and renumber them sequentially, then writes the file back with the same
-    formatting style.
-    
+
+    Reads a marker JSON file (flat format: rpp_file, timestamp, count, markers),
+    orders markers by position and renumbers them, then writes the file back.
+
     Args:
         file_path: Path to the marker JSON file to process.
-    
+
     Returns:
         Dictionary with success status, file path, and counts.
-    
+
     Raises:
         FileNotFoundError: If file_path doesn't exist.
         json.JSONDecodeError: If file is not valid JSON.
@@ -712,63 +585,50 @@ def order_markers_in_file(file_path: Path) -> dict:
     file_path = Path(file_path)
     if not file_path.exists():
         raise FileNotFoundError(f"Marker file not found: {file_path}")
-    
-    # Read existing JSON
+
     try:
         data = json.loads(file_path.read_text())
     except json.JSONDecodeError as e:
         raise json.JSONDecodeError(f"Invalid JSON in {file_path}: {e.msg}", e.doc, e.pos)
-    
-    # Process each entry
-    entries = data.get("entries", [])
-    if not entries:
+
+    # Support flat format; migrate legacy entries format by using first entry
+    if "markers" in data:
+        markers = data["markers"]
+    elif "entries" in data and data["entries"]:
+        markers = data["entries"][0].get("markers", [])
+    else:
         return {
             "success": True,
             "file": str(file_path),
             "entries_processed": 0,
-            "message": "No entries found in file",
+            "total_markers": 0,
+            "message": "No markers found in file",
         }
-    
-    ordered_entries = []
-    for entry in entries:
-        ordered_entry = _order_markers_in_entry(entry)
-        ordered_entries.append(ordered_entry)
-    
-    # Update data with ordered entries
-    data["entries"] = ordered_entries
-    
-    # Format JSON output (same style as read_markers)
-    formatted_entries = []
-    for entry in ordered_entries:
-        marker_lines = []
-        for marker in entry["markers"]:
-            marker_json = json.dumps(marker, separators=(",", ":"))
-            marker_lines.append(f"      {marker_json}")
-        
-        entry_json = "    {\n"
-        entry_json += f'      "timestamp": {json.dumps(entry["timestamp"])},\n'
-        entry_json += f'      "count": {entry["count"]},\n'
-        entry_json += '      "markers": [\n'
-        entry_json += ",\n".join(marker_lines)
-        entry_json += "\n      ]\n"
-        entry_json += "    }"
-        formatted_entries.append(entry_json)
-    
+
+    entry = {"timestamp": data.get("timestamp", ""), "count": len(markers), "markers": markers}
+    ordered_entry = _order_markers_in_entry(entry)
+
+    marker_lines = []
+    for marker in ordered_entry["markers"]:
+        marker_json = json.dumps(marker, separators=(",", ":"))
+        marker_lines.append(f"    {marker_json}")
+
     json_output = "{\n"
     json_output += f'  "rpp_file": {json.dumps(data["rpp_file"])},\n'
-    json_output += '  "entries": [\n'
-    json_output += ",\n".join(formatted_entries)
+    json_output += f'  "timestamp": {json.dumps(ordered_entry["timestamp"])},\n'
+    json_output += f'  "count": {ordered_entry["count"]},\n'
+    json_output += '  "markers": [\n'
+    json_output += ",\n".join(marker_lines)
     json_output += "\n  ]\n"
     json_output += "}"
-    
-    # Write file back
+
     file_path.write_text(json_output)
-    
+
     return {
         "success": True,
         "file": str(file_path),
-        "entries_processed": len(ordered_entries),
-        "total_markers": sum(entry["count"] for entry in ordered_entries),
+        "entries_processed": 1,
+        "total_markers": ordered_entry["count"],
     }
 
 
@@ -823,8 +683,8 @@ def read_all_markers() -> dict:
     """Read marker data from all RPP files in the markers directory.
 
     Searches reaper/markers for *.RPP files, extracts markers from each,
-    and writes JSON output files to data/audio-markers (prepending new entries
-    if files already exist, preserving historical data).
+    and writes JSON output files to data/annotations/audio-markers (overwrites
+    existing files with current markers).
 
     Returns:
         Dictionary with processing results for all files.
