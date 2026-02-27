@@ -132,7 +132,7 @@ def _build_subdivision_boundaries(
     return np.asarray(boundary_times, dtype=np.float64)
 
 
-def metric_chromagram_mvp(
+def metric_chromagram(
     y: np.ndarray,
     *,
     sr: int,
@@ -146,7 +146,7 @@ def metric_chromagram_mvp(
     weight_power: float = 1.0,
     min_frames_per_bin: int = 2,
 ) -> np.ndarray:
-    """MVP metric-aligned chromagram using an external meter map.
+    """metric-aligned chromagram using an external meter map.
 
     Parameters
     ----------
@@ -183,12 +183,14 @@ def metric_chromagram_mvp(
     if min_frames_per_bin < 1:
         raise ValueError(f"min_frames_per_bin must be >= 1, got {min_frames_per_bin}")
 
+    # --- setup: validate audio, extract beat times, compute frame-level chroma ---
     y, sr = _validate_audio(y, sr)
     duration = len(y) / float(sr)
     beat_times = _extract_beat_times_from_meter_map(meter_map, duration=duration)
 
     C = _compute_frame_chroma(y, sr=sr, hop_length=hop_length, chroma_type=chroma_type)
 
+    # --- accent handling: optionally normalise or pre-compute frame weights ---
     frame_weights: np.ndarray | None = None
     if accent_mode == "normalize":
         C = librosa.util.normalize(C, norm=1, axis=0)
@@ -206,9 +208,11 @@ def metric_chromagram_mvp(
     else:
         raise ValueError('accent_mode must be "preserve", "normalize", or "weighted"')
 
+    # --- build adaptive subdivision grid (tempo-aware) and convert to frame indices ---
     boundary_times = _build_subdivision_boundaries(beat_times, bpm_threshold=bpm_threshold)
     boundary_frames = librosa.time_to_frames(boundary_times, sr=sr, hop_length=hop_length)
 
+    # --- guard: boundaries must be strictly increasing after quantisation to frames ---
     if not np.all(np.diff(boundary_frames) > 0):
         raise ValueError(
             "Subdivision boundaries collapsed to non-increasing frame indices. "
@@ -219,6 +223,7 @@ def metric_chromagram_mvp(
     if boundary_frames[-1] > T:
         raise ValueError(f"Meter map extends beyond chroma frames (last_frame={boundary_frames[-1]}, T={T})")
 
+    # --- guard: every bin must have enough frames for a meaningful aggregate ---
     bin_lengths = np.diff(boundary_frames)
     if np.any(bin_lengths < min_frames_per_bin):
         bad = int(np.where(bin_lengths < min_frames_per_bin)[0][0])
@@ -231,9 +236,11 @@ def metric_chromagram_mvp(
     if aggregate not in {"mean", "median"}:
         raise ValueError('aggregate must be "mean" or "median"')
 
+    # --- aggregate chroma frames into metric bins ---
     M = len(boundary_frames) - 1
     C_metric = np.zeros((12, M), dtype=np.float32)
 
+    # fast path: unweighted mean/median per bin
     if accent_mode != "weighted":
         agg_fn = np.mean if aggregate == "mean" else np.median
         for j in range(M):
@@ -242,6 +249,7 @@ def metric_chromagram_mvp(
             C_metric[:, j] = agg_fn(C[:, s:t], axis=1).astype(np.float32, copy=False)
         return C_metric
 
+    # weighted path: weighted mean per bin (median not supported here)
     if aggregate != "mean":
         raise ValueError('aggregate must be "mean" when accent_mode="weighted"')
     assert frame_weights is not None

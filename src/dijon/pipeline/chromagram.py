@@ -7,7 +7,7 @@ from pathlib import Path
 import librosa
 import numpy as np
 
-from ..chromagram import metric_chromagram_mvp
+from ..chromagram import metric_chromagram
 from ..global_config import DERIVED_DIR, RAW_AUDIO_DIR
 
 METER_DIR = DERIVED_DIR / "meter"
@@ -127,7 +127,7 @@ def run_chromagram(
         try:
             y, sr = librosa.load(audio_path, sr=None, mono=True)
             meter_map = np.load(meter_path).astype(np.float64)
-            C_metric = metric_chromagram_mvp(
+            C_metric = metric_chromagram(
                 y,
                 sr=sr,
                 meter_map=meter_map,

@@ -68,6 +68,10 @@ def chromagram(
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
     ] = False,
+    no_log: Annotated[
+        bool,
+        typer.Option("--no-log", help="Do not write a log file to data/logs/derived."),
+    ] = False,
 ) -> None:
     """Compute metric chromagrams and write to data/derived/chromagram.
 
@@ -101,8 +105,20 @@ def chromagram(
         else "Computing metric chromagram for "
         + (f"{len(audio_list)} file(s)..." if audio_list else "all audio in raw folder...")
     )
+    inputs_desc = (
+        str([str(p) for p in audio_list]) if audio_list
+        else f"all .wav in {RAW_AUDIO_DIR}"
+    )
     cli.handle_cli_operation(
         operation="chromagram",
         op_callable=_run,
         pre_message=pre_message,
+        log_module="chromagram",
+        log_method=chroma_type.lower(),
+        log_dry_run=dry_run,
+        enable_log=not no_log,
+        log_context={
+            "inputs": inputs_desc,
+            "output_dir": str(CHROMAGRAM_OUTPUT_DIR),
+        },
     )

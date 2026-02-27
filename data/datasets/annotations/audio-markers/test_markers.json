@@ -1,6 +1,6 @@
 {
-  "rpp_file": "/private/var/folders/n3/fk41_zd57m79jjjprfznr8680000gn/T/pytest-of-petermynett/pytest-35/test_read_markers_parses_corre0/proj/test-markers.RPP",
-  "timestamp": "2026-02-26T13:57:25.194274",
+  "rpp_file": "/private/var/folders/n3/fk41_zd57m79jjjprfznr8680000gn/T/pytest-of-petermynett/pytest-0/test_read_markers_parses_corre0/proj/test-markers.RPP",
+  "timestamp": "2026-02-26T23:42:27.018951",
   "count": 3,
   "markers": [
     {"name":"1A","position":0.17,"number":1,"color":8,"flags":0,"locked":1,"guid":"{4B33297A-385B-D84C-8CD4-EB377E55CE19}"},
