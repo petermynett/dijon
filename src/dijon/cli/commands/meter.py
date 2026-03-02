@@ -25,7 +25,7 @@ def meter(
     files: Annotated[
         list[Path],
         typer.Argument(
-            help="Beats .npy file(s) to process. If omitted, all .npy in data/derived/beats are used.",
+            help="Beats file(s): track ID (e.g. YTB-014) or full path. If omitted, all .npy in data/derived/beats are used.",
         ),
     ] = [],
     dry_run: Annotated[

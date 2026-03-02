@@ -16,12 +16,30 @@ METER_OUTPUT_DIR = DERIVED_DIR / "meter"
 
 
 def _resolve_beats_files(files: list[Path] | None, beats_dir: Path) -> list[Path]:
-    """Return list of beats paths: explicit if given, else all .npy in beats_dir."""
-    if files:
-        return [Path(p).resolve() for p in files]
-    if not beats_dir.exists():
-        return []
-    return sorted(beats_dir.glob("*.npy"))
+    """Return list of beats paths: explicit if given, else all .npy in beats_dir.
+
+    When files are provided, each item is resolved as follows:
+    - Full path (absolute or with directory): used as-is.
+    - Basename only (e.g. YTB-014, YTB-014_beats, YTB-014_beats.npy): resolved to
+      beats_dir / <track_id>_beats.npy.
+    """
+    if not files:
+        if not beats_dir.exists():
+            return []
+        return sorted(beats_dir.glob("*.npy"))
+
+    resolved: list[Path] = []
+    for p in files:
+        path = Path(p)
+        is_shorthand = not path.is_absolute() and len(path.parts) == 1
+        if is_shorthand:
+            stem = path.stem
+            if stem.endswith("_beats"):
+                stem = stem[:-6]
+            resolved.append((beats_dir / f"{stem}_beats.npy").resolve())
+        else:
+            resolved.append(path.resolve())
+    return list(dict.fromkeys(resolved))
 
 
 def _track_name_from_beats_stem(stem: str) -> str:

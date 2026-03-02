@@ -30,8 +30,10 @@ dijon novelty -t complex
 dijon novelty --type spectrum --n 2048 --h 128
 dijon novelty -t energy --gamma 5.0 --m 0
 
-# Specific file(s) only
-dijon novelty path/to/audio.wav
+# Shorthand: track ID resolves to data/datasets/raw/audio/<id>.wav
+dijon novelty YTB-014
+
+# Full path
 dijon novelty data/datasets/raw/audio/YTB-001.wav data/datasets/raw/audio/YTB-002.wav
 
 # Preview without writing (dry-run)
@@ -55,7 +57,10 @@ dijon tempogram -t cyclic
 # Override N, H, theta range
 dijon tempogram --type fourier --n 300 --h 1 --theta-min 60 --theta-max 200
 
-# Specific novelty file(s) only
+# Shorthand: track ID resolves to matching novelty in data/derived/novelty (fails if ambiguous)
+dijon tempogram YTB-014
+
+# Full path
 dijon tempogram data/derived/novelty/YTB-001_novelty_spectrum_1024-256-100.0-10.npy
 
 # Dry-run
@@ -75,7 +80,10 @@ dijon beats
 # Override factor, theta range
 dijon beats --factor 1.0 --theta-min 40 --theta-max 320
 
-# Specific tempogram file(s) only
+# Shorthand: track ID resolves to matching tempogram in data/derived/tempogram (fails if ambiguous)
+dijon beats YTB-014
+
+# Full path
 dijon beats data/derived/tempogram/YTB-001_tempogram_fourier_500-1-40-320.npy
 
 # Dry-run
@@ -92,7 +100,10 @@ Compute meter labels (bar/beat numbers) from beats `.npy` and write to `data/der
 # Default: all .npy in data/derived/beats (requires HEAD_IN_START marker and raw audio)
 dijon meter
 
-# Specific beats file(s) only
+# Shorthand: track ID resolves to data/derived/beats/<id>_beats.npy
+dijon meter YTB-014
+
+# Full path
 dijon meter data/derived/beats/YTB-001_beats.npy
 
 # Dry-run
@@ -121,7 +132,10 @@ dijon chromagram --accent-mode weighted --weight-source onset --weight-power 1.5
 # Frame-bin strictness
 dijon chromagram --hop-length 256 --min-frames-per-bin 2
 
-# Specific audio file(s) only
+# Shorthand: track ID resolves to data/datasets/raw/audio/<id>.wav
+dijon chromagram YTB-014
+
+# Full path
 dijon chromagram data/datasets/raw/audio/YTB-005.wav
 
 # Dry-run

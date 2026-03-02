@@ -18,12 +18,37 @@ THETA_DEFAULT = (40, 320)
 
 
 def _resolve_tempogram_files(files: list[Path] | None, tempogram_dir: Path) -> list[Path]:
-    """Return list of tempogram paths: explicit if given, else all .npy in tempogram_dir."""
-    if files:
-        return [Path(p).resolve() for p in files]
-    if not tempogram_dir.exists():
-        return []
-    return sorted(tempogram_dir.glob("*.npy"))
+    """Return list of tempogram paths: explicit if given, else all .npy in tempogram_dir.
+
+    When files are provided, each item is resolved as follows:
+    - Full path (absolute or with directory): used as-is.
+    - Basename only (e.g. YTB-014): glob tempogram_dir/<track_id>_tempogram_*.npy.
+      If multiple matches, raises ValueError (ambiguous; use explicit path).
+    """
+    if not files:
+        if not tempogram_dir.exists():
+            return []
+        return sorted(tempogram_dir.glob("*.npy"))
+
+    resolved: list[Path] = []
+    for p in files:
+        path = Path(p)
+        is_shorthand = not path.is_absolute() and len(path.parts) == 1
+        if is_shorthand:
+            stem = path.stem
+            track_id = stem.split("_tempogram_")[0] if "_tempogram_" in stem else stem
+            matches = sorted(tempogram_dir.glob(f"{track_id}_tempogram_*.npy"))
+            if len(matches) > 1:
+                names = [m.name for m in matches]
+                raise ValueError(
+                    f"Ambiguous shorthand '{path}': {len(matches)} matching tempogram files. "
+                    f"Specify one explicitly: {names}"
+                )
+            if matches:
+                resolved.append(matches[0].resolve())
+        else:
+            resolved.append(path.resolve())
+    return list(dict.fromkeys(resolved))
 
 
 def _track_name_from_tempogram_stem(stem: str) -> str:

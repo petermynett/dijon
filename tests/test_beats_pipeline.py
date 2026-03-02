@@ -34,6 +34,34 @@ class TestBeatsHelpers:
     def test_resolve_tempogram_files_empty(self, tmp_path: Path) -> None:
         assert _resolve_tempogram_files(None, tmp_path) == []
 
+    def test_resolve_tempogram_files_shorthand_track_id(self, tmp_path: Path) -> None:
+        tempo_dir = tmp_path / "tempogram"
+        tempo_dir.mkdir()
+        (tempo_dir / "YTB-014_tempogram_fourier_100-10-60-120.npy").touch()
+        got = _resolve_tempogram_files([Path("YTB-014")], tempo_dir)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014_tempogram_fourier_100-10-60-120.npy"
+
+    def test_resolve_tempogram_files_shorthand_ambiguous_raises(self, tmp_path: Path) -> None:
+        tempo_dir = tmp_path / "tempogram"
+        tempo_dir.mkdir()
+        (tempo_dir / "YTB-014_tempogram_fourier_100-10-60-120.npy").touch()
+        (tempo_dir / "YTB-014_tempogram_autocorr_100-10-60-120.npy").touch()
+        with pytest.raises(ValueError, match="Ambiguous shorthand"):
+            _resolve_tempogram_files([Path("YTB-014")], tempo_dir)
+
+    def test_resolve_tempogram_files_explicit_path_preserved(self, tmp_path: Path) -> None:
+        tempo_dir = tmp_path / "tempogram"
+        other_dir = tmp_path / "other"
+        tempo_dir.mkdir()
+        other_dir.mkdir()
+        explicit = other_dir / "custom.npy"
+        explicit.touch()
+        got = _resolve_tempogram_files([explicit], tempo_dir)
+        assert len(got) == 1
+        assert got[0].name == "custom.npy"
+        assert got[0].parent == other_dir.resolve()
+
 
 class TestRunBeats:
     """Integration-style tests for run_beats (tmp paths)."""
@@ -89,3 +117,27 @@ class TestRunBeats:
         arr = np.load(out_file)
         assert arr.ndim == 1
         assert arr.dtype == np.float64
+
+    def test_run_beats_with_shorthand_track_id(self, tmp_path: Path) -> None:
+        """Shorthand YTB-014 resolves to matching tempogram in tempogram_dir."""
+        nov_dir = tmp_path / "novelty"
+        tempo_dir = tmp_path / "tempogram"
+        out_dir = tmp_path / "beats"
+        nov_dir.mkdir()
+        tempo_dir.mkdir()
+        nov = np.clip(np.random.randn(1000).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        np.save(nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy", nov)
+        tempo_arr = np.random.rand(61, 101).astype(np.float64) * 0.5
+        np.save(tempo_dir / "YTB-014_tempogram_fourier_100-10-60-120.npy", tempo_arr)
+
+        result = run_beats(
+            tempogram_files=[Path("YTB-014")],
+            output_dir=out_dir,
+            tempogram_dir=tempo_dir,
+            novelty_dir=nov_dir,
+            dry_run=False,
+        )
+
+        assert result["success"] is True
+        assert result["succeeded"] == 1
+        assert (out_dir / "YTB-014_beats.npy").exists()

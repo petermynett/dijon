@@ -22,7 +22,7 @@ def novelty(
     files: Annotated[
         list[Path],
         typer.Argument(
-            help="Audio file(s) to process. If omitted, all .wav files in data/datasets/raw/audio are used.",
+            help="Audio file(s): track ID (e.g. YTB-014) or full path. If omitted, all .wav in data/datasets/raw/audio are used.",
         ),
     ] = [],
     type: Annotated[

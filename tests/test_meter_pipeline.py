@@ -61,6 +61,43 @@ class TestMeterHelpers:
     def test_resolve_beats_files_empty(self, tmp_path: Path) -> None:
         assert _resolve_beats_files(None, tmp_path) == []
 
+    def test_resolve_beats_files_shorthand_track_id(self, tmp_path: Path) -> None:
+        beats_dir = tmp_path / "beats"
+        beats_dir.mkdir()
+        (beats_dir / "YTB-014_beats.npy").touch()
+        got = _resolve_beats_files([Path("YTB-014")], beats_dir)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014_beats.npy"
+        assert got[0].parent == beats_dir.resolve()
+
+    def test_resolve_beats_files_shorthand_with_beats_suffix(self, tmp_path: Path) -> None:
+        beats_dir = tmp_path / "beats"
+        beats_dir.mkdir()
+        (beats_dir / "YTB-014_beats.npy").touch()
+        got = _resolve_beats_files([Path("YTB-014_beats")], beats_dir)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014_beats.npy"
+
+    def test_resolve_beats_files_shorthand_with_full_filename(self, tmp_path: Path) -> None:
+        beats_dir = tmp_path / "beats"
+        beats_dir.mkdir()
+        (beats_dir / "YTB-014_beats.npy").touch()
+        got = _resolve_beats_files([Path("YTB-014_beats.npy")], beats_dir)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014_beats.npy"
+
+    def test_resolve_beats_files_explicit_path_preserved(self, tmp_path: Path) -> None:
+        beats_dir = tmp_path / "beats"
+        other_dir = tmp_path / "other"
+        beats_dir.mkdir()
+        other_dir.mkdir()
+        explicit = other_dir / "custom_beats.npy"
+        explicit.touch()
+        got = _resolve_beats_files([explicit], beats_dir)
+        assert len(got) == 1
+        assert got[0].name == "custom_beats.npy"
+        assert got[0].parent == other_dir.resolve()
+
 
 class TestRunMeter:
     """Integration-style tests for run_meter (tmp paths)."""
@@ -119,3 +156,31 @@ class TestRunMeter:
         arr = np.load(out_file)
         assert arr.ndim == 2
         assert arr.shape[1] >= 3
+
+    def test_run_meter_with_shorthand_track_id(self, tmp_path: Path) -> None:
+        """Shorthand YTB-014 resolves to beats_dir/YTB-014_beats.npy."""
+        beats_dir = tmp_path / "beats"
+        out_dir = tmp_path / "meter"
+        audio_dir = tmp_path / "audio"
+        markers_dir = tmp_path / "markers"
+        beats_dir.mkdir()
+        audio_dir.mkdir()
+        markers_dir.mkdir()
+
+        _write_minimal_wav(audio_dir / "YTB-014.wav", duration_sec=5.0)
+        _write_markers_with_head_in(markers_dir, "YTB-014", 2.0, 5.0)
+        beat_times = np.arange(0.5, 5.0, 0.5, dtype=np.float64)
+        np.save(beats_dir / "YTB-014_beats.npy", beat_times)
+
+        result = run_meter(
+            beats_files=[Path("YTB-014")],
+            output_dir=out_dir,
+            beats_dir=beats_dir,
+            raw_audio_dir=audio_dir,
+            markers_dir=markers_dir,
+            dry_run=False,
+        )
+
+        assert result["success"] is True
+        assert result["succeeded"] == 1
+        assert (out_dir / "YTB-014_meter.npy").exists()

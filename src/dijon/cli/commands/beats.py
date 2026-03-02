@@ -26,7 +26,7 @@ def beats(
     files: Annotated[
         list[Path],
         typer.Argument(
-            help="Tempogram .npy file(s) to process. If omitted, all .npy in data/derived/tempogram are used.",
+            help="Tempogram file(s): track ID (e.g. YTB-014) or full path. If omitted, all .npy in data/derived/tempogram are used.",
         ),
     ] = [],
     factor: Annotated[

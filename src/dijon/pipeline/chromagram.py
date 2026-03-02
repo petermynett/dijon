@@ -15,12 +15,27 @@ CHROMAGRAM_OUTPUT_DIR = DERIVED_DIR / "chromagram"
 
 
 def _resolve_audio_files(files: list[Path] | None, raw_audio_dir: Path) -> list[Path]:
-    """Return list of audio paths: explicit files if given, else all .wav in raw_audio_dir."""
-    if files:
-        return [Path(p).resolve() for p in files]
-    if not raw_audio_dir.exists():
-        return []
-    return sorted(raw_audio_dir.glob("*.wav"))
+    """Return list of audio paths: explicit files if given, else all .wav in raw_audio_dir.
+
+    When files are provided, each item is resolved as follows:
+    - Full path (absolute or with directory): used as-is.
+    - Basename only (e.g. YTB-014, YTB-014.wav): resolved to raw_audio_dir / <track_id>.wav.
+    """
+    if not files:
+        if not raw_audio_dir.exists():
+            return []
+        return sorted(raw_audio_dir.glob("*.wav"))
+
+    resolved: list[Path] = []
+    for p in files:
+        path = Path(p)
+        is_shorthand = not path.is_absolute() and len(path.parts) == 1
+        if is_shorthand:
+            stem = path.stem
+            resolved.append((raw_audio_dir / f"{stem}.wav").resolve())
+        else:
+            resolved.append(path.resolve())
+    return list(dict.fromkeys(resolved))
 
 
 def _track_name(audio_path: Path) -> str:

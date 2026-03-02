@@ -46,6 +46,34 @@ class TestTempogramHelpers:
     def test_resolve_novelty_files_empty(self, tmp_path: Path) -> None:
         assert _resolve_novelty_files(None, tmp_path) == []
 
+    def test_resolve_novelty_files_shorthand_track_id(self, tmp_path: Path) -> None:
+        nov_dir = tmp_path / "novelty"
+        nov_dir.mkdir()
+        (nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy").touch()
+        got = _resolve_novelty_files([Path("YTB-014")], nov_dir)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014_novelty_spectrum_1024-256-100.0-10.npy"
+
+    def test_resolve_novelty_files_shorthand_ambiguous_raises(self, tmp_path: Path) -> None:
+        nov_dir = tmp_path / "novelty"
+        nov_dir.mkdir()
+        (nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy").touch()
+        (nov_dir / "YTB-014_novelty_energy_2048-512-10.0-0.npy").touch()
+        with pytest.raises(ValueError, match="Ambiguous shorthand"):
+            _resolve_novelty_files([Path("YTB-014")], nov_dir)
+
+    def test_resolve_novelty_files_explicit_path_preserved(self, tmp_path: Path) -> None:
+        nov_dir = tmp_path / "novelty"
+        other_dir = tmp_path / "other"
+        nov_dir.mkdir()
+        other_dir.mkdir()
+        explicit = other_dir / "custom.npy"
+        explicit.touch()
+        got = _resolve_novelty_files([explicit], nov_dir)
+        assert len(got) == 1
+        assert got[0].name == "custom.npy"
+        assert got[0].parent == other_dir.resolve()
+
 
 class TestRunTempogram:
     """Integration-style tests for run_tempogram (tmp paths)."""
@@ -92,6 +120,30 @@ class TestRunTempogram:
         arr = np.load(out_file)
         assert arr.ndim == 2
         assert arr.dtype == np.float64
+
+    def test_run_tempogram_with_shorthand_track_id(self, tmp_path: Path) -> None:
+        """Shorthand YTB-014 resolves to matching novelty in novelty_dir."""
+        nov_dir = tmp_path / "novelty"
+        out_dir = tmp_path / "tempogram"
+        nov_dir.mkdir()
+        nov = np.clip(np.random.randn(500).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        np.save(nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy", nov)
+
+        result = run_tempogram(
+            novelty_files=[Path("YTB-014")],
+            output_dir=out_dir,
+            novelty_dir=nov_dir,
+            ntype="fourier",
+            N=100,
+            H=10,
+            theta_min=60,
+            theta_max=120,
+            dry_run=False,
+        )
+
+        assert result["success"] is True
+        assert result["succeeded"] == 1
+        assert (out_dir / "YTB-014_tempogram_fourier_100-10-60-120.npy").exists()
 
     def test_run_tempogram_dry_run_writes_nothing(self, tmp_path: Path) -> None:
         nov_dir = tmp_path / "novelty"

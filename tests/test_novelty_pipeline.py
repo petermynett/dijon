@@ -81,6 +81,31 @@ class TestNoveltyHelpers:
     def test_resolve_audio_files_nonexistent_folder(self, tmp_path: Path) -> None:
         assert _resolve_audio_files(None, tmp_path / "missing") == []
 
+    def test_resolve_audio_files_shorthand_track_id(self, tmp_path: Path) -> None:
+        (tmp_path / "YTB-014.wav").touch()
+        got = _resolve_audio_files([Path("YTB-014")], tmp_path)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014.wav"
+        assert got[0].parent == tmp_path.resolve()
+
+    def test_resolve_audio_files_shorthand_with_ext(self, tmp_path: Path) -> None:
+        (tmp_path / "YTB-014.wav").touch()
+        got = _resolve_audio_files([Path("YTB-014.wav")], tmp_path)
+        assert len(got) == 1
+        assert got[0].name == "YTB-014.wav"
+
+    def test_resolve_audio_files_explicit_path_preserved(self, tmp_path: Path) -> None:
+        audio_dir = tmp_path / "audio"
+        other_dir = tmp_path / "other"
+        audio_dir.mkdir()
+        other_dir.mkdir()
+        explicit = other_dir / "custom.wav"
+        explicit.touch()
+        got = _resolve_audio_files([explicit], audio_dir)
+        assert len(got) == 1
+        assert got[0].name == "custom.wav"
+        assert got[0].parent == other_dir.resolve()
+
 
 class TestRunNovelty:
     """Integration-style tests for run_novelty (use tmp paths)."""
@@ -120,6 +145,28 @@ class TestRunNovelty:
         arr = np.load(out_file)
         assert arr.ndim == 1
         assert arr.dtype == np.float64
+
+    def test_run_novelty_with_shorthand_track_id(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Shorthand YTB-014 resolves to raw_audio_dir/YTB-014.wav."""
+        wav_dir = tmp_path / "audio"
+        markers_dir = tmp_path / "markers"
+        wav_dir.mkdir()
+        out_dir = tmp_path / "novelty"
+        _write_minimal_wav(wav_dir / "YTB-014.wav")
+        _write_markers(markers_dir, "YTB-014")
+        monkeypatch.setattr("dijon.utils.audio_region.AUDIO_MARKERS_DIR", markers_dir)
+
+        result = run_novelty(
+            audio_files=[Path("YTB-014")],
+            output_dir=out_dir,
+            raw_audio_dir=wav_dir,
+            ntype="spectrum",
+            dry_run=False,
+        )
+
+        assert result["success"] is True
+        assert result["succeeded"] == 1
+        assert (out_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy").exists()
 
     def test_run_novelty_dry_run_writes_nothing(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         wav_dir = tmp_path / "audio"

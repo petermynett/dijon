@@ -27,12 +27,37 @@ THETA_DEFAULT = (40, 320)
 
 
 def _resolve_novelty_files(files: list[Path] | None, novelty_dir: Path) -> list[Path]:
-    """Return list of novelty paths: explicit if given, else all .npy in novelty_dir."""
-    if files:
-        return [Path(p).resolve() for p in files]
-    if not novelty_dir.exists():
-        return []
-    return sorted(novelty_dir.glob("*.npy"))
+    """Return list of novelty paths: explicit if given, else all .npy in novelty_dir.
+
+    When files are provided, each item is resolved as follows:
+    - Full path (absolute or with directory): used as-is.
+    - Basename only (e.g. YTB-014): glob novelty_dir/<track_id>_novelty_*.npy.
+      If multiple matches, raises ValueError (ambiguous; use explicit path).
+    """
+    if not files:
+        if not novelty_dir.exists():
+            return []
+        return sorted(novelty_dir.glob("*.npy"))
+
+    resolved: list[Path] = []
+    for p in files:
+        path = Path(p)
+        is_shorthand = not path.is_absolute() and len(path.parts) == 1
+        if is_shorthand:
+            stem = path.stem
+            track_id = stem.split("_novelty_")[0] if "_novelty_" in stem else stem
+            matches = sorted(novelty_dir.glob(f"{track_id}_novelty_*.npy"))
+            if len(matches) > 1:
+                names = [m.name for m in matches]
+                raise ValueError(
+                    f"Ambiguous shorthand '{path}': {len(matches)} matching novelty files. "
+                    f"Specify one explicitly: {names}"
+                )
+            if matches:
+                resolved.append(matches[0].resolve())
+        else:
+            resolved.append(path.resolve())
+    return list(dict.fromkeys(resolved))
 
 
 def _track_name_from_novelty_stem(stem: str) -> str:

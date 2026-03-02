@@ -26,7 +26,7 @@ def chromagram(
     files: Annotated[
         list[Path],
         typer.Argument(
-            help="Audio .wav file(s) to process. If omitted, all .wav in data/datasets/raw/audio are used.",
+            help="Audio file(s): track ID (e.g. YTB-014) or full path. If omitted, all .wav in data/datasets/raw/audio are used.",
         ),
     ] = [],
     chroma_type: Annotated[
