@@ -5,7 +5,7 @@ from __future__ import annotations
 import typer
 
 from ...global_config import PROJECT_ROOT
-from ...pipeline.clean import clean_derived, clean_pyc, clean_reaper
+from ...pipeline.clean import clean_derived, clean_logs_derived, clean_pyc, clean_reaper
 from ..base import BaseCLI
 
 app = typer.Typer(
@@ -109,3 +109,44 @@ def clean_derived_command(
         pre_message=pre_message,
         enable_log=False,
     )
+
+
+logs_app = typer.Typer(
+    name="logs",
+    help="Clean log directories (keeps most recent; deletes older)",
+)
+
+# Future: add more log subcommands here, e.g. logs_app.command("other")
+
+
+@logs_app.command("derived")
+def clean_logs_derived_command(
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show what would be deleted without actually deleting files",
+    ),
+) -> None:
+    """Delete all but the most recent derived logs.
+
+    Keeps the single most recently modified file (or all tied for most recent)
+    in data/logs/derived. Deletes all others.
+    """
+    cli = BaseCLI("clean")
+
+    def _clean() -> dict:
+        return clean_logs_derived(dry_run=dry_run)
+
+    pre_message = (
+        "Checking what would be cleaned (dry-run)..." if dry_run
+        else "Cleaning derived logs (keeping most recent)..."
+    )
+    cli.handle_cli_operation(
+        operation="clean logs derived",
+        op_callable=_clean,
+        pre_message=pre_message,
+        enable_log=False,
+    )
+
+
+app.add_typer(logs_app, name="logs")

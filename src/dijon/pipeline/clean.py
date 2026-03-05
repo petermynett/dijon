@@ -492,3 +492,111 @@ def clean_derived(dry_run: bool = False) -> dict[str, Any]:
         result["message"] = "No derived data or logs found"
 
     return result
+
+
+def clean_logs_derived(dry_run: bool = False) -> dict[str, Any]:
+    """Delete all but the most recent derived logs.
+
+    Keeps the single most recently modified file (or all files tied for most
+    recent) in data/logs/derived. Deletes all others.
+
+    Args:
+        dry_run: If True, only report what would be deleted without actually deleting.
+
+    Returns:
+        Result dictionary with:
+        - success: bool (True if operation completed without errors)
+        - total: int (total number of files deleted or would be deleted)
+        - files_deleted: int (number of files removed or would be removed)
+        - kept: int (number of files kept)
+        - failures: list[dict] (list of failures with item and reason, if any)
+        - message: str (summary message)
+        - dry_run: bool (indicates if this was a dry run)
+        - items_to_delete: list[str] (list of items that would be deleted, only in dry_run mode)
+    """
+    files_deleted = 0
+    kept = 0
+    failures: list[dict[str, str]] = []
+    items_to_delete: list[str] = []
+
+    if not DERIVED_LOGS_DIR.exists():
+        return {
+            "success": True,
+            "total": 0,
+            "files_deleted": 0,
+            "kept": 0,
+            "message": "No derived logs directory found",
+            "dry_run": dry_run,
+        }
+
+    # Collect all files with mtime
+    files_with_mtime: list[tuple[Path, float]] = []
+    for path in DERIVED_LOGS_DIR.rglob("*"):
+        if path.is_file():
+            try:
+                mtime = path.stat().st_mtime
+                files_with_mtime.append((path, mtime))
+            except OSError as exc:  # noqa: BLE001
+                rel = path.relative_to(DERIVED_LOGS_DIR)
+                failures.append({"item": str(rel), "reason": f"Failed to stat: {exc}"})
+
+    if not files_with_mtime:
+        return {
+            "success": len(failures) == 0,
+            "total": 0,
+            "files_deleted": 0,
+            "kept": 0,
+            "message": "No derived log files found",
+            "dry_run": dry_run,
+            **({"failures": failures} if failures else {}),
+        }
+
+    # Sort by mtime descending; most recent first
+    files_with_mtime.sort(key=lambda x: x[1], reverse=True)
+    max_mtime = files_with_mtime[0][1]
+    to_keep = [p for p, m in files_with_mtime if m == max_mtime]
+    to_delete = [p for p, m in files_with_mtime if m < max_mtime]
+
+    kept = len(to_keep)
+
+    if dry_run:
+        for path in to_delete:
+            rel = path.relative_to(DERIVED_LOGS_DIR)
+            items_to_delete.append(f"FILE: logs/derived/{rel}")
+        files_deleted = len(to_delete)
+    else:
+        for path in to_delete:
+            try:
+                if path.exists():
+                    path.unlink()
+                    files_deleted += 1
+            except Exception as exc:  # noqa: BLE001
+                rel = path.relative_to(DERIVED_LOGS_DIR)
+                failures.append({"item": f"logs/derived/{rel}", "reason": f"Failed to delete: {exc}"})
+
+    total = files_deleted
+    success = len(failures) == 0
+
+    result: dict[str, Any] = {
+        "success": success,
+        "total": total,
+        "files_deleted": files_deleted,
+        "kept": kept,
+        "dry_run": dry_run,
+    }
+
+    if failures:
+        result["failures"] = failures
+
+    if dry_run and items_to_delete:
+        result["items_to_delete"] = items_to_delete
+
+    if total > 0:
+        if dry_run:
+            result["message"] = f"Would delete {files_deleted} files (kept {kept} most recent)"
+        else:
+            result["message"] = f"Deleted {files_deleted} files (kept {kept} most recent)"
+    else:
+        result["message"] = f"No derived logs to delete (kept {kept} file(s))"
+
+    return result

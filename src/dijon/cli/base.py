@@ -214,7 +214,7 @@ class BaseCLI:
 
         if use_log:
             DERIVED_LOGS_DIR.mkdir(parents=True, exist_ok=True)
-            ts = datetime.now(timezone.utc).strftime("%I-%M-%S")
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
             parts = [ts, log_module]
             if log_method:
                 parts.append(log_method)
