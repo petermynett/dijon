@@ -1,3 +1,4 @@
+# src/dijon/chromagram/methods.py
 """Chromagram method implementations."""
 
 from __future__ import annotations
@@ -19,6 +20,19 @@ def _validate_audio(y: np.ndarray, sr: int) -> tuple[np.ndarray, int]:
     if not np.all(np.isfinite(y)):
         raise ValueError("y contains non-finite values")
     return y.astype(np.float64, copy=False), int(sr)
+
+
+def _preprocess_audio_for_chroma(
+    y: np.ndarray,
+    *,
+    preprocess: str,
+) -> np.ndarray:
+    """Preprocess audio for chroma extraction."""
+    if preprocess == "none":
+        return y
+    if preprocess == "harmonic":
+        return librosa.effects.harmonic(y)
+    raise ValueError('preprocess must be "none" or "harmonic"')
 
 
 def _extract_beat_times_from_meter_map(
@@ -71,12 +85,18 @@ def _compute_frame_chroma(
     sr: int,
     hop_length: int,
     chroma_type: str,
+    tuning: float | None = None,
 ) -> np.ndarray:
     """Compute frame-level chroma features."""
     if hop_length <= 0:
         raise ValueError(f"hop_length must be positive, got {hop_length}")
     if chroma_type == "cqt":
-        C = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+        C = librosa.feature.chroma_cqt(
+            y=y,
+            sr=sr,
+            hop_length=hop_length,
+            tuning=tuning,
+        )
     elif chroma_type == "stft":
         C = librosa.feature.chroma_stft(y=y, sr=sr, hop_length=hop_length)
     else:
@@ -97,14 +117,21 @@ def _compute_frame_weights(
 ) -> np.ndarray:
     """Compute per-frame weights for weighted aggregation."""
     if weight_source == "rms":
-        weights = librosa.feature.rms(y=y, frame_length=2048, hop_length=hop_length, center=True)[0]
+        weights = librosa.feature.rms(
+            y=y,
+            frame_length=2048,
+            hop_length=hop_length,
+            center=True,
+        )[0]
     elif weight_source == "onset":
         weights = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     else:
         raise ValueError('weight_source must be "rms" or "onset"')
 
     weights = librosa.util.fix_length(weights, size=n_frames)
-    weights = np.maximum(weights.astype(np.float64, copy=False), 1e-10) ** float(weight_power)
+    weights = np.maximum(weights.astype(np.float64, copy=False), 1e-10) ** float(
+        weight_power
+    )
     return weights
 
 
@@ -140,13 +167,15 @@ def metric_chromagram(
     hop_length: int = 256,
     bpm_threshold: float = 180.0,
     chroma_type: str = "cqt",
+    preprocess: str = "harmonic",
+    tuning: float | None = None,
     aggregate: str = "mean",
     accent_mode: str = "preserve",
     weight_source: str = "rms",
     weight_power: float = 1.0,
     min_frames_per_bin: int = 2,
 ) -> np.ndarray:
-    """metric-aligned chromagram using an external meter map.
+    """Metric-aligned chromagram using an external meter map.
 
     Parameters
     ----------
@@ -164,6 +193,14 @@ def metric_chromagram(
         <= threshold uses 4 bins/beat; > threshold uses 2 bins/beat.
     chroma_type : str
         "cqt" or "stft".
+    preprocess : str
+        Audio preprocessing applied before chroma extraction.
+        "none" uses the raw signal.
+        "harmonic" extracts the harmonic component using
+        librosa.effects.harmonic.
+    tuning : float | None
+        Tuning offset in fractional chroma bins passed to
+        librosa.feature.chroma_cqt. None uses librosa's default behavior.
     aggregate : str
         "mean" or "median".
     accent_mode : str
@@ -179,16 +216,28 @@ def metric_chromagram(
     -------
     np.ndarray
         `C_metric` with shape (12, M), aligned to adaptive metric subdivisions.
+
+    Notes
+    -----
+    Preprocessing affects only the signal used for chroma estimation.
+    Frame weighting, when enabled, is still computed from the original waveform.
     """
     if min_frames_per_bin < 1:
         raise ValueError(f"min_frames_per_bin must be >= 1, got {min_frames_per_bin}")
 
-    # --- setup: validate audio, extract beat times, compute frame-level chroma ---
+    # --- setup: validate audio, preprocess for chroma, extract beat times ---
     y, sr = _validate_audio(y, sr)
+    y_chroma = _preprocess_audio_for_chroma(y, preprocess=preprocess)
     duration = len(y) / float(sr)
     beat_times = _extract_beat_times_from_meter_map(meter_map, duration=duration)
 
-    C = _compute_frame_chroma(y, sr=sr, hop_length=hop_length, chroma_type=chroma_type)
+    C = _compute_frame_chroma(
+        y_chroma,
+        sr=sr,
+        hop_length=hop_length,
+        chroma_type=chroma_type,
+        tuning=tuning,
+    )
 
     # --- accent handling: optionally normalise or pre-compute frame weights ---
     frame_weights: np.ndarray | None = None
@@ -209,7 +258,10 @@ def metric_chromagram(
         raise ValueError('accent_mode must be "preserve", "normalize", or "weighted"')
 
     # --- build adaptive subdivision grid (tempo-aware) and convert to frame indices ---
-    boundary_times = _build_subdivision_boundaries(beat_times, bpm_threshold=bpm_threshold)
+    boundary_times = _build_subdivision_boundaries(
+        beat_times,
+        bpm_threshold=bpm_threshold,
+    )
     boundary_frames = librosa.time_to_frames(boundary_times, sr=sr, hop_length=hop_length)
 
     # --- guard: boundaries must be strictly increasing after quantisation to frames ---
@@ -221,7 +273,9 @@ def metric_chromagram(
 
     T = C.shape[1]
     if boundary_frames[-1] > T:
-        raise ValueError(f"Meter map extends beyond chroma frames (last_frame={boundary_frames[-1]}, T={T})")
+        raise ValueError(
+            f"Meter map extends beyond chroma frames (last_frame={boundary_frames[-1]}, T={T})"
+        )
 
     # --- guard: every bin must have enough frames for a meaningful aggregate ---
     bin_lengths = np.diff(boundary_frames)
@@ -261,6 +315,9 @@ def metric_chromagram(
         W = float(np.sum(w))
         if W <= 0:
             raise ValueError(f"Zero weight in bin {j} (frames {s}:{t})")
-        C_metric[:, j] = ((C[:, s:t] * w[None, :]).sum(axis=1) / W).astype(np.float32, copy=False)
+        C_metric[:, j] = ((C[:, s:t] * w[None, :]).sum(axis=1) / W).astype(
+            np.float32,
+            copy=False,
+        )
 
     return C_metric
