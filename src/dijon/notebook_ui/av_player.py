@@ -38,6 +38,16 @@ def _validate_inputs(
     if (fig is None) ^ (ax is None):
         raise ValueError("Provide both fig and ax, or neither.")
 
+    if ax is not None:
+        if isinstance(ax, np.ndarray):
+            axes_list = np.ravel(ax).tolist()
+        elif isinstance(ax, (list, tuple)):
+            axes_list = list(ax)
+        else:
+            axes_list = [ax]
+        if not axes_list:
+            raise ValueError("ax must be a non-empty Axes or sequence of Axes.")
+
     duration_s = len(x) / sr
     if duration_s > max_duration_sec:
         raise ValueError(
@@ -69,11 +79,17 @@ def _render_plot_png_and_bounds(
         plt.tight_layout()
 
     fig.canvas.draw()
-    bbox = ax.get_position()
-    plot_left = bbox.x0
-    plot_right = bbox.x1
-    plot_top_pct = (1 - bbox.y1) * 100
-    plot_bottom_pct = bbox.y0 * 100
+    if isinstance(ax, np.ndarray):
+        axes_list = np.ravel(ax).tolist()
+    elif isinstance(ax, (list, tuple)):
+        axes_list = list(ax)
+    else:
+        axes_list = [ax]
+    first_bbox = axes_list[0].get_position()
+    plot_left = first_bbox.x0
+    plot_right = first_bbox.x1
+    plot_top_pct = (1 - max(a.get_position().y1 for a in axes_list)) * 100
+    plot_bottom_pct = min(a.get_position().y0 for a in axes_list) * 100
 
     fig_buf = io.BytesIO()
     # Keep default bbox mapping; tight bbox changes cursor coordinates.
@@ -218,7 +234,8 @@ def display_audio_with_cursor(
         x: Mono waveform samples (1D array-like).
         sr: Sample rate (Hz).
         fig: Optional matplotlib Figure (requires ax as well).
-        ax: Optional matplotlib Axes (requires fig as well).
+        ax: Optional matplotlib Axes or sequence of Axes (requires fig as well).
+            When a sequence, the cursor spans all axes vertically.
         max_duration_sec: Duration hard limit.
         cursor_color: CSS color string for cursor bar.
         close_fig: Close provided figure after rendering when True.

@@ -3,8 +3,87 @@
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import librosa
 import numpy as np
+
+
+def _parse_novelty_log_region(log_path: Path, base: str) -> tuple[float, float, str, str]:
+    """Parse novelty log and extract analysis region for one base filename.
+
+    Expected log pattern:
+    - item line containing "• {base}.wav:" and "success"
+    - following line containing "region: Xs -> Ys"
+    - optional "markers: A -> B"
+    """
+    # NOTE FOR AGENTS: If novelty log formatting changes, update regex + line-walk
+    # logic here and the notebook import sites that rely on this parser.
+    text = log_path.read_text()
+    wav_name = f"{base}.wav"
+    if wav_name not in text:
+        raise ValueError(f"Base '{base}' not found in novelty log {log_path}")
+
+    lines = text.splitlines()
+    region_re = re.compile(r"region:\s*([\d.]+)s\s*->\s*([\d.]+)s")
+    markers_re = re.compile(r"markers:\s*(\S+)\s*->\s*(\S+)")
+    for i, line in enumerate(lines):
+        if f"• {wav_name}:" in line and "success" in line:
+            if i + 1 >= len(lines):
+                raise ValueError(f"Incomplete entry for {wav_name} in {log_path}")
+            details = lines[i + 1]
+            m_region = region_re.search(details)
+            m_markers = markers_re.search(details)
+            if not m_region:
+                raise ValueError(f"No region found for {wav_name} in {log_path}")
+            start_sec = float(m_region.group(1))
+            end_sec = float(m_region.group(2))
+            start_name = m_markers.group(1) if m_markers else ""
+            end_name = m_markers.group(2) if m_markers else ""
+            return (start_sec, end_sec, start_name, end_name)
+
+    raise ValueError(f"Could not parse region for {wav_name} in {log_path}")
+
+
+def cents_to_cqt_tuning(cents: float, bins_per_octave: int = 36) -> float:
+    """Convert cents offset to librosa CQT tuning offset (fractional bins)."""
+    return cents * (bins_per_octave / 1200.0)
+
+
+def safe_l1_normalize_columns(C: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+    """L1-normalize columns with safe handling of near-zero columns."""
+    C = np.asarray(C, dtype=np.float64)
+    sums = C.sum(axis=0, keepdims=True)
+    out = np.zeros_like(C)
+    mask = sums > eps
+    out[:, mask[0]] = C[:, mask[0]] / sums[:, mask[0]]
+    return out
+
+
+def score_metric_chromagram(
+    C_metric: np.ndarray,
+    k: int = 4,
+    lambda_jitter: float = 0.5,
+) -> tuple[float, float, float]:
+    """Score metric chroma by concentration minus temporal jitter penalty."""
+    strengths = np.sum(C_metric, axis=0)
+    C_norm = safe_l1_normalize_columns(C_metric)
+    sorted_desc = np.sort(C_norm, axis=0)[::-1]
+    topk = np.sum(sorted_desc[:k], axis=0)
+    conc = (
+        np.sum(topk * strengths) / np.sum(strengths)
+        if np.sum(strengths) > 0
+        else np.nan
+    )
+    jitter = (
+        np.sum(np.abs(np.diff(C_norm, axis=1)), axis=0)
+        if C_norm.shape[1] >= 2
+        else np.zeros(0)
+    )
+    jw = np.minimum(strengths[:-1], strengths[1:])
+    jit = np.sum(jitter * jw) / np.sum(jw) if len(jitter) and np.sum(jw) > 0 else 0.0
+    return float(conc - lambda_jitter * jit), float(conc), float(jit)
 
 
 def _validate_audio(y: np.ndarray, sr: int) -> tuple[np.ndarray, int]:
