@@ -120,15 +120,21 @@ def _extract_beat_times_from_meter_map(
     duration: float,
     tol: float = 1e-6,
 ) -> np.ndarray:
-    """Validate meter map and return beat times in seconds with optional auto-padding."""
+    """Validate meter map and return beat boundary times in seconds.
+
+    Returns validated beat boundaries verbatim. Does not clip, prepend 0.0,
+    or append duration. Requires at least two rows. Assumes the audio passed
+    to metric_chromagram is on the same timebase as meter_map[:, 0].
+    """
     if not isinstance(meter_map, np.ndarray):
         raise TypeError("meter_map must be a NumPy array")
     if meter_map.ndim != 2:
         raise ValueError(f"meter_map must be 2-D, got shape {meter_map.shape}")
     if meter_map.shape[1] != 3:
         raise ValueError(f"meter_map must have shape (N, 3), got {meter_map.shape}")
-    if meter_map.shape[0] < 1:
-        raise ValueError("meter_map must contain at least one row")
+    if meter_map.shape[0] < 2:
+        raise ValueError("meter_map must contain at least two rows")
+
     if meter_map.dtype.kind != "f":
         raise TypeError(f"meter_map must be float dtype, got {meter_map.dtype}")
     if not np.all(np.isfinite(meter_map)):
@@ -140,21 +146,13 @@ def _extract_beat_times_from_meter_map(
     if not np.all(np.diff(beat_times) > 0):
         raise ValueError("meter_map[:, 0] (time_sec) must be strictly increasing")
 
+    # Do not repair out-of-range or missing endpoints; upstream meter generation owns boundary definition.
     if beat_times[0] < -tol or beat_times[-1] > duration + tol:
         raise ValueError(
             f"meter_map time_sec must lie within [0, duration]. "
             f"Got [{beat_times[0]:.3f}, {beat_times[-1]:.3f}] for duration={duration:.3f}s"
         )
 
-    beat_times = np.clip(beat_times, 0.0, duration)
-    if beat_times[0] > tol:
-        beat_times = np.concatenate(([0.0], beat_times))
-    if beat_times[-1] < duration - tol:
-        beat_times = np.concatenate((beat_times, [duration]))
-    if beat_times.size < 2:
-        raise ValueError("Need at least two beat boundaries after auto-padding")
-    if not np.all(np.diff(beat_times) > 0):
-        raise ValueError("Beat boundaries must be strictly increasing after auto-padding")
     return beat_times
 
 
@@ -265,6 +263,8 @@ def metric_chromagram(
     meter_map : np.ndarray
         Shape (N, 3) with columns [time_sec, bar_number, beat_number].
         Only time_sec is used for boundaries; bar/beat columns are metadata.
+        time_sec must be on the same timeline as y; if y is region-trimmed,
+        meter_map must be region-relative.
     hop_length : int
         Feature hop length in samples.
     bpm_threshold : float
@@ -289,7 +289,7 @@ def metric_chromagram(
     weight_power : float
         Exponent applied to positive frame weights.
     min_frames_per_bin : int
-        Minimum number of chroma frames required per subdivision bin.
+        Minimum chroma frames per subdivision bin after time-to-frame quantization.
 
     Returns
     -------
@@ -357,6 +357,8 @@ def metric_chromagram(
         )
 
     # --- guard: every bin must have enough frames for a meaningful aggregate ---
+    # Very short metric subdivisions can collapse after time-to-frame quantization;
+    # treat as an input/configuration issue, not something to auto-correct.
     bin_lengths = np.diff(boundary_frames)
     if np.any(bin_lengths < min_frames_per_bin):
         bad = int(np.where(bin_lengths < min_frames_per_bin)[0][0])

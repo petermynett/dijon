@@ -12,17 +12,19 @@ def _compute_autocorrelation_local(x, Fs, N, H, norm_sum=True):
     """
     L_left = round(N / 2)
     L_right = L_left
-    x_pad = np.concatenate((np.zeros(L_left), x, np.zeros(L_right)))
-    L_pad = len(x_pad)
+    L_pad = L_left + len(x) + L_right
+    x_pad = np.empty(L_pad, dtype=x.dtype)
+    x_pad[:L_left] = 0
+    x_pad[L_left : L_left + len(x)] = x
+    x_pad[L_left + len(x) :] = 0
     M = int(np.floor(L_pad - N) / H) + 1
-    A = np.zeros((N, M))
-    win = np.ones(N)
+    A = np.empty((N, M))
     if norm_sum is True:
         lag_summand_num = np.arange(N, 0, -1)
     for n in range(M):
         t_0 = n * H
         t_1 = t_0 + N
-        x_local = win * x_pad[t_0:t_1]
+        x_local = x_pad[t_0:t_1]
         r_xx = np.correlate(x_local, x_local, mode="full")
         r_xx = r_xx[N - 1 :]
         if norm_sum is True:
@@ -75,7 +77,7 @@ def compute_cyclic_tempogram(
     return tempogram_cyclic, F_coef_scale
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def compute_tempogram_fourier(x, Fs, N, H, Theta):
     """Compute Fourier-based tempogram [FMP, Section 6.2.2].
 
@@ -99,7 +101,10 @@ def compute_tempogram_fourier(x, Fs, N, H, Theta):
     L_left = N_left
     L_right = N_left
     L_pad = L + L_left + L_right
-    x_pad = np.concatenate((np.zeros(L_left), x, np.zeros(L_right)))
+    x_pad = np.empty(L_pad, dtype=x.dtype)
+    x_pad[:L_left] = 0
+    x_pad[L_left : L_left + L] = x
+    x_pad[L_left + L :] = 0
     M = int(np.floor(L_pad - N) / H) + 1
     K = len(Theta)
     X = np.zeros((K, M), dtype=np.complex128)

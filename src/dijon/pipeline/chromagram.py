@@ -1,4 +1,9 @@
-"""Pipeline for computing metric chromagrams from audio and meter maps."""
+"""Pipeline for computing metric chromagrams from audio and meter maps.
+
+Invariant: meter_map[:, 0] and the waveform passed to metric_chromagram must be
+on the same timebase. When meter maps come from marker-trimmed novelty/beats,
+chromagram audio must be trimmed to the same marker-defined region.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +14,7 @@ import numpy as np
 
 from ..chromagram import metric_chromagram
 from ..global_config import DERIVED_DIR, RAW_AUDIO_DIR
+from ..utils.audio_region import resolve_audio_region
 
 METER_DIR = DERIVED_DIR / "meter"
 CHROMAGRAM_OUTPUT_DIR = DERIVED_DIR / "chromagram"
@@ -73,6 +79,8 @@ def run_chromagram(
     output_dir: Path = CHROMAGRAM_OUTPUT_DIR,
     raw_audio_dir: Path = RAW_AUDIO_DIR,
     meter_dir: Path = METER_DIR,
+    start_marker: str | None = None,
+    end_marker: str | None = None,
     hop_length: int = 256,
     bpm_threshold: float = 180.0,
     chroma_type: str = "cqt",
@@ -83,7 +91,12 @@ def run_chromagram(
     min_frames_per_bin: int = 2,
     dry_run: bool = False,
 ) -> dict:
-    """Compute metric chromagram for audio file(s) and write .npy to output_dir."""
+    """Compute metric chromagram for audio file(s) and write .npy to output_dir.
+
+    start_marker, end_marker: When both provided, trim audio to the marker-defined
+    region (same as novelty pipeline). Meter maps from novelty/beats are region-relative;
+    use the same markers to align timelines. When omitted, use full audio.
+    """
     paths = _resolve_audio_files(audio_files, raw_audio_dir)
     if not paths:
         return {
@@ -141,6 +154,22 @@ def run_chromagram(
 
         try:
             y, sr = librosa.load(audio_path, sr=None, mono=True)
+            region_start_sec: float | None = None
+            region_end_sec: float | None = None
+
+            if start_marker is not None and end_marker is not None:
+                # Trim waveform so audio and meter_map share the same region-local time origin.
+                start_sec, end_sec = resolve_audio_region(
+                    audio_path,
+                    start_marker=start_marker,
+                    end_marker=end_marker,
+                )
+                start_ix = int(start_sec * sr)
+                end_ix = int(end_sec * sr)
+                y = y[start_ix:end_ix]
+                region_start_sec = start_sec
+                region_end_sec = end_sec
+
             meter_map = np.load(meter_path).astype(np.float64)
             C_metric = metric_chromagram(
                 y,
@@ -159,12 +188,16 @@ def run_chromagram(
                 np.save(out_path, C_metric, allow_pickle=False)
 
             succeeded += 1
-            items.append({
+            item: dict = {
                 "file": audio_path.name,
                 "meter": meter_path.name,
                 "output": out_name,
                 "status": "success",
-            })
+            }
+            if region_start_sec is not None and region_end_sec is not None:
+                item["region_start_sec"] = region_start_sec
+                item["region_end_sec"] = region_end_sec
+            items.append(item)
         except Exception as e:
             failed += 1
             failures.append({"item": str(audio_path), "reason": str(e)})

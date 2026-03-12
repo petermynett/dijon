@@ -118,6 +118,43 @@ def test_compute_frame_chroma_stft_does_not_require_tuning(
     assert captured["hop_length"] == 128
 
 
+def test_extract_beat_times_no_prepend() -> None:
+    """First beat at 0.03 is returned verbatim; no synthetic 0.0 prepended."""
+    meter_map = np.array(
+        [[0.03, 1, 1], [0.32, 1, 2], [0.59, 1, 3]],
+        dtype=np.float64,
+    )
+    got = methods._extract_beat_times_from_meter_map(meter_map, duration=1.0)
+    assert np.allclose(got, [0.03, 0.32, 0.59])
+
+
+def test_extract_beat_times_no_append() -> None:
+    """Last beat before duration is returned verbatim; no synthetic duration appended."""
+    meter_map = np.array(
+        [[0.0, 1, 1], [0.5, 1, 2], [1.5, 2, 1]],
+        dtype=np.float64,
+    )
+    got = methods._extract_beat_times_from_meter_map(meter_map, duration=2.0)
+    assert np.allclose(got, [0.0, 0.5, 1.5])
+
+
+def test_extract_beat_times_one_row_raises() -> None:
+    """Single-row meter map raises; need at least two beat boundaries."""
+    meter_map = np.array([[0.5, 1, 1]], dtype=np.float64)
+    with pytest.raises(ValueError, match="at least two rows"):
+        methods._extract_beat_times_from_meter_map(meter_map, duration=1.0)
+
+
+def test_extract_beat_times_out_of_bounds_raises() -> None:
+    """Out-of-bounds beat times raise; no silent clipping."""
+    meter_map = np.array(
+        [[0.0, 1, 1], [0.5, 1, 2], [1.5, 2, 1]],
+        dtype=np.float64,
+    )
+    with pytest.raises(ValueError, match="must lie within"):
+        methods._extract_beat_times_from_meter_map(meter_map, duration=1.0)
+
+
 def test_metric_chromagram_weighted_uses_original_audio_for_weights(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from dijon.tempogram import compute_tempogram_fourier
+from dijon.tempogram import (
+    compute_cyclic_tempogram,
+    compute_tempogram_autocorr,
+    compute_tempogram_fourier,
+)
 from dijon.pipeline.tempogram import (
     FS_NOVELTY,
     TEMPOGRAM_DEFAULTS,
@@ -189,6 +194,48 @@ class TestRunTempogram:
         assert result["success"] is False
         assert "Unknown tempogram type" in result["message"]
 
+    def test_run_tempogram_skip_if_exists_skips_computation(self, tmp_path: Path) -> None:
+        """When skip_if_exists=True and output exists, skip recomputation."""
+        nov_dir = tmp_path / "novelty"
+        out_dir = tmp_path / "tempogram"
+        nov_dir.mkdir()
+        out_dir.mkdir()
+        nov = np.clip(np.random.randn(500).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        np.save(nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy", nov)
+
+        result1 = run_tempogram(
+            novelty_files=[nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy"],
+            output_dir=out_dir,
+            novelty_dir=nov_dir,
+            ntype="fourier",
+            N=100,
+            H=10,
+            theta_min=60,
+            theta_max=120,
+            dry_run=False,
+        )
+        assert result1["success"] is True
+        assert result1["succeeded"] == 1
+        assert result1["skipped"] == 0
+
+        result2 = run_tempogram(
+            novelty_files=[nov_dir / "YTB-014_novelty_spectrum_1024-256-100.0-10.npy"],
+            output_dir=out_dir,
+            novelty_dir=nov_dir,
+            ntype="fourier",
+            N=100,
+            H=10,
+            theta_min=60,
+            theta_max=120,
+            dry_run=False,
+            skip_if_exists=True,
+        )
+        assert result2["success"] is True
+        assert result2["succeeded"] == 0
+        assert result2["skipped"] == 1
+        assert result2["items"][0]["status"] == "skipped"
+        assert result2["items"][0]["detail"] == "Output exists"
+
     def test_defaults_match_spec(self) -> None:
         assert FS_NOVELTY == 100.0
         assert TEMPOGRAM_DEFAULTS["fourier"] == (512, 1)
@@ -219,6 +266,73 @@ def _fourier_tempogram_reference(x: np.ndarray, Fs: float, N: int, H: int, Theta
     return X
 
 
+class TestTempogramRegression:
+    """Numeric regression tests for saved pipeline outputs."""
+
+    def test_autocorr_regression(self) -> None:
+        """Autocorr output shape and anchor values on deterministic input."""
+        np.random.seed(123)
+        x = np.clip(np.random.randn(300).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        Fs, N, H = 100.0, 64, 8
+        Theta = np.arange(60, 121, dtype=float)
+
+        out, _T, _F = compute_tempogram_autocorr(x, Fs, N, H, Theta=Theta)
+
+        assert out.shape == (61, 38)
+        assert out.dtype == np.float64
+        np.testing.assert_allclose(out[0, 0], 0.0, atol=1e-10)
+        np.testing.assert_allclose(out.min(), -9.818965301039668, rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(out.max(), 3.9863013490104655, rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(out.mean(), -0.5327567879030604, rtol=1e-9, atol=1e-9)
+
+    def test_cyclic_regression(self) -> None:
+        """Cyclic output shape and anchor values on deterministic input."""
+        np.random.seed(123)
+        x = np.clip(np.random.randn(300).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        Fs, N, H = 100.0, 64, 8
+        Theta = np.arange(60, 121, dtype=float)
+
+        X, _T, F_coef = compute_tempogram_fourier(x, Fs, N, H, Theta)
+        mag = np.abs(X)
+        out, _scale = compute_cyclic_tempogram(mag, F_coef)
+
+        assert out.shape == (40, 38)
+        assert out.dtype == np.float64
+        np.testing.assert_allclose(out[0, 0], 4.3303997198664055, rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(out[0, -1], 4.556043689524867, rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(out.min(), -16.520550887997505, rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(out.max(), 4.677247051965587, rtol=1e-9, atol=1e-9)
+
+    def test_fourier_saved_output_shape_and_stats(self, tmp_path: Path) -> None:
+        """Saved fourier magnitude has expected shape and stats on deterministic input."""
+        np.random.seed(456)
+        nov = np.clip(np.random.randn(200).astype(np.float64) * 0.1 + 0.5, 0, 1)
+        nov_dir = tmp_path / "novelty"
+        out_dir = tmp_path / "tempogram"
+        nov_dir.mkdir()
+        np.save(nov_dir / "regress.npy", nov)
+
+        result = run_tempogram(
+            novelty_files=[nov_dir / "regress.npy"],
+            output_dir=out_dir,
+            novelty_dir=nov_dir,
+            ntype="fourier",
+            N=64,
+            H=8,
+            theta_min=60,
+            theta_max=120,
+            dry_run=False,
+        )
+        assert result["success"] is True
+        arr = np.load(out_dir / "regress_tempogram_fourier_64-8-60-120.npy")
+        assert arr.ndim == 2
+        assert arr.dtype == np.float64
+        assert arr.shape[0] == 61
+        assert arr.shape[1] == 26
+        assert arr.min() >= 0
+        np.testing.assert_allclose(arr.mean(), float(result["items"][0]["mean"]), rtol=1e-10)
+
+
 class TestComputeTempogramFourier:
     """Unit tests for compute_tempogram_fourier numerical correctness."""
 
@@ -236,3 +350,42 @@ class TestComputeTempogramFourier:
 
         np.testing.assert_allclose(X_opt.real, X_ref.real, rtol=1e-10, atol=1e-10)
         np.testing.assert_allclose(X_opt.imag, X_ref.imag, rtol=1e-10, atol=1e-10)
+
+
+class TestTempogramBenchmark:
+    """Lightweight runtime benchmarks for fourier/autocorr/cyclic tempogram."""
+
+    @pytest.mark.slow
+    def test_tempogram_runtime_benchmark(self) -> None:
+        """Benchmark fourier, autocorr, cyclic on representative novelty lengths."""
+        Fs = 100.0
+        N = 512
+        H = 1
+        Theta = np.arange(40, 321, dtype=float)
+        np.random.seed(42)
+
+        sizes = [1000, 5000, 15000]
+        results: list[dict] = []
+
+        for n_samples in sizes:
+            x = np.clip(np.random.randn(n_samples).astype(np.float64) * 0.1 + 0.5, 0, 1)
+            row: dict = {"n_samples": n_samples}
+
+            t0 = time.perf_counter()
+            compute_tempogram_fourier(x, Fs, N, H, Theta)
+            row["fourier_sec"] = time.perf_counter() - t0
+
+            t0 = time.perf_counter()
+            compute_tempogram_autocorr(x, Fs, N, H, Theta=Theta)
+            row["autocorr_sec"] = time.perf_counter() - t0
+
+            t0 = time.perf_counter()
+            X, _T, F_coef = compute_tempogram_fourier(x, Fs, N, H, Theta)
+            mag = np.abs(X)
+            compute_cyclic_tempogram(mag, F_coef)
+            row["cyclic_sec"] = time.perf_counter() - t0
+
+            results.append(row)
+
+        for r in results:
+            assert r["fourier_sec"] >= 0 and r["autocorr_sec"] >= 0 and r["cyclic_sec"] >= 0

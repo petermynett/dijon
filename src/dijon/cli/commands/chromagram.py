@@ -64,6 +64,14 @@ def chromagram(
         int,
         typer.Option("--min-frames-per-bin", help="Minimum frames required per subdivision bin. Default: 2."),
     ] = 2,
+    start_marker: Annotated[
+        str | None,
+        typer.Option("--start-marker", "-s", help="Start marker name. When set with --end-marker, trim audio to match meter-map timeline."),
+    ] = None,
+    end_marker: Annotated[
+        str | None,
+        typer.Option("--end-marker", "-e", help="End marker name. Use with --start-marker to align with novelty/beats region."),
+    ] = None,
     dry_run: Annotated[
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
@@ -77,6 +85,8 @@ def chromagram(
 
     Expects meter maps in data/derived/meter named <track_name>_meter.npy.
     Output filenames encode the main chromagram parameters.
+    When meter maps come from novelty/beats (marker-trimmed), use --start-marker
+    and --end-marker so the selected region matches the meter-map timeline.
     """
     cli = BaseCLI("chromagram")
 
@@ -88,6 +98,8 @@ def chromagram(
             output_dir=CHROMAGRAM_OUTPUT_DIR,
             raw_audio_dir=RAW_AUDIO_DIR,
             meter_dir=METER_DIR,
+            start_marker=start_marker,
+            end_marker=end_marker,
             hop_length=hop_length,
             bpm_threshold=bpm_threshold,
             chroma_type=chroma_type.lower(),

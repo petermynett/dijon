@@ -48,6 +48,10 @@ def tempogram(
         bool,
         typer.Option("--dry-run", help="Show what would be written without writing files."),
     ] = False,
+    skip_existing: Annotated[
+        bool,
+        typer.Option("--skip-existing", help="Skip files whose output already exists."),
+    ] = False,
     no_log: Annotated[
         bool,
         typer.Option("--no-log", help="Do not write a log file to data/logs/derived."),
@@ -73,6 +77,7 @@ def tempogram(
             theta_min=theta_min,
             theta_max=theta_max,
             dry_run=dry_run,
+            skip_if_exists=skip_existing,
         )
 
     pre_message = (

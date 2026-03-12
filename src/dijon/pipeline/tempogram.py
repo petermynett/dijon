@@ -83,12 +83,15 @@ def run_tempogram(
     theta_min: int | None = None,
     theta_max: int | None = None,
     dry_run: bool = False,
+    skip_if_exists: bool = False,
 ) -> dict:
     """Compute tempogram for novelty file(s) and write .npy to output_dir.
 
     Input novelty is assumed at 100 Hz. If novelty_files is None/empty, uses all
     .npy in novelty_dir. For type cyclic, computes fourier tempogram then cyclic;
     saves cyclic array. Output: <track_name>_tempogram_<type>_<N>-<H>-<theta_min>-<theta_max>.npy.
+
+    skip_if_exists: When True, skip computation when output file already exists.
     """
     if ntype not in TEMPOGRAM_TYPES:
         return {
@@ -128,6 +131,7 @@ def run_tempogram(
 
     succeeded = 0
     failed = 0
+    skipped = 0
     items: list[dict] = []
     failures: list[dict] = []
 
@@ -136,6 +140,17 @@ def run_tempogram(
         out_name = _output_filename(track_name, ntype, N, H, theta_min, theta_max)
         out_path = output_dir / out_name
 
+        if skip_if_exists and out_path.exists():
+            skipped += 1
+            items.append({
+                "file": nov_path.name,
+                "input_file": nov_path.name,
+                "output": out_name,
+                "status": "skipped",
+                "detail": "Output exists",
+            })
+            continue
+
         if not nov_path.exists():
             failed += 1
             failures.append({"item": str(nov_path), "reason": "File not found"})
@@ -143,7 +158,7 @@ def run_tempogram(
             continue
 
         try:
-            nov = np.load(nov_path).astype(np.float64)
+            nov = np.load(nov_path, allow_pickle=False).astype(np.float64, copy=False)
             if nov.ndim != 1:
                 raise ValueError(f"Expected 1D novelty, got shape {nov.shape}")
 
@@ -196,8 +211,8 @@ def run_tempogram(
         "total": len(paths),
         "succeeded": succeeded,
         "failed": failed,
-        "skipped": 0,
-        "message": f"Processed {len(paths)} file(s). Succeeded: {succeeded}, failed: {failed}."
+        "skipped": skipped,
+        "message": f"Processed {len(paths)} file(s). Succeeded: {succeeded}, failed: {failed}, skipped: {skipped}."
         + (" [DRY RUN]" if dry_run else ""),
         "items": items,
         "failures": failures,

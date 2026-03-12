@@ -47,7 +47,7 @@ Output filenames: `<track-name>_novelty_<type>_<N>-<H>-<gamma>-<M>.npy`. Same pa
 Compute tempograms from novelty `.npy` files (assumed 100 Hz) and write to `data/derived/tempogram`:
 
 ```bash
-# Default: fourier tempogram for all .npy in data/derived/novelty (N=500, H=1, theta 40–320 BPM)
+# Default: fourier tempogram for all .npy in data/derived/novelty (N=512, H=1, theta 40–320 BPM)
 dijon tempogram
 
 # Types: fourier, autocorr, cyclic (cyclic is computed from fourier in the same run)
@@ -65,6 +65,9 @@ dijon tempogram data/derived/novelty/YTB-001_novelty_spectrum_1024-256-100.0-10.
 
 # Dry-run
 dijon tempogram --dry-run
+
+# Skip files whose output already exists
+dijon tempogram --skip-existing
 ```
 
 Output filenames: `<track_name>_tempogram_<type>_<N>-<H>-<theta_min>-<theta_max>.npy` (track name is parsed from the novelty filename, e.g. `YTB-001_novelty_spectrum_...` → `YTB-001`).
